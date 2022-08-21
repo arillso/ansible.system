@@ -1,0 +1,15 @@
+---
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    reviewers:
+      - sbaerlocher
+    assignees:
+      - sbaerlocher
+    commit-message:
+      prefix: fix
+      prefix-development: chore
+      include: scope

@@ -3,13 +3,16 @@
 
 # python 3 headers, required if submitting to Ansible
 from __future__ import absolute_import, division, print_function
-from re import compile as regex_compile
-from json import JSONDecodeError, loads
-from ansible.module_utils.urls import open_url
-from ansible.module_utils._text import to_native, to_text
 from ansible.utils.display import Display
-from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.urls import open_url
+from re import compile as regex_compile
+
+from json import JSONDecodeError, loads
+
 from ansible.errors import AnsibleLookupError, AnsibleParserError
+from ansible.module_utils._text import to_native, to_text
+
+from ansible.plugins.lookup import LookupBase
 
 __metaclass__ = type
 
@@ -81,11 +84,13 @@ class LookupModule(LookupBase):
 
             # https://regex101.com/r/CHm7eZ/1
             valid_github_username_and_repo_name = regex_compile(
-                r"[a-z\d\-]+\/[a-z\d\S]+")
+                r"[a-z\d\-]+\/[a-z\d\S]+"
+            )
             if not repo or not valid_github_username_and_repo_name.match(repo):
                 # The Parser error indicates invalid options passed
                 raise AnsibleParserError(
-                    "repo name is incorrectly formatted: %s" % to_text(repo))
+                    "repo name is incorrectly formatted: %s" % to_text(repo)
+                )
 
             display.debug("Github version lookup term: '%s'" % to_text(repo))
 

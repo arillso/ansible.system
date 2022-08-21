@@ -1,0 +1,6 @@
+---
+
+- name: 'Install {{ package.package }}'
+  become: true
+  ansible.builtin.apt:
+    name: '{{ package.package }}={{ package.available }}'

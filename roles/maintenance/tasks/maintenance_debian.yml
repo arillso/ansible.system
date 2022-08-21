@@ -1,0 +1,14 @@
+---
+
+- name: 'Check availability updates Debian'
+  become: true
+  arillso.system.apt_update_info:
+  register: register_update
+
+- name: Run arillso Package
+  ansible.buildin.include_role:
+    name: arillso.system.packages
+    tasks_from: install_package_debian
+  loop: "{{ register_update.packages }}"
+  loop_control:
+    loop_var: package

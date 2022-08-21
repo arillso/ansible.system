@@ -6,9 +6,9 @@ from __future__ import absolute_import, division, print_function
 
 from json import JSONDecodeError, loads
 from re import compile as regex_compile
+
 from ansible.errors import AnsibleLookupError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
-
 from ansible.module_utils.urls import open_url
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.display import Display

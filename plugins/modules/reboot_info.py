@@ -10,9 +10,9 @@ __metaclass__ = type
 from ansible.module_utils.basic import AnsibleModule
 
 ANSIBLE_METADATA = {
-    'metadata_version': '1.1',
-    'status': ['preview'],
-    'supported_by': 'community'
+    "metadata_version": "1.1",
+    "status": ["preview"],
+    "supported_by": "community",
 }
 
 DOCUMENTATION = r"""

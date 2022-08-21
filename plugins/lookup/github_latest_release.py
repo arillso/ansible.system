@@ -3,16 +3,16 @@
 
 # python 3 headers, required if submitting to Ansible
 from __future__ import absolute_import, division, print_function
-from ansible.utils.display import Display
-from ansible.module_utils.urls import open_url
-from re import compile as regex_compile
 
 from json import JSONDecodeError, loads
+from re import compile as regex_compile
 
 from ansible.errors import AnsibleLookupError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
 
+from ansible.module_utils.urls import open_url
 from ansible.plugins.lookup import LookupBase
+from ansible.utils.display import Display
 
 __metaclass__ = type
 
@@ -117,7 +117,7 @@ class LookupModule(LookupBase):
                         e)
                 )
 
-            display.vvvv(u"Github version lookup using %s as repo" %
+            display.vvvv("Github version lookup using %s as repo" %
                          to_text(repo))
 
         return versions

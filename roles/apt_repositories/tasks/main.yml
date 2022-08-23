@@ -1,0 +1,6 @@
+---
+
+- name: ensure apt repositories
+  block:
+    - name: ensure apt repositories
+      ansible.builtin.import_tasks: repositories.yml

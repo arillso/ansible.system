@@ -1,0 +1,9 @@
+---
+
+apt_repositories: []
+apt_repositories_force_apt_get: true
+apt_repositories_empty_sources_list: false
+apt_repositories_filename: /etc/apt/sources
+apt_repositories_update_cache_retries: "{{ omit }}"
+apt_repositories_update_cache_retry_max_delay: "{{ omit }}"
+apt_repositories_update_cache: "{{ omit }}"

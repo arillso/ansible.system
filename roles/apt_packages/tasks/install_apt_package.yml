@@ -1,0 +1,12 @@
+---
+
+- name: ensure {{ apt_package_name }} apt package
+  become: true
+  ansible.builtin.apt:
+    pkg: "{% if apt_package_version and apt_package_version | length %}{{ apt_package_name }}={{ apt_package_version }}{% else %}{{ apt_package_name }}{% endif %}"
+    allow_downgrade: "{{ apt_package_allow_downgrade | default(omit) }}"
+    install_recommends: "{{ apt_package_install_recommends | default(omit)  }}"
+    purge: "{{ apt_package_purge | default(omit) }}"
+    force_apt_get: "{{ apt_package_force_apt_get | default(omit) }}"
+    lock_timeout: "{{ apt_package_lock_timeout | default(omit) }}"
+    state: "{{ apt_package_state | default(omit) }}"

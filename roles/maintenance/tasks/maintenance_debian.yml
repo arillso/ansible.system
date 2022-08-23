@@ -6,9 +6,12 @@
   register: register_update
 
 - name: Run arillso Package
-  ansible.buildin.include_role:
-    name: arillso.system.packages
-    tasks_from: install_package_debian
+  ansible.builtin.include_role:
+    name: arillso.system.apt_packages
+    tasks_from: install_apt_package
   loop: "{{ register_update.packages }}"
   loop_control:
-    loop_var: package
+    loop_var: apt_package
+  vars:
+    apt_package_name: "{{ apt_package.package }}"
+    apt_package_version: "{{ apt_package.available }}"

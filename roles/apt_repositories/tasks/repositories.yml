@@ -1,0 +1,19 @@
+---
+
+- name: ensure apt repositories
+  ansible.builtin.include_tasks: repository.yml
+  vars:
+    apt_repository_codename: "{{ apt_repository.codename | default(omit) }}"
+    apt_repository_filename: "{{ apt_repository.filename | default(apt_repositories_filename) }}"
+    apt_repository_install_python_apt: "{{ apt_repository.install_python_apt | default(omit) }}"
+    apt_repository_mode: "{{ apt_repository.mode | default(omit) }}"
+    apt_repository_repo: "{{ apt_repository.repo | mandatory }}"
+    apt_repository_state: "{{ apt_repository.state | default('present') }}"
+    apt_repository_update_cache_retries: "{{ apt_repository.update_cache_retries | default(apt_repositories_update_cache_retries) }}"
+    apt_repository_update_cache_retry_max_delay: "{{ apt_repository.update_cache_retry_max_delay | default(apt_repositories_update_cache_retry_max_delay) }}"
+    apt_repository_update_cache: "{{ apt_repository.update_cache | default(apt_repositories_update_cache) }}"
+    apt_repository_validate_certs: "{{ apt_repository.validate_certs | default(omit) }}"
+  loop: "{{ apt_repositories }}"
+  loop_control:
+    label: "{{ apt_repository_repo }}"
+    loop_var: apt_repository

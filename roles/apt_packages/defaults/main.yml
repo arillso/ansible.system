@@ -1,0 +1,8 @@
+---
+apt_packages: []
+apt_packages_state: present
+apt_packages_install_recommends: false
+apt_packages_allow_downgrade: false
+apt_packages_purge: true
+apt_packages_force_apt_get: true
+apt_packages_lock_timeout: 60

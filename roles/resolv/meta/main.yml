@@ -1,0 +1,23 @@
+---
+
+galaxy_info:
+  description: An Ansible role to configure /etc/resolv.conf
+  author: "arillso (@arillso)"
+  license: MIT
+  min_ansible_version: "2.11"
+  platforms:
+    - name: Debian
+      versions:
+        - buster
+        - bullseye
+    - name: Ubuntu
+      versions:
+        - focal
+
+  galaxy_tags:
+    - dns
+    - resolv
+    - system
+
+dependencies:
+  - role: arillso.system.apt_cache

@@ -1,0 +1,7 @@
+---
+
+systemd_service_name: ""
+systemd_service_enabled: true
+systemd_service_state: started
+systemd_service_reload_on: false
+systemd_service_restart_on: false

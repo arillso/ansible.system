@@ -5,7 +5,7 @@
   arillso.system.apt_update_info:
   register: register_update
 
-- name: Run arillso Package
+- name: Run arillso Apt Package
   ansible.builtin.include_role:
     name: arillso.system.apt_packages
     tasks_from: install_apt_package

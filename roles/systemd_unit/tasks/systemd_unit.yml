@@ -1,0 +1,42 @@
+---
+
+- name: ensure {{ systemd_unit_name }} systemd unit
+  become: true
+  ansible.builtin.template:
+    src: unit.j2
+    dest: "{{ systemd_unit_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: ensure systemd configuration is reloaded
+  when:
+    - systemd_unit_name
+    - not systemd_unit_override_name
+  register: systemd_unit_state
+
+- name: ensure {{ systemd_unit_name }} systemd unit override directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ systemd_unit_override_directory }}"
+    owner: root
+    group: root
+    mode: "0644"
+    state: "{{ systemd_unit_override | ternary('directory', 'absent') }}"
+  notify: ensure systemd configuration is reloaded
+  when:
+    - systemd_unit_name
+    - systemd_unit_override_name
+
+- name: ensure {{ systemd_unit_name }} systemd unit {{ systemd_unit_override_name }} override
+  become: true
+  ansible.builtin.template:
+    src: unit.j2
+    dest: "{{ systemd_unit_override_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: ensure systemd configuration is reloaded
+  when:
+    - systemd_unit_name
+    - systemd_unit_override_name
+  register: systemd_unit_override_state

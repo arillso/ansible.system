@@ -1,0 +1,15 @@
+---
+
+systemd_unit_name: ""
+systemd_unit_type: ""
+systemd_unit_directory: /etc/systemd/system
+systemd_unit_file: "{{ systemd_unit_directory }}/{{ systemd_unit_name }}.{{ systemd_unit_type }}"
+systemd_unit_override_name: ""
+systemd_unit_override_directory: "{{ systemd_unit_directory }}/{{ systemd_unit_name }}.{{ systemd_unit_type }}.d"
+systemd_unit_override_file: "{{ systemd_unit_override_directory }}/{{ systemd_unit_override_name }}.conf"
+systemd_unit_types_supported:
+  - service
+  - timer
+systemd_unit_generic_options: []
+systemd_unit_options: []
+systemd_unit_install_options: []

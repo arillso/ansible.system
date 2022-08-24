@@ -1,0 +1,12 @@
+---
+
+- name: Run arillso Apt Package
+  ansible.builtin.include_role:
+    name: arillso.system.apt_packages
+    tasks_from: install_apt_package
+  loop: "{{ netplan_packages }}"
+  loop_control:
+    loop_var: apt_package
+  vars:
+    apt_package_name: "{{ apt_package.name }}"
+    apt_package_version: "{{ apt_package.version | default('') }}"

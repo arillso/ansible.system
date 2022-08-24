@@ -1,0 +1,11 @@
+---
+
+- name: Create Netplan Configuration
+  ansible.builtin.template:
+    src: etc/netplan/_default.yaml.j2
+    dest: "/etc/netplan/{{ netplan_configuration.name }}.yaml"
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - Generating Netplan Configuration

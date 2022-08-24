@@ -1,0 +1,12 @@
+---
+
+- name: Run devsec ssh hardening setup
+  ansible.builtin.include_role:
+    name: devsec.hardening.ssh_hardening
+
+- name: Enable IP nonlocal bind
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_nonlocal_bind
+    value: '1'
+    state: present
+  when: ssh_ip_nonlocal_bind

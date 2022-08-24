@@ -1,0 +1,23 @@
+---
+
+galaxy_info:
+  description: The role installs different packages on the apt system.
+  author: "arillso (@arillso)"
+  license: MIT
+  min_ansible_version: "2.11"
+  platforms:
+    - name: Debian
+      versions:
+        - buster
+        - bullseye
+    - name: Ubuntu
+      versions:
+        - focal
+
+  galaxy_tags:
+    - package
+    - packages
+    - apt
+
+dependencies:
+  - role: arillso.system.apt_cache

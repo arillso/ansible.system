@@ -1,0 +1,19 @@
+{{ ansible_managed | comment }}
+{% if systemd_unit_generic_options | length %}
+[Unit]
+{% for systemd_unit_generic_option in systemd_unit_generic_options %}
+{{ systemd_unit_generic_option }}
+{% endfor %}
+{% endif %}
+{% if systemd_unit_options | length %}
+[{{ systemd_unit_type | capitalize }}]
+{% for systemd_unit_option in systemd_unit_options %}
+{{ systemd_unit_option }}
+{% endfor %}
+{% endif %}
+{% if systemd_unit_install_options | length %}
+[Install]
+{% for systemd_unit_install_option in systemd_unit_install_options %}
+{{ systemd_unit_install_option }}
+{% endfor %}
+{% endif %}

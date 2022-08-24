@@ -1,0 +1,5 @@
+---
+- name: ensure apt cache
+  block:
+    - name: ensure apt cache
+      ansible.builtin.import_tasks: update_cache.yml

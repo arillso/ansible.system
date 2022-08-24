@@ -1,0 +1,18 @@
+---
+
+galaxy_info:
+  description: Manage Netplan configuration
+  author: "arillso (@arillso)"
+  license: MIT
+  min_ansible_version: "2.11"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+
+  galaxy_tags:
+    - netplan
+    - netplan.io
+    - system
+
+dependencies: []

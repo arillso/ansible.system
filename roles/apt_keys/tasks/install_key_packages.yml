@@ -1,0 +1,8 @@
+---
+- name: ensure apt keys packages
+  ansible.builtin.include_role:
+    name: arillso.system.apt_packages
+  vars:
+    apt_packages:
+      - name: gpg
+      - name: gpg-agent

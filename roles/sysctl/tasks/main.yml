@@ -1,0 +1,17 @@
+---
+
+- name: ensure sysctl tasks
+  ansible.builtin.include_tasks: configure_sysctl.yml
+  vars:
+    sysctl_entrie_ignoreerrors: "{{ sysctl_entrie.ignoreerrors | default(sysctl_entries_ignoreerrors) }}"
+    sysctl_entrie_name: "{{ sysctl_entrie.name }}"
+    sysctl_entrie_reload: "{{ sysctl_entrie.reload | default(sysctl_entries_reload) }}"
+    sysctl_entrie_state: "{{ sysctl_entrie.state | default('present') }}"
+    sysctl_entrie_sysctl_file: >
+      "{{ '/etc/sysctl.d/' + sysctl_entrie.sysctl_file + '.conf' if sysctl_entrie.sysctl_file is defined else sysctl_entries_sysctl_file }}"
+    sysctl_entrie_sysctl_set: "{{ sysctl_entrie.sysctl_set | default(sysctl_entries_sysctl_set) }}"
+    sysctl_entrie_value: "{{ sysctl_entrie.value }}"
+  loop: "{{ sysctl_entries }}"
+  loop_control:
+    label: "{{ sysctl_entrie_name }}"
+    loop_var: sysctl_entrie

@@ -1,0 +1,12 @@
+---
+
+- name: Generating Netplan Configuration
+  become: true
+  ansible.builtin.command: netplan generate
+  listen: netplan generate config
+  notify:
+    - Applying Netplan Configuration
+
+- name: Applying Netplan Configuration
+  become: true
+  ansible.builtin.command: netplan apply

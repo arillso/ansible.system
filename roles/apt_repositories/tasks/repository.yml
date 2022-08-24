@@ -1,0 +1,14 @@
+---
+- name: "ensure {{ apt_repository_repo.split(' ')[1:3] | join(' ') }} apt repository {{ apt_repository_filename }}.list {{ apt_repository_state }}"
+  ansible.builtin.apt_repository:
+    codename: "{{ apt_repository_codename }}"
+    filename: "{{ apt_repository_filename }}"
+    install_python_apt: "{{ apt_repository_install_python_apt }}"
+    mode: "{{ apt_repository_mode }}"
+    repo: "{{ apt_repository_repo }}"
+    state: "{{ apt_repository_state }}"
+    update_cache_retries: "{{ apt_repository_update_cache_retries }}"
+    update_cache_retry_max_delay: "{{ apt_repository_update_cache_retry_max_delay }}"
+    update_cache: "{{ apt_repository_update_cache }}"
+    validate_certs: "{{ apt_repository_validate_certs }}"
+  notify: ensure apt cache

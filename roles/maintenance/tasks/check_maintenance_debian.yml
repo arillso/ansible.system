@@ -1,0 +1,6 @@
+---
+
+- name: 'Check availability updates Debian'
+  become: true
+  arillso.system.apt_update_info:
+  register: register_update

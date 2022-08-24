@@ -44,7 +44,7 @@ tags:
 # L(specifiers,https://python-semanticversion.readthedocs.io/en/latest/#requirement-specification). Multiple version
 # range specifiers can be set and are separated by ','
 dependencies:
-  devsec.hardening: '>=17.16.0'
+  devsec.hardening: '>=8.0.0'
   ansible.posix: '>=1.4.0'
 
 # The URL of the originating SCM repository

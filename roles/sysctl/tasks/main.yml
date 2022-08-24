@@ -7,9 +7,8 @@
     sysctl_entrie_name: "{{ sysctl_entrie.name }}"
     sysctl_entrie_reload: "{{ sysctl_entrie.reload | default(sysctl_entries_reload) }}"
     sysctl_entrie_state: "{{ sysctl_entrie.state | default('present') }}"
-    sysctl_entrie_sysctl_file: >
-      "{{ '/etc/sysctl.d/' + sysctl_entrie.sysctl_file + '.conf' if sysctl_entrie.sysctl_file is defined else sysctl_entries_sysctl_file }}"
-    sysctl_entrie_sysctl_set: "{{ sysctl_entrie.sysctl_set | default(sysctl_entries_sysctl_set) }}"
+    sysctl_entrie_sysctl_file: "{{ '/etc/sysctl.d/' + sysctl_entrie.file + '.conf' if sysctl_entrie.file is defined else sysctl_entries_sysctl_file }}"
+    sysctl_entrie_sysctl_set: "{{ sysctl_entrie.set | default(sysctl_entries_sysctl_set) }}"
     sysctl_entrie_value: "{{ sysctl_entrie.value }}"
   loop: "{{ sysctl_entries }}"
   loop_control:

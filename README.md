@@ -8,7 +8,10 @@ This is an Ansible collection that installs and then configures various system.
 
 ## Roles
 
-- [apt](roles/apt/README.md)
+- [apt_cache](roles/apt_cache/README.md)
+- [apt_keys](roles/apt_keys/README.md)
+- [apt_packages](roles/apt_packages/README.md)
+- [apt_repositories](roles/apt_repositories/README.md)
 - [maintenance](roles/maintenance/README.md)
 - [netplan](roles/netplan/README.md)
 - [packages](roles/packages/README.md)
@@ -17,7 +20,19 @@ This is an Ansible collection that installs and then configures various system.
 - [ssh](roles/ssh/README.md)
 - [sudoers](roles/sudoers/README.md)
 - [sysctl](roles/sysctl/README.md)
-- [systemd](roles/systemd/README.md)
+- [systemd_service](roles/systemd_service/README.md)
+- [systemd_unit](roles/systemd_unit/README.md)
+
+## Plugins
+
+plugins/lookup:
+
+- github_latest_release.py
+
+plugins/modules:
+
+- apt_update_info.py
+- reboot_info.py
 
 ## License
 

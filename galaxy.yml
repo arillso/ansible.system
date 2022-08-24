@@ -36,6 +36,8 @@ license:
 # requirements as 'namespace' and 'name'
 tags:
   - system
+  - apt
+  - systemd
 
 # Collections that this collection requires to be installed for it to be usable. The key of the dict is the
 # collection label 'namespace.name'. The value is a version range
@@ -43,6 +45,7 @@ tags:
 # range specifiers can be set and are separated by ','
 dependencies:
   devsec.hardening: '>=17.16.0'
+  ansible.posix: '>=1.4.0'
 
 # The URL of the originating SCM repository
 repository: https://github.com/arillso/ansible.system

@@ -1,0 +1,9 @@
+---
+
+- name: Create Logrotate Configuration
+  ansible.builtin.template:
+    src: etc/logrotate.d/entry.j2
+    dest: "{{ logrotate_confd_directory }}/{{ logrotate_d_name }}"
+    owner: root
+    group: root
+    mode: 0644

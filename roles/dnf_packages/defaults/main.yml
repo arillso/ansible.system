@@ -1,0 +1,8 @@
+---
+
+dnf_packages_allow_downgrade: false
+dnf_packages_install_recommends: false
+dnf_packages_lock_timeout: 60
+dnf_packages_purge: true
+dnf_packages_state: present
+dnf_packages: []

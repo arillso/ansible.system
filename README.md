@@ -12,6 +12,7 @@ This is an Ansible collection that installs and then configures various system.
 - [apt_keys](roles/apt_keys/README.md)
 - [apt_packages](roles/apt_packages/README.md)
 - [apt_repositories](roles/apt_repositories/README.md)
+- [dnf_packages](roles/dnf_packages/README.md)
 - [logrotate](roles/logrotate/README.md)
 - [maintenance](roles/maintenance/README.md)
 - [netplan](roles/netplan/README.md)

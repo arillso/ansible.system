@@ -1,0 +1,12 @@
+---
+
+- name: Run arillso dnf Package
+  ansible.builtin.include_role:
+    name: arillso.system.dnf_packages
+    tasks_from: install_dnf_package
+  loop: "{{ logrotate_packages }}"
+  loop_control:
+    loop_var: logrotate_package
+  vars:
+    dnf_package_name: "{{ logrotate_package.name }}"
+    dnf_package_version: "{{ logrotate_package.version | default('') }}"

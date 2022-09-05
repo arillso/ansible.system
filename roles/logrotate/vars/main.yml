@@ -17,3 +17,9 @@ _logrotate_group:
   default: root
   Debian: adm
   Ubuntu: adm
+
+_logrotate_dateext:
+  default: false
+  Debian: false
+  Ubuntu: false
+  CentOS: true

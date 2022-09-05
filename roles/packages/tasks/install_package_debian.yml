@@ -4,7 +4,7 @@
   ansible.builtin.include_role:
     name: arillso.system.apt_packages
     tasks_from: install_apt_package
-  loop: "{{ netplan_packages }}"
+  loop: "{{ packages }}"
   loop_control:
     loop_var: apt_package
   vars:

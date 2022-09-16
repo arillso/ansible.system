@@ -1,0 +1,19 @@
+---
+
+galaxy_info:
+  description: yum repositories role
+  author: "arillso (@arillso)"
+  license: MIT
+  min_ansible_version: "2.11"
+  platforms:
+    - name: Centos
+      versions:
+        - all
+
+  galaxy_tags:
+    - repositories
+    - repository
+    - yum
+    - dnf
+
+dependencies: []

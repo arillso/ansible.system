@@ -17,9 +17,14 @@ _logrotate_group:
   default: root
   Debian: adm
   Ubuntu: adm
+  AlmaLinux: root
+  CentOS: root
+  Rocky: root
 
 _logrotate_dateext:
   default: false
-  Debian: false
-  Ubuntu: false
+  AlmaLinux: true
   CentOS: true
+  Debian: false
+  Rocky: true
+  Ubuntu: false

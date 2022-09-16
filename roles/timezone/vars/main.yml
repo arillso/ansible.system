@@ -1,0 +1,9 @@
+---
+
+_timezone_packages:
+  default:
+    - name: tzdata
+  CentOS:
+    - name: tzdata
+  Ubuntu:
+    - name: tzdata

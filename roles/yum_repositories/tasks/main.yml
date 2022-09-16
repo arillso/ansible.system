@@ -1,0 +1,6 @@
+---
+
+- name: ensure yum repositories
+  block:
+    - name: ensure yum repositories
+      ansible.builtin.import_tasks: repositories.yml

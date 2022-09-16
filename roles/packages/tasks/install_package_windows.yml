@@ -1,0 +1,7 @@
+---
+
+- name: Run arillso chocolatey Package
+  ansible.builtin.include_role:
+    name: arillso.system.chocolatey_packages
+  vars:
+    chocolatey_packages: "{{ packages }}"

@@ -12,6 +12,7 @@ This is an Ansible collection that installs and then configures various system.
 - [apt_keys](roles/apt_keys/README.md)
 - [apt_packages](roles/apt_packages/README.md)
 - [apt_repositories](roles/apt_repositories/README.md)
+- [chocolatey_packages](roles/chocolatey_packages/README.md)
 - [dnf_packages](roles/dnf_packages/README.md)
 - [logrotate](roles/logrotate/README.md)
 - [maintenance](roles/maintenance/README.md)
@@ -24,6 +25,8 @@ This is an Ansible collection that installs and then configures various system.
 - [sysctl](roles/sysctl/README.md)
 - [systemd_service](roles/systemd_service/README.md)
 - [systemd_unit](roles/systemd_unit/README.md)
+- [timezone](roles/timezone/README.md)
+- [yum_repositories](roles/yum_repositories/README.md)
 
 ## Plugins
 

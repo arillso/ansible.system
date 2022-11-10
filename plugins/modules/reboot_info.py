@@ -31,7 +31,7 @@ def main():
     result = dict(changed=False, reboot=False)
     module = AnsibleModule(argument_spec=dict(), supports_check_mode=True)
 
-    if distro.linux_distribution()[0] == "Ubuntu":
+    if distro.linux_distribution()[0] == "Ubuntu" or distro.linux_distribution()[0] == 'Debian GNU/Linux':
         if os.path.isfile("/var/run/reboot-required"):
             result["reboot"] = True
 

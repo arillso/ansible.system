@@ -1,0 +1,9 @@
+---
+
+iptables_rules:
+  - chain: input
+    protocol: tcp
+    source_address: 0.0.0.0/0
+    destination_port: 22
+    comment: OpenSSH
+    target: accept

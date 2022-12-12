@@ -1,0 +1,95 @@
+---
+
+- name: Add OS specific variables
+  ansible.builtin.include_vars: "{{ loop_vars }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_distribution }}-{{ ansible_distribution_version }}.yml"
+        - "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
+        - "{{ ansible_distribution }}.yml"
+        - "{{ ansible_os_family }}.yml"
+        - "defaults.yml"
+      paths:
+        - "vars"
+  loop_control:
+    loop_var: loop_vars
+
+- name: Modify iptables
+  ansible.builtin.include_tasks: modify_iptables.yml
+  vars:
+    iptable_rule_action: "{{ iptable_rule.action | default(omit) }}"
+    iptable_rule_chain: "{{ iptable_rule.chain | default(omit) }}"
+    iptable_rule_comment: "{{ iptable_rule.comment | default(omit) }}"
+    iptable_rule_ctstate: "{{ iptable_rule.ctstate | default(omit) }}"
+    iptable_rule_destination: "{{ iptable_rule.destination | default(omit) }}"
+    iptable_rule_destination_port: "{{ iptable_rule.destination_port | default(omit) }}"
+    iptable_rule_destination_ports: "{{ iptable_rule.destination_ports | default(omit) }}"
+    iptable_rule_dst_range: "{{ iptable_rule.dst_range | default(omit) }}"
+    iptable_rule_flush: "{{ iptable_rule.flush | default(omit) }}"
+    iptable_rule_fragment: "{{ iptable_rule.fragment | default(omit) }}"
+    iptable_rule_gateway: "{{ iptable_rule.gateway | default(omit) }}"
+    iptable_rule_gid_owner: "{{ iptable_rule.gid_owner | default(omit) }}"
+    iptable_rule_goto: "{{ iptable_rule.goto | default(omit) }}"
+    iptable_rule_icmp_type: "{{ iptable_rule.icmp_type | default(omit) }}"
+    iptable_rule_in_interface: "{{ iptable_rule.in_interface | default(omit) }}"
+    iptable_rule_ip_version: "{{ iptable_rule.ip_version | default(omit) }}"
+    iptable_rule_jump: "{{ iptable_rule.jump | default(omit) }}"
+    iptable_rule_limit: "{{ iptable_rule.limit | default(omit) }}"
+    iptable_rule_limit_burst: "{{ iptable_rule.limit_burst | default(omit) }}"
+    iptable_rule_log_level: "{{ iptable_rule.log_level | default(omit) }}"
+    iptable_rule_log_prefix: "{{ iptable_rule.log_prefix | default(omit) }}"
+    iptable_rule_match: "{{ iptable_rule.match | default(omit) }}"
+    iptable_rule_match_set: "{{ iptable_rule.match_set | default(omit) }}"
+    iptable_rule_match_set_flags: "{{ iptable_rule.match_set_flags | default(omit) }}"
+    iptable_rule_out_interface: "{{ iptable_rule.out_interface | default(omit) }}"
+    iptable_rule_policy: "{{ iptable_rule.policy | default(omit) }}"
+    iptable_rule_protocol: "{{ iptable_rule.protocol | default(omit) }}"
+    iptable_rule_reject_with: "{{ iptable_rule.reject_with | default(omit) }}"
+    iptable_rule_rule_num: "{{ iptable_rule.rule_num | default(omit) }}"
+    iptable_rule_set_counters: "{{ iptable_rule.set_counters | default(omit) }}"
+    iptable_rule_set_dscp_mark: "{{ iptable_rule.set_dscp_mark | default(omit) }}"
+    iptable_rule_set_dscp_mark_class: "{{ iptable_rule.set_dscp_mark_class | default(omit) }}"
+    iptable_rule_source: "{{ iptable_rule.source | default(omit) }}"
+    iptable_rule_source_port: "{{ iptable_rule.source_port | default(omit) }}"
+    iptable_rule_src_range: "{{ iptable_rule.src_range | default(omit) }}"
+    iptable_rule_state: "{{ iptable_rule.state | default(omit) }}"
+    iptable_rule_syn: "{{ iptable_rule.syn | default(omit) }}"
+    iptable_rule_table: "{{ iptable_rule.table | default(omit) }}"
+    iptable_rule_tcp_flags: "{{ iptable_rule.tcp_flags | default(omit) }}"
+    iptable_rule_flags: "{{ iptable_rule.flags | default(omit) }}"
+    iptable_rule_flags_set: "{{ iptable_rule.flags_set | default(omit) }}"
+    iptable_rule_to_destination: "{{ iptable_rule.to_destination | default(omit) }}"
+    iptable_rule_to_ports: "{{ iptable_rule.to_ports | default(omit) }}"
+    iptable_rule_to_source: "{{ iptable_rule.to_source | default(omit) }}"
+    iptable_rule_uid_owner: "{{ iptable_rule.uid_owner | default(omit) }}"
+    iptable_rule_wait: "{{ iptable_rule.wait | default(omit) }}"
+  loop: "{{ iptable_rules }}"
+  loop_control:
+    label: "{{ iptable_chain }}"
+    loop_var: iptable_rule
+
+- name: Install iptables
+  become: true
+  ansible.builtin.package:
+    name: "{{ item }}"
+  with_items:
+    - "{{ iptables_packages }}"
+  notify:
+    - Start iptables
+    - Enable iptables
+    - Start ip6tables
+    - Enable ip6tables
+
+- name: Save in File IPv4
+  become: true
+  community.general.iptables_state:
+    ip_version: ipv4
+    path: "{{ iptables_configuration }}"
+    state: saved
+
+- name: Save in File IPv6
+  become: true
+  community.general.iptables_state:
+    ip_version: ipv6
+    path: "{{ ip6tables_configuration }}"
+    state: saved

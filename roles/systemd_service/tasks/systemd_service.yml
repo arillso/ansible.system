@@ -1,31 +1,30 @@
 ---
 
-- name: ensure {{ systemd_service_name }} systemd service
+- name: "Ensure systemd service {{ systemd_service_name }}"
   become: true
+  when:
+    - systemd_service_name | length
   block:
-    - name: ensure {{ systemd_service_name }} systemd service is enabled
+    - name: "Ensure systemd service enabled {{ systemd_service_name }}"
       ansible.builtin.systemd:
         name: "{{ systemd_service_name }}"
         enabled: "{{ systemd_service_enabled }}"
 
-    - name: ensure {{ systemd_service_name }} systemd service is started
+    - name: "Ensure systemd service started {{ systemd_service_name }}"
       ansible.builtin.systemd:
         name: "{{ systemd_service_name }}"
         state: "{{ systemd_service_state }}"
 
-    - name: ensure {{ systemd_service_name }} systemd service is reloaded
+    - name: "Ensure systemd service reload {{ systemd_service_name }}"
       ansible.builtin.systemd:
         name: "{{ systemd_service_name }}"
         state: reloaded
       when:
         - systemd_service_reload_on
 
-    - name: ensure {{ systemd_service_name }} systemd service is restarted
+    - name: "Ensure systemd service restarted {{ systemd_service_name }}"
       ansible.builtin.systemd:
         name: "{{ systemd_service_name }}"
         state: restarted
       when:
         - systemd_service_restart_on
-
-  when:
-    - systemd_service_name | length

@@ -1,6 +1,6 @@
 ---
 
-- name: install sudores package
+- name: Install sudores package
   become: true
   ansible.builtin.package:
     name: '{{ sudoers_package }}'

@@ -1,6 +1,6 @@
 ---
 
-- name: ensure stopped systemd-resolved
+- name: Ensure stopped systemd-resolved
   ansible.builtin.include_role:
     name: arillso.system.systemd_service
   vars:
@@ -8,5 +8,5 @@
     systemd_service_enabled: false
     systemd_service_state: stopped
 
-- name: ensure resolv
+- name: Ensure resolv
   ansible.builtin.import_tasks: configure_resolv.yml

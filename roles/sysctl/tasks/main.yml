@@ -1,6 +1,6 @@
 ---
 
-- name: ensure sysctl tasks
+- name: Ensure sysctl tasks
   ansible.builtin.include_tasks: configure_sysctl.yml
   vars:
     sysctl_entrie_ignoreerrors: "{{ sysctl_entrie.ignoreerrors | default(sysctl_entries_ignoreerrors) }}"

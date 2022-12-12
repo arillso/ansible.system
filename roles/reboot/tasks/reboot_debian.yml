@@ -1,12 +1,13 @@
 ---
 
-- name: check if reboot requert
+- name: Check if reboot requert
   arillso.system.reboot_info:
   register: register_reboot
 
 - name: Reboot Block
+  when: register_reboot.reboot
   block:
-    - name: reboot
+    - name: Reboot
       become: true
       ansible.builtin.reboot:
         reboot_timeout: "{{ reboot_timeout }}"
@@ -16,4 +17,3 @@
 
     - name: 3 gather facts after reboot
       ansible.builtin.setup:
-  when: register_reboot.reboot

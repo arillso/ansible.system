@@ -1,6 +1,6 @@
 ---
 
-- name: ensure {{ systemd_unit_name }} systemd unit
+- name: "Ensure systemd unit {{ systemd_unit_name }}"
   block:
-    - name: ensure {{ systemd_unit_name }} systemd unit
+    - name: "Ensure systemd unit {{ systemd_unit_name }}"
       ansible.builtin.import_tasks: systemd_unit.yml

@@ -1,6 +1,6 @@
 ---
 
-- name: include distribution maintenance tasks
+- name: Include distribution maintenance tasks
   ansible.builtin.include_tasks: "{{ loop_distribution }}"
   with_first_found:
     - files:

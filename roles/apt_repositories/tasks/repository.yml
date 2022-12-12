@@ -1,5 +1,5 @@
 ---
-- name: "ensure {{ apt_repository_repo.split(' ')[1:3] | join(' ') }} apt repository {{ apt_repository_filename }}.list {{ apt_repository_state }}"
+- name: "Ensure apt repository {{ apt_repository_filename }}"
   ansible.builtin.apt_repository:
     codename: "{{ apt_repository_codename }}"
     filename: "{{ apt_repository_filename }}"

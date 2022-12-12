@@ -1,6 +1,6 @@
 ---
 
-- name: include distribution tasks
+- name: Include distribution tasks
   ansible.builtin.include_tasks: "{{ lookup('ansible.builtin.first_found', params) }}"
   vars:
     distribution: "{{ ansible_distribution }}"

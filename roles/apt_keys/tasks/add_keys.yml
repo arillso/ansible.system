@@ -1,5 +1,6 @@
 ---
-- name: ensure apt keys
+
+- name: Ensure apt keys
   become: true
   ansible.builtin.apt_key:
     id: "{{ apt_key.id }}"

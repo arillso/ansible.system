@@ -1,6 +1,6 @@
 ---
 
-- name: ensure chocolatey packages
+- name: Ensure chocolatey packages
   ansible.builtin.include_tasks: install_chocolatey_package.yml
   vars:
     chocolatey_package_allow_empty_checksums: "{{ chocolatey_package.allow_empty_checksums | default(chocolatey_packages_allow_empty_checksums) }}"

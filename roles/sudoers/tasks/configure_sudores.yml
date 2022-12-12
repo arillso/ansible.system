@@ -1,6 +1,6 @@
 ---
 
-- name: configuration specific files
+- name: Configuration specific files
   become: true
   ansible.builtin.template:
     src: etc/sudoers.d/sudoers.j2
@@ -11,7 +11,7 @@
     mode: 0440
   with_dict: '{{ sudoers_sudoers_d_files }}'
 
-- name: configuration global files
+- name: Configuration global files
   become: true
   ansible.builtin.template:
     src: etc/sudoers.j2

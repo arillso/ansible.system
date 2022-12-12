@@ -1,6 +1,6 @@
 ---
 
-- name: ensure {{ systemd_service_name }} systemd service
+- name: "Ensure systemd service {{ systemd_service_name }}"
   block:
-    - name: ensure {{ systemd_service_name }} systemd service
+    - name: "Ensure systemd service {{ systemd_service_name }}"
       ansible.builtin.import_tasks: systemd_service.yml

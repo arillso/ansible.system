@@ -1,6 +1,6 @@
 ---
 
-- name: ensure yum repositories
+- name: Ensure yum repositories
   ansible.builtin.include_tasks: repository.yml
   vars:
     yum_repository_async: "{{ yum_repository.async | default(yum_repositories_async | default(omit)) }}"

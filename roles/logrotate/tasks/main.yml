@@ -1,6 +1,6 @@
 ---
 
-- name: include distribution install tasks
+- name: Include distribution install tasks
   ansible.builtin.include_tasks: "{{ loop_distribution }}"
   with_first_found:
     - files:
@@ -17,10 +17,10 @@
     distribution_version: "{{ ansible_distribution_version }}"
     distribution_major_version: "{{ ansible_distribution_major_version }}"
 
-- name: ensure logrotate tasks
+- name: Ensure logrotate tasks
   ansible.builtin.include_tasks: configure_logrotate.yml
 
-- name: ensure logrotate.d tasks
+- name: Ensure logrotate.d tasks
   ansible.builtin.include_tasks: configure_logrotate_d.yml
   vars:
     logrotate_d_name: "{{ logrotate_entrie.name | mandatory }}"

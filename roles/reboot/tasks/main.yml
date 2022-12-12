@@ -1,6 +1,6 @@
 ---
 
-- name: include distribution install tasks
+- name: Include distribution install tasks
   ansible.builtin.include_tasks: "{{ loop_distribution }}"
   with_first_found:
     - files:

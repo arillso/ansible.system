@@ -1,12 +1,12 @@
 ---
-- name: "ensure {{ yum_repository_baseurl.split(' ')[1:3] | join(' ') }} yum repository {{ yum_repository_file }}.list {{ yum_repository_state }}"
+- name: "Ensure yum repository {{ yum_repository_state }}"
   ansible.builtin.yum_repository:
     async: "{{ yum_repository_async }}"
     attributes: "{{ yum_repository_attributes }}"
     bandwidth: "{{ yum_repository_bandwidth }}"
     baseurl: "{{ yum_repository_baseurl }}"
     cost: "{{ yum_repository_cost }}"
-    deltarpm_metadata_percentage: "{{ yum_repository_deltarpm_metadata_percentage  }}"
+    deltarpm_metadata_percentage: "{{ yum_repository_deltarpm_metadata_percentage }}"
     deltarpm_percentage: "{{ yum_repository_deltarpm_percentage }}"
     description: "{{ yum_repository_description }}"
     enabled: "{{ yum_repository_enabled }}"

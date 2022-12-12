@@ -1,5 +1,6 @@
 ---
-- name: ensure apt cache valid time
+
+- name: Ensure apt cache valid time
   become: true
   ansible.builtin.apt:
     update_cache: true
@@ -8,5 +9,5 @@
     update_cache_retry_max_delay: "{{ apt_cache_update_cache_retry_max_delay }}"
     force_apt_get: "{{ apt_cache_force_apt_get }}"
 
-- name: ensure apt cache is up to date
+- name: Ensure apt cache is up to date
   ansible.builtin.meta: flush_handlers

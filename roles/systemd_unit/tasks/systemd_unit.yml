@@ -1,6 +1,6 @@
 ---
 
-- name: ensure {{ systemd_unit_name }} systemd unit
+- name: "Ensure systemd unit {{ systemd_unit_name }}"
   become: true
   ansible.builtin.template:
     src: unit.j2
@@ -14,7 +14,7 @@
     - not systemd_unit_override_name
   register: systemd_unit_state
 
-- name: ensure {{ systemd_unit_name }} systemd unit override directory
+- name: "Ensure systemd unit override directory {{ systemd_unit_name }}"
   become: true
   ansible.builtin.file:
     path: "{{ systemd_unit_override_directory }}"
@@ -27,7 +27,7 @@
     - systemd_unit_name
     - systemd_unit_override_name
 
-- name: ensure {{ systemd_unit_name }} systemd unit {{ systemd_unit_override_name }} override
+- name: "Ensure systemd unit override {{ systemd_unit_name }} {{ systemd_unit_override_name }}"
   become: true
   ansible.builtin.template:
     src: unit.j2

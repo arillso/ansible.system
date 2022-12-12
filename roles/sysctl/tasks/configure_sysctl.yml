@@ -1,6 +1,6 @@
 ---
 
-- name: "ensure {{ sysctl_entrie_name }} entrie"
+- name: "Ensure entrie {{ sysctl_entrie_name }}"
   become: true
   ansible.posix.sysctl:
     ignoreerrors: "{{ sysctl_entrie_ignoreerrors | default(omit) }}"

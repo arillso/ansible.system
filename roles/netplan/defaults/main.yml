@@ -1,4 +1,5 @@
 ---
+
 netplan_packages:
   - name: nplan
   - name: netplan.io

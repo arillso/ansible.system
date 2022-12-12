@@ -1,6 +1,6 @@
 ---
 
-- name: ensure {{ chocolatey_package_name }} chocolatey package
+- name: "Ensure package {{ chocolatey_package_name }}"
   chocolatey.chocolatey.win_chocolatey:
     allow_empty_checksums: "{{ chocolatey_package_allow_empty_checksums | default(omit) }}"
     allow_multiple: "{{ chocolatey_package_allow_multiple | default(omit) }}"

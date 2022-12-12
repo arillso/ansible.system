@@ -1,0 +1,39 @@
+---
+
+- name: Restart iptables
+  become: true
+  ansible.builtin.service:
+    name: "{{ iptables_service }}"
+    state: restarted
+
+- name: Start iptables
+  become: true
+  ansible.builtin.service:
+    name: "{{ iptables_service }}"
+    state: started
+
+- name: Enable iptables
+  become: true
+  ansible.builtin.service:
+    name: "{{ iptables_service }}"
+    enabled: true
+
+- name: Restart ip6tables
+  become: true
+  ansible.builtin.service:
+    name: "{{ ip6tables_service }}"
+    state: restarted
+
+- name: Start ip6tables
+  become: true
+  ansible.builtin.service:
+    name: "{{ ip6tables_service }}"
+    state: started
+  when: "'scope' in ansible_default_ipv6 and ansible_default_ipv6.scope == 'global'"
+
+- name: Enable ip6tables
+  become: true
+  ansible.builtin.service:
+    name: "{{ ip6tables_service }}"
+    enabled: true
+  when: "'scope' in ansible_default_ipv6 and ansible_default_ipv6.scope == 'global'"

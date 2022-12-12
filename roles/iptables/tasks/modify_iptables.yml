@@ -2,7 +2,7 @@
 
 - name: Modify iptable Rules
   become: true
-  ansible_builtin_iptables:
+  ansible.builtin.iptables:
     action: "{{ iptables_rule_action | default(omit) }}"
     chain: "{{ iptables_rule_chain | default(omit) }}"
     comment: "{{ iptables_rule_comment | default(omit) }}"

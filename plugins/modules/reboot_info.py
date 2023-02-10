@@ -6,8 +6,6 @@ from __future__ import absolute_import, division, print_function
 
 import os.path
 
-import distro
-
 __metaclass__ = type
 from ansible.module_utils.basic import AnsibleModule
 
@@ -23,7 +21,7 @@ module: arillso.system.reboot_info
 version_added: '0.0.1'
 short_description: checks if the system has to be restarted.
 author:
-- Simon Bärlocher (@sbaerlocher)
+  - arillso (@arillso) <hello@arillso.io>
 """
 
 
@@ -31,9 +29,8 @@ def main():
     result = dict(changed=False, reboot=False)
     module = AnsibleModule(argument_spec=dict(), supports_check_mode=True)
 
-    if distro.linux_distribution()[0] == "Ubuntu" or distro.linux_distribution()[0] == 'Debian GNU/Linux':
-        if os.path.isfile("/var/run/reboot-required"):
-            result["reboot"] = True
+    if os.path.isfile("/var/run/reboot-required"):
+        result["reboot"] = True
 
     module.exit_json(**result)
 

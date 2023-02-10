@@ -1,5 +1,10 @@
 ---
 
+- name: 'Include arillso.system.apt_cache role'
+  become: true
+  ansible.builtin.include_role:
+    name: arillso.system.apt_cache
+
 - name: 'Check availability updates Debian'
   become: true
   arillso.system.apt_update_info:

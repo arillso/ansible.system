@@ -1,7 +1,6 @@
 ---
 
 - name: 'Include arillso.system.apt_cache role'
-  become: true
   ansible.builtin.include_role:
     name: arillso.system.apt_cache
 

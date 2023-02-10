@@ -1,0 +1,16 @@
+---
+- name: Install python pip
+  ansible.builtin.package:
+    name: "{{ pip_packages }}"
+    state: present
+
+- name: Update pip
+  ansible.builtin.pip:
+    name:
+      - pip
+      - setuptools
+    state: latest # noqa package-latest
+    executable: "{{ pip_executable | default(omit) }}"
+
+- name: Ensure requested modules
+  ansible.builtin.import_tasks: modules.yml

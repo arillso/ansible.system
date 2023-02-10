@@ -1,0 +1,7 @@
+---
+# Files
+environment_files:
+  - pam
+
+# Variables
+environment_variables: {}

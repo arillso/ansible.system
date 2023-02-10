@@ -1,0 +1,6 @@
+---
+# By default no modules should be installed.
+pip_modules: []
+
+# You can use something other than the default pip binary.
+pip_executable: pip3

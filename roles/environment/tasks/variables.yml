@@ -1,0 +1,11 @@
+---
+- name: Ensure environment variables
+  ansible.builtin.blockinfile:
+    dest: "{{ item.file }}"
+    block: |
+      {% for key, value in environment_variables.items() %}
+      {{ (item.export) | ternary('export ', '') }}{{ key }}="{{ value }}"
+      {% endfor %}
+  loop: "{{ query('occ.linux.environment_files',
+    environment_files,
+    environment_files_patterns) }}"

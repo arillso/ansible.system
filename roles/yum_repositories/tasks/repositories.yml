@@ -1,5 +1,4 @@
 ---
-
 - name: Ensure yum repositories
   ansible.builtin.include_tasks: repository.yml
   vars:
@@ -60,7 +59,7 @@
     yum_repository_ui_repoid_vars: "{{ yum_repository.ui_repoid_vars | default(yum_repositories_ui_repoid_vars | default(omit)) }}"
     yum_repository_unsafe_writes: "{{ yum_repository.unsafe_writes | default(yum_repositories_unsafe_writes | default(omit)) }}"
     yum_repository_username: "{{ yum_repository.username | default(yum_repositories_username | default(omit)) }}"
-  loop: "{{ yum_repositories }}"
+  loop: "{{ yum_repositories_list }}"
   loop_control:
     label: "{{ yum_repository_baseurl }}"
     loop_var: yum_repository

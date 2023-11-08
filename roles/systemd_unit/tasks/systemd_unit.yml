@@ -1,5 +1,4 @@
 ---
-
 - name: "Ensure systemd unit {{ systemd_unit_name }}"
   become: true
   ansible.builtin.template:
@@ -27,7 +26,7 @@
     - systemd_unit_name
     - systemd_unit_override_name
 
-- name: "Ensure systemd unit override {{ systemd_unit_name }} {{ systemd_unit_override_name }}"
+- name: "Ensure systemd unit override {{ systemd_unit_override_name }}"
   become: true
   ansible.builtin.template:
     src: unit.j2

@@ -1,10 +1,9 @@
 ---
-
 # Name of package
 sudoers_package: sudo
 
 # sudores file declarations
-sudoers_sudoers_file: '/etc/sudoers'
+sudoers_sudoers_file: "/etc/sudoers"
 
 # Includes default rules that ship with target distro (boolean)
 sudoers_use_os_defaults: true
@@ -19,5 +18,5 @@ sudoers_sudoers_d_files: {}
 
 # helper info
 sudoers_os_defaults:
-  defaults: '{{ sudoers_sudoers_preset_defaults }}'
-  privileges: '{{ sudoers_sudoers_preset_privileges }}'
+  defaults: "{{ sudoers_sudoers_preset_defaults }}"
+  privileges: "{{ sudoers_sudoers_preset_privileges }}"

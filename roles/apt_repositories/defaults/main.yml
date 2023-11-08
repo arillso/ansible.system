@@ -1,6 +1,5 @@
 ---
-
-apt_repositories: []
+apt_repositories_list: []
 apt_repositories_force_apt_get: true
 apt_repositories_empty_sources_list: false
 apt_repositories_filename: /etc/apt/sources

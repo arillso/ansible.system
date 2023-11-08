@@ -1,5 +1,4 @@
 ---
-
 - name: Modify iptable Rules
   become: true
   ansible.builtin.iptables:

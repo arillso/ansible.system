@@ -50,4 +50,4 @@ This project is under the MIT License. See the [LICENSE](licence) file for the f
 
 ## Copyright
 
-(c) 2022, Arillso
+(c) 2023, Arillso

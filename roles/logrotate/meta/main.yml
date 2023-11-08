@@ -1,10 +1,9 @@
 ---
-
 galaxy_info:
-  description: 'Ansible role for installs and configures logratet on Linux'
+  description: "Ansible role for installs and configures logratet on Linux"
   author: "arillso (@arillso)"
   license: MIT
-  min_ansible_version: "2.11"
+  min_ansible_version: "2.15"
   platforms:
     - name: Ubuntu
       versions:

@@ -1,5 +1,4 @@
 ---
-
 - name: Add OS specific variables
   ansible.builtin.include_vars: "{{ loop_vars }}"
   with_first_found:
@@ -77,8 +76,8 @@
   notify:
     - Start iptables
     - Enable iptables
-    - Start ip6tables
-    - Enable ip6tables
+    - Start iptables 6
+    - Enable iptables 6
 
 - name: Save in File IPv4
   become: true

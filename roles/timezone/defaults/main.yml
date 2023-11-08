@@ -1,4 +1,3 @@
 ---
-
-timezone_packages: "{{ _timezone_packages[ansible_distribution] | default(_timezone_packages['default'] ) }}"
-timezone: "Etc/UTC"
+timezone_packages: "{{ _timezone_packages[ansible_distribution] | default(_timezone_packages['default']) }}"
+timezone_name: "Etc/UTC"

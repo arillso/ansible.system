@@ -1,5 +1,4 @@
 ---
-
 - name: Restart iptables
   become: true
   ansible.builtin.service:
@@ -18,22 +17,22 @@
     name: "{{ iptables_service }}"
     enabled: true
 
-- name: Restart ip6tables
+- name: Restart iptables 6
   become: true
   ansible.builtin.service:
-    name: "{{ ip6tables_service }}"
+    name: "{{ iptables_6_service }}"
     state: restarted
 
-- name: Start ip6tables
+- name: Start iptables 6
   become: true
   ansible.builtin.service:
-    name: "{{ ip6tables_service }}"
+    name: "{{ iptables_6_service }}"
     state: started
   when: "'scope' in ansible_default_ipv6 and ansible_default_ipv6.scope == 'global'"
 
-- name: Enable ip6tables
+- name: Enable iptables 6
   become: true
   ansible.builtin.service:
-    name: "{{ ip6tables_service }}"
+    name: "{{ iptables_6_service }}"
     enabled: true
   when: "'scope' in ansible_default_ipv6 and ansible_default_ipv6.scope == 'global'"

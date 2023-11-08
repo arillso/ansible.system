@@ -1,0 +1,30 @@
+---
+argument_specs:
+
+  update_cache: &update_cache
+    short_description: Ensure the apt package cache is up to date
+    description:
+      - Ensure that the apt package cache is up to date and has not expired.
+    options:
+      apt_cache_valid_time: &apt_cache_valid_time
+        type: int
+        description: The maximum age (in seconds) of the package cache before it is considered stale and needs to be updated.
+        default: 86400
+
+      apt_cache_update_cache_retries: &apt_cache_update_cache_retries
+        type: int
+        description: The maximum number of times to retry updating the cache if it fails.
+        default: 5
+
+      apt_cache_update_cache_retry_max_delay: &apt_cache_update_cache_retry_max_delay
+        type: int
+        description: The maximum delay (in seconds) between retry attempts when updating the cache.
+        default: 12
+
+      apt_cache_force_apt_get: &apt_cache_force_apt_get
+        type: bool
+        description: Whether to force the use of apt-get instead of apt when updating the cache.
+        default: true
+
+
+  main: *update_cache

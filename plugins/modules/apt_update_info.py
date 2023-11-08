@@ -22,10 +22,13 @@ module: arillso.system.apt_update_info
 version_added: "0.0.1"
 short_description: Retrieves a list of updatable packages.
 description:
-    - This module fetches a list of all packages on an APT-based system that are available for update. It's intended to be used within an Ansible environment.
-    - Upon execution, it returns a detailed list of packages with information on current and available versions, aiding in the assessment of pending updates.
+    - This module fetches a list of all packages on an APT-based system that are available for update.
+    - It's intended to be used within an Ansible environment.
+    - Upon execution, it returns a detailed list of packages with information on current and available versions, 
+    - aiding in the assessment of pending updates.
 author: "arillso (@arillso) <hello@arillso.io>"
 '''
+
 
 def main():
     result = dict(changed=False, packages=[])

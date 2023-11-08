@@ -1,0 +1,24 @@
+---
+# List of users to be added, default is an empty list.
+# Example:
+# users_list:
+#   - name: alice
+#     state: present
+#     shell: /bin/bash
+users_list: []
+
+# List of users to be added by host-specific variables, default is an empty list.
+# Example:
+# users_host_list:
+#   - name: bob
+#     state: present
+#     shell: /bin/bash
+users_host_list: []
+
+# List of users to be added by group vars, defaults to an empty list.
+# Example:
+# users_group_list:
+#   - name: carol
+#     state: present
+#     shell: /bin/bash
+users_group_list: []

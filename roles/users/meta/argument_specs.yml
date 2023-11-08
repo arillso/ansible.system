@@ -1,0 +1,188 @@
+---
+argument_specs:
+  create_user_linux: &create_user_linux
+    short_description: "Linux user management"
+    description: |
+      "This role manages Linux users, their home directories, SSH keys,
+       and file permissions based on OS-specific variables."
+    author: "Arillso"
+    options:
+      users_list:
+        description: "A list of users with their properties to be ensured on the system."
+        type: "list"
+        elements: "dict"
+        required: true
+        options:
+          username:
+            description: "The username of the account."
+            type: "str"
+            required: true
+          uid:
+            description: "The numeric user id for the user."
+            type: "int"
+            required: false
+          home:
+            description: "Home directory to create or manage."
+            type: "path"
+            required: false
+          name:
+            description: "Full name of the user."
+            type: "str"
+            required: false
+          system:
+            description: "Whether the user is a system account."
+            type: "bool"
+            required: false
+          ssh_key_generate:
+            description: "Whether to generate SSH keys for the user."
+            type: "bool"
+            required: false
+          group:
+            description: "Primary group for the user."
+            type: "str"
+            required: false
+          groups:
+            description: "List of groups the user will be added to."
+            type: "list"
+            elements: "str"
+            required: false
+          password:
+            description: "Password for the user (optionally hashed)."
+            type: "str"
+            required: false
+          shell:
+            description: "The shell for the user."
+            type: "str"
+            required: false
+          update_password:
+            description: "Whether to update the password if it differs."
+            type: "str"
+            required: false
+          authorized_keys:
+            description: "SSH keys to add to the user's authorized_keys file."
+            type: "list"
+            elements: "str"
+            required: false
+
+  create_user_windows:
+    short_description: "Windows user management"
+    description: |
+      "This section manages Windows user accounts, setting properties,
+      managing group memberships, and editing registry settings for user configurations."
+    options:
+      users_list:
+        description: "A list of Windows user definitions to be managed."
+        type: "list"
+        elements: "dict"
+        options:
+          username:
+            description: "The username of the account, maximum 20 characters."
+            type: "str"
+            required: true
+          name:
+            description: "Full name of the user."
+            type: "str"
+          description:
+            description: "A description for the user account."
+            type: "str"
+          password:
+            description: "Password for the user account."
+            type: "str"
+          groups:
+            description: "List of groups the user should be added to."
+            type: "list"
+            elements: "str"
+          state:
+            description: "Whether the account should be 'present' or 'absent'."
+            type: "str"
+          account_disabled:
+            description: "Whether the account should be disabled."
+            type: "bool"
+          groups_action:
+            description: "Action to take with groups ('add', 'remove', 'replace')."
+            type: "str"
+          account_locked:
+            description: "Whether the account should be locked."
+            type: "bool"
+          password_never_expires:
+            description: "Whether the password should never expire."
+            type: "bool"
+          update_password:
+            description: "When to update the password ('always', 'on_create')."
+            type: "str"
+          password_expired:
+            description: "Whether the password should be expired."
+            type: "bool"
+          user_cannot_change_password:
+            description: "Whether the user should be able to change the password."
+            type: "bool"
+          hide:
+            description: "Whether the user account should be hidden from the login screen."
+            type: "bool"
+
+  main:
+    short_description: "Cross-platform user management"
+    description: |
+      "This role manages user accounts on both Linux and Windows systems,
+      applying OS-specific configurations and handling user attributes
+      such as home directories, SSH keys, and permissions."
+    author: "Arillso"
+    options:
+      users_list: &users_list
+        description: "A list of users with their properties to be ensured on the system."
+        type: "list"
+        elements: "dict"
+        required: true
+        options:
+          username:
+            description: "The username of the account."
+            type: "str"
+            required: true
+          uid:
+            description: "The numeric user id for the user."
+            type: "int"
+            required: false
+          home:
+            description: "Home directory to create or manage."
+            type: "path"
+            required: false
+          name:
+            description: "Full name of the user."
+            type: "str"
+            required: false
+          system:
+            description: "Whether the user is a system account."
+            type: "bool"
+            required: false
+          ssh_key_generate:
+            description: "Whether to generate SSH keys for the user."
+            type: "bool"
+            required: false
+          group:
+            description: "Primary group for the user."
+            type: "str"
+            required: false
+          groups:
+            description: "List of groups the user will be added to."
+            type: "list"
+            elements: "str"
+            required: false
+          password:
+            description: "Password for the user (optionally hashed)."
+            type: "str"
+            required: false
+          shell:
+            description: "The shell for the user."
+            type: "str"
+            required: false
+          update_password:
+            description: "Whether to update the password if it differs."
+            type: "str"
+            required: false
+          authorized_keys:
+            description: "SSH keys to add to the user's authorized_keys file."
+            type: "list"
+            elements: "str"
+            required: false
+      users_host_list: *users_list
+      users_group_list: *users_list

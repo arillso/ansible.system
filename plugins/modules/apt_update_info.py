@@ -22,7 +22,7 @@ module: arillso.system.apt_update_info
 version_added: '0.0.1'
 short_description: List all packages to be updated.
 author:
-- Simon Bärlocher (@sbaerlocher)
+  - arillso (@arillso) <hello@arillso.io>
 """
 
 

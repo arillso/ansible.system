@@ -1,5 +1,4 @@
 ---
-
 - name: Ensure stopped systemd-resolved
   ansible.builtin.include_role:
     name: arillso.system.systemd_service

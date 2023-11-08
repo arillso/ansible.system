@@ -1,5 +1,4 @@
 ---
-
 - name: "Ensure package {{ dnf_package_name | default(omit) }}"
   become: true
   ansible.builtin.dnf:

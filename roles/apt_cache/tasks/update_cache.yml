@@ -1,5 +1,4 @@
 ---
-
 - name: Ensure apt cache valid time
   become: true
   ansible.builtin.apt:

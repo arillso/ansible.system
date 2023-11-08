@@ -1,5 +1,4 @@
 ---
-
 - name: "Ensure systemd unit {{ systemd_unit_name }}"
   block:
     - name: "Ensure systemd unit {{ systemd_unit_name }}"

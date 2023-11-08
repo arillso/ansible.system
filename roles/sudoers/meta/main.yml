@@ -5,7 +5,7 @@ galaxy_info:
   author: arillso <team@arillso.io>
   description: Manage sudoers and sudoers.d in Linux.
   license: MIT
-  min_ansible_version: "2.10"
+  min_ansible_version: "2.15"
   platforms:
     - name: Alpine
       versions:

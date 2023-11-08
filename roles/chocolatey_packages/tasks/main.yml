@@ -1,5 +1,4 @@
 ---
-
 - name: Ensure chocolatey packages
   ansible.builtin.include_tasks: install_chocolatey_package.yml
   vars:
@@ -29,7 +28,7 @@
     chocolatey_package_timeout: "{{ chocolatey_package.timeout | default(chocolatey_packages_timeout | default(omit)) }}"
     chocolatey_package_validate_certs: "{{ chocolatey_package.validate_certs | default(chocolatey_packages_validate_certs | default(omit)) }}"
     chocolatey_package_version: "{{ chocolatey_package.version if chocolatey_package.version != 'latest' else omit }}"
-  loop: "{{ chocolatey_packages }}"
+  loop: "{{ chocolatey_packages_list }}"
   loop_control:
     label: "{{ chocolatey_package_name }}"
     loop_var: chocolatey_package

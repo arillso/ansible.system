@@ -1,10 +1,9 @@
 ---
-
-- name: 'Include arillso.system.apt_cache role'
+- name: "Include arillso.system.apt_cache role"
   ansible.builtin.include_role:
     name: arillso.system.apt_cache
 
-- name: 'Check availability updates Debian'
+- name: "Check availability updates Debian"
   become: true
   arillso.system.apt_update_info:
   register: register_update
@@ -12,10 +11,5 @@
 - name: Run arillso Apt Package
   ansible.builtin.include_role:
     name: arillso.system.apt_packages
-    tasks_from: install_apt_package
-  loop: "{{ register_update.packages }}"
-  loop_control:
-    loop_var: apt_package
   vars:
-    apt_package_name: "{{ apt_package.package }}"
-    apt_package_version: "{{ apt_package.available }}"
+    apt_packages_list: "{{ register_update.packages }}"

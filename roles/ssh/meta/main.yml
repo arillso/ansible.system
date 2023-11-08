@@ -1,10 +1,9 @@
 ---
-
 galaxy_info:
   description: This role provides secure ssh-client and ssh-server configurations. It is intended to be compliant with the DevSec SSH Baseline.
   author: "arillso (@arillso)"
   license: MIT
-  min_ansible_version: "2.11"
+  min_ansible_version: "2.15"
   platforms:
     - name: Ubuntu
       versions:

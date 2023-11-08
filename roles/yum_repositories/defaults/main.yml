@@ -1,3 +1,2 @@
 ---
-
-yum_repositories: []
+yum_repositories_list: []

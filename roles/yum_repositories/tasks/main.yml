@@ -1,5 +1,4 @@
 ---
-
 - name: Ensure yum repositories
   block:
     - name: Ensure yum repositories

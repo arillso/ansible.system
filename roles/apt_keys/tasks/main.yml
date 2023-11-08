@@ -1,5 +1,4 @@
 ---
-
 - name: Ensure apt keys
   block:
     - name: Ensure apt keys packages

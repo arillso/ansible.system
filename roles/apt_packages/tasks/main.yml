@@ -1,6 +1,5 @@
 ---
-
-- name: ensure apt packages
+- name: Ensure apt packages
   ansible.builtin.include_tasks: install_apt_package.yml
   vars:
     apt_package_name: "{{ apt_package.name | default(apt_package) }}"

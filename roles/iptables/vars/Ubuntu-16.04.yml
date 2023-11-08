@@ -1,10 +1,9 @@
 ---
-
 iptables_packages:
   - iptables
   - iptables-persistent
 
 iptables_service: netfilter-persistent
-ip6tables_service: netfilter-persistent
+iptables_6_service: netfilter-persistent
 iptables_configuration: /etc/iptables/rules.v4
-ip6tables_configuration: /etc/iptables/rules.v6
+iptables_6_configuration: /etc/iptables/rules.v6

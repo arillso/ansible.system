@@ -1,6 +1,5 @@
 ---
-
-- name: ensure dnf packages
+- name: Ensure dnf packages
   ansible.builtin.include_tasks: install_dnf_package.yml
   vars:
     dnf_package_allow_downgrade: "{{ dnf_package.allow_downgrade | default(dnf_packages_allow_downgrade | default(omit)) }}"
@@ -24,7 +23,7 @@
     dnf_package_lock_timeout: "{{ dnf_package.lock_timeout | default(dnf_packages_lock_timeout | default(omit)) }}"
     dnf_package_name: "{{ dnf_package.name }}"
     dnf_package_version: "{{ dnf_package.version | default('') }}"
-    dnf_package_nobest: "{{ dnf_package.nobest | default(dnf_packages_nobest| default(omit)) }}"
+    dnf_package_nobest: "{{ dnf_package.nobest | default(dnf_packages_nobest | default(omit)) }}"
     dnf_package_releasever: "{{ dnf_package.releasever | default(dnf_packages_releasever | default(omit)) }}"
     dnf_package_security: "{{ dnf_package.security | default(dnf_packages_security | default(omit)) }}"
     dnf_package_skip_broken: "{{ dnf_package.skip_broken | default(dnf_packages_skip_broken | default(omit)) }}"
@@ -33,7 +32,7 @@
     dnf_package_update_cache: "{{ dnf_package.update_cache | default(dnf_packages_update_cache | default(omit)) }}"
     dnf_package_update_only: "{{ dnf_package.update_only | default(dnf_packages_update_only | default(omit)) }}"
     dnf_package_validate_certs: "{{ dnf_package.validate_certs | default(dnf_packages_validate_certs | default(omit)) }}"
-  loop: "{{ dnf_packages }}"
+  loop: "{{ dnf_packages_list }}"
   loop_control:
     label: "{{ dnf_package_name }}"
     loop_var: dnf_package

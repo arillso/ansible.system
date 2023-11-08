@@ -1,12 +1,15 @@
 ---
-
 - name: Generating Netplan Configuration
   become: true
   ansible.builtin.command: netplan generate
   listen: netplan generate config
   notify:
     - Applying Netplan Configuration
+  register: register_apply_generate
+  changed_when: register_apply_generate.rc != 0
 
 - name: Applying Netplan Configuration
   become: true
   ansible.builtin.command: netplan apply
+  register: register_apply_netplan
+  changed_when: register_apply_netplan.rc != 0

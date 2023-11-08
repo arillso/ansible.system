@@ -20,6 +20,8 @@ DOCUMENTATION = r"""
 module: arillso.system.reboot_info
 version_added: '0.0.1'
 short_description: checks if the system has to be restarted.
+description:
+  - checks if the system has to be restarted.
 author:
   - arillso (@arillso) <hello@arillso.io>
 """

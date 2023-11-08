@@ -1,0 +1,4 @@
+---
+# vars file for arillso.users
+
+users_sudo_group: sudo

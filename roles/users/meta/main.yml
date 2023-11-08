@@ -1,0 +1,24 @@
+---
+galaxy_info:
+  author: arillso
+  description: Role to manage users on Linux and Windows.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - bionic
+        - cosmic
+    - name: Debian
+      versions:
+        - jessie
+        - stretch
+        - buster
+    - name: Windows
+      versions:
+        - all
+
+  galaxy_tags:
+    - system
+    - users
+    - user

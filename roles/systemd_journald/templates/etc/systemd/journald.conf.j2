@@ -1,0 +1,43 @@
+# {{ ansible_managed }}
+
+#  This file is part of systemd.
+#
+#  systemd is free software; you can redistribute it and/or modify it
+#  under the terms of the GNU Lesser General Public License as published by
+#  the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+#
+# Entries in this file show the compile time defaults.
+# You can change settings by editing this file.
+# Defaults can be restored by simply deleting this file.
+#
+# See journald.conf(5) for details.
+
+[Journal]
+Compress={{ 'yes' if journald_compress else 'no' }}
+ForwardToConsole={{ 'yes' if journald_forward_to_console else 'no' }}
+ForwardToKMsg={{ 'yes' if journald_forward_to_kmsg else 'no' }}
+ForwardToSyslog={{ 'yes' if journald_forward_to_syslog else 'no' }}
+ForwardToWall={{ 'yes' if journald_forward_to_wall else 'no' }}
+LineMax={{ journald_line_max }}
+MaxFileSec={{ journald_max_file_sec }}
+MaxLevelConsole={{ journald_max_level_console }}
+MaxLevelKMsg={{ journald_max_level_kmsg }}
+MaxLevelStore={{ journald_max_level_store }}
+MaxLevelSyslog={{ journald_max_level_syslog }}
+MaxLevelWall={{ journald_max_level_wall }}
+MaxRetentionSec={{ journald_max_retention_sec }}
+RateLimitBurst={{ journald_rate_limit_burst }}
+RateLimitInterval={{ journald_rate_limit_interval }}
+RuntimeKeepFree={{ journald_runtime_keep_free }}
+RuntimeMaxFiles={{ journald_runtime_max_files }}
+RuntimeMaxFileSize={{ journald_runtime_max_file_size }}
+RuntimeMaxUse={{ journald_runtime_max_use }}
+Seal={{ 'yes' if journald_seal else 'no' }}
+SplitMode={{ journald_split_mode }}
+Storage={{ journald_storage }}
+SyncIntervalSec={{ journald_sync_interval_sec }}
+SystemKeepFree={{ journald_system_keep_free }}
+SystemMaxFiles={{ journald_system_max_files }}
+SystemMaxFileSize={{ journald_system_max_file_size }}
+SystemMaxUse={{ journald_system_max_use }}

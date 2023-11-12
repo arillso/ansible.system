@@ -1,0 +1,23 @@
+---
+- name: "Deploy /etc/systemd/journald.conf"
+  ansible.builtin.template:
+    src: "etc/systemd/journald.conf.j2"
+    dest: "/etc/systemd/journald.conf"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  notify:
+    - "Restart systemd-journald"
+
+- name: Systemd-journald Service
+  block:
+    - name: 'Systemctl systemd-journald {{ systemd_journald_service_enabled | bool | ternary("enable", "disable") }}'
+      ansible.builtin.systemd:
+        name: "systemd-journald"
+        enabled: "{{ systemd_journald__service_enabled }}"
+
+    - name: "Systemctl systemd-journald {{ systemd_journald_service_state[:-2] }}"
+      ansible.builtin.systemd:
+        name: "systemd-journald"
+        state: "{{ systemd_journald__service_state }}"
+      register: "systemd_journald__service_state_result"

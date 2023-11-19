@@ -26,9 +26,9 @@ dependencies:
 
 repository: https://github.com/arillso/ansible.system
 
-documentation: https://github.com/arillso/ansible.system
+documentation: https://guide.arillso.io/collections/arillso/system/index.html
 
-# homepage: http://example.com
+homepage: https://arillso.io
 
 issues: https://github.com/arillso/ansible.system/issues
 

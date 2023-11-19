@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  role_name: apt_configuration
+  author: "arillso (@arillso)"
+  license: MIT
+  min_ansible_version: "2.15"
+  description: Role for managing APT configurations on Debian and Ubuntu systems.
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - all
+    - name: Debian
+      versions:
+        - all
+
+  galaxy_tags:
+    - system
+    - apt
+    - package
+    - configuration

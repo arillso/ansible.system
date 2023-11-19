@@ -1,0 +1,52 @@
+---
+argument_specs:
+  main:
+    short_description: Configure APT settings on hosts
+    description:
+      - Manage various APT configuration settings on a system, including automatic updates, package blacklists, and more.
+    options:
+      apt_configuration_list:
+        type: list
+        elements: dict
+        description:
+          - Main list of APT configurations, each with a filename and configuration content.
+        default: []
+        options: &apt_configuration_list_options
+          filename:
+            type: str
+            description: Filename for the APT configuration file.
+          config:
+            type: dict
+            description: Configuration content for the APT settings.
+
+      apt_configuration_host_list:
+        type: list
+        elements: dict
+        description:
+          - List of host-specific APT configurations.
+        default: []
+        options: *apt_configuration_list_options
+
+      apt_configuration_group_list:
+        type: list
+        elements: dict
+        description:
+          - List of group-specific APT configurations.
+        default: []
+        options: *apt_configuration_list_options
+
+  configuration:
+    short_description: Configure APT settings on hosts
+    description:
+      - Manage various APT configuration settings on a system, including automatic updates, package blacklists, and more.
+    options:
+      apt_configuration_detail:
+        type: dict
+        description:
+          - This variable stores the detailed configuration for APT settings derived from each item's 'config' property in the 'apt_configuration_list'.
+          - It includes specific settings and values to be applied in the corresponding APT configuration file.
+      apt_configuration_filename:
+        type: str
+        description:
+          - This variable specifies the filename of the APT configuration file derived from each item's 'filename' property in the 'apt_configuration_list'.
+          - It determines under which filename the APT configuration will be stored on the target system.

@@ -31,7 +31,7 @@ Variables for managing APT configurations are defined in `defaults/main.yml`. Us
 
 For detailed information and advanced usage, please refer to our guide:
 
-[Arillso System Guide](https://guide.arillso.io/collections/arillso/system/apt_configuration.html#ansible-collections-arillso-system-apt-configuration-role)
+[Arillso System Guide](https://guide.arillso.io/collections/arillso/system/apt_configuration_role.html#ansible-collections-arillso-system-apt-configuration-role)
 
 ## Dependencies
 

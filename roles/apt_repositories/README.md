@@ -29,7 +29,7 @@ codename, filename, repository, state, and others.
 
 For detailed information and advanced usage, please refer to our guide:
 
-[Arillso System Guide](https://guide.arillso.io/collections/arillso/system/apt_repositories.html#ansible-collections-arillso-system-apt-repositories-role)
+[Arillso System Guide](https://guide.arillso.io/collections/arillso/system/apt_repositories_role.html#ansible-collections-arillso-system-apt-repositories-role)
 
 ## Dependencies
 

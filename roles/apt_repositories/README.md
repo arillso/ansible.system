@@ -15,7 +15,7 @@ Variables for managing APT repositories are defined in `defaults/main.yml`. User
 ### APT Repositories Configuration
 
 - `apt_repositories_list`: A list of APT repositories to manage. Each entry should be a dictionary with repository details such as
-codename, filename, repo, state, and others.
+codename, filename, repository, state, and others.
 
 - `apt_repositories_filename`: Default filename for APT repositories if not specified in each repository dictionary (default: 'default.list').
 

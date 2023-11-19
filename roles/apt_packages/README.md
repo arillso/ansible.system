@@ -33,7 +33,7 @@ Variables for managing APT packages are defined in `defaults/main.yml`. Users ca
 
 For detailed information and advanced usage, please refer to our guide:
 
-[Arillso System Guide](https://guide.arillso.io/collections/arillso/system/apt_packages.html#ansible-collections-arillso-system-apt-packages-role)
+[Arillso System Guide](https://guide.arillso.io/collections/arillso/system/apt_packages_role.html#ansible-collections-arillso-system-apt-packages-role)
 
 ## Dependencies
 

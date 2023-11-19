@@ -25,7 +25,7 @@ Variables for managing APT keys are defined in `defaults/main.yml`. Users can ov
 
 For detailed information and advanced usage, please refer to our guide:
 
-[Arillso System Guide](https://guide.arillso.io/collections/arillso/system/apt_keys.html#ansible-collections-arillso-system-apt-keys-role)
+[Arillso System Guide](https://guide.arillso.io/collections/arillso/system/apt_keys_role.html#ansible-collections-arillso-system-apt-keys-role)
 
 ## Dependencies
 

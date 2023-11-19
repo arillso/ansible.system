@@ -10,7 +10,7 @@
     apt_package_force_apt_get: "{{ apt_package.force_apt_get | default(apt_packages_force_apt_get) }}"
     apt_package_lock_timeout: "{{ apt_package.lock_timeout | default(apt_packages_lock_timeout) }}"
     apt_package_state: "{{ apt_package.state | default(apt_packages_state) }}"
-  loop: "{{ apt_packages }}"
+  loop: "{{ apt_packages_list }}"
   loop_control:
     label: "{{ apt_package_name }}"
     loop_var: apt_package

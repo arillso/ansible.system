@@ -1,0 +1,32 @@
+---
+argument_specs:
+  manage_apt_keys: &manage_apt_keys
+    short_description: Manage APT keys
+    description:
+      - This specification manages APT keys on a system using ansible.builtin.apt_key module.
+    options:
+      apt_keys_list:
+        type: list
+        elements: dict
+        description:
+          - A list of dictionaries specifying APT keys to manage.
+          - Each dictionary should have 'id', 'url', and optionally 'state'.
+        default: []
+        options:
+          id:
+            type: str
+            description: The ID of the APT key.
+          url:
+            type: str
+            description: The URL from where the APT key can be downloaded.
+          state:
+            type: str
+            description: The state of the APT key. Can be 'present' or 'absent'.
+            default: "{{ apt_keys_state }}"
+
+      apt_keys_state:
+        type: str
+        description: The default state of APT keys if not specified in each key dictionary. Can be 'present' or 'absent'.
+        default: present
+
+  main: *manage_apt_keys

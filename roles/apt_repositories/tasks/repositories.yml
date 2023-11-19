@@ -1,5 +1,4 @@
 ---
-
 - name: Ensure apt repositories
   ansible.builtin.include_tasks: repository.yml
   vars:
@@ -13,7 +12,7 @@
     apt_repository_update_cache_retry_max_delay: "{{ apt_repository.update_cache_retry_max_delay | default(apt_repositories_update_cache_retry_max_delay) }}"
     apt_repository_update_cache: "{{ apt_repository.update_cache | default(apt_repositories_update_cache) }}"
     apt_repository_validate_certs: "{{ apt_repository.validate_certs | default(omit) }}"
-  loop: "{{ apt_repositories }}"
+  loop: "{{ apt_repositories_list }}"
   loop_control:
     label: "{{ apt_repository_repo }}"
     loop_var: apt_repository

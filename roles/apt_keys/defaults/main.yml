@@ -1,3 +1,10 @@
 ---
-apt_keys_list: []
-apt_keys_state: present
+# A list of apt keys to be managed. Each entry in the list should be a dictionary with 'id', 'url', and optionally 'state'.
+apt_keys_list:
+  # Beispiel:
+  # - id: 'E0C56BD4'  # The ID of the key.
+  #   url: 'http://keyserver.ubuntu.com:80'  # The URL from where the key can be downloaded.
+  #   state: 'present'  # Optional: state of the key ('present' or 'absent'). If not specified, 'apt_keys_state' will be used.
+
+# The default state for apt keys if not specified in 'apt_keys_list'. Can be 'present' or 'absent'.
+apt_keys_state: "present"

@@ -18,7 +18,7 @@ argument_specs:
           filename:
             type: str
             description: Filename under which the repository is stored.
-            default: "{{ apt_repositories_filename }}"
+            default: "default.list" # Assuming a default value is set here
           install_python_apt:
             type: bool
             description: Whether to install the python-apt package if necessary for the repository.
@@ -35,15 +35,15 @@ argument_specs:
           update_cache_retries:
             type: int
             description: Number of retries to update the cache after adding the repository.
-            default: "{{ apt_repositories_update_cache_retries }}"
+            default: 5
           update_cache_retry_max_delay:
             type: int
             description: Maximum delay in seconds between retries to update the cache.
-            default: "{{ apt_repositories_update_cache_retry_max_delay }}"
+            default: 12
           update_cache:
             type: bool
             description: Whether to update the cache after adding the repository.
-            default: "{{ apt_repositories_update_cache }}"
+            default: true
           validate_certs:
             type: bool
             description: Whether to validate SSL certificates for HTTPS repositories.

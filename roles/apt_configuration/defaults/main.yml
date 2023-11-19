@@ -1,0 +1,88 @@
+---
+# A list of host-specific APT configurations.
+apt_configuration_host_list: []
+
+# A list of group-specific APT configurations.
+apt_configuration_group_list: []
+
+# Main list of APT configurations, each with a filename and config content
+apt_configuration_list:
+  # Configuration for auto-removing specific packages and kernel packages
+  - filename: "01autoremove"
+    config:
+      APT:
+        NeverAutoRemove: # Packages that should never be auto-removed
+          - "^firmware-linux.*"
+          - "^linux-firmware$"
+          - "^linux-image-[a-z0-9]*$"
+          - "^linux-image-[a-z0-9]*-[a-z0-9]*$"
+        VersionedKernelPackages: # List of kernel packages for versioning
+          - "linux-.*"
+          - "kfreebsd-.*"
+          - "gnumach-.*"
+          - ".*-modules"
+          - ".*-kernel"
+        Never-MarkAuto-Sections: # Sections that should never be marked auto
+          - "metapackages"
+          - "tasks"
+        Move-Autobit-Sections: # Sections to move to auto
+          - "oldlibs"
+
+  # Configuration for automatic updates and upgrades
+  - filename: "20auto-upgrades"
+    config:
+      APT:
+        Periodic:
+          Update-Package-Lists: "1" # Enable automatic package list updates
+          Unattended-Upgrade: "1" # Enable unattended upgrades
+          Enable: "1" # Enable periodic actions
+          Download-Upgradeable-Packages: "0" # Disable automatic download of upgradeable packages
+
+  # Configuration for apt-listchanges tool
+  - filename: "20listchanges"
+    config:
+      DPkg:
+        Pre-Install-Pkgs: "/usr/bin/apt-listchanges --apt || test $? -lt 10" # Command to run apt-listchanges
+        Tools::Options:
+          /usr/bin/apt-listchanges:
+            Version: "2" # Version of apt-listchanges
+            InfoFD: "20" # File descriptor for apt-listchanges
+      Dir:
+        Etc:
+          apt-listchanges-main: "listchanges.conf" # Main configuration file for apt-listchanges
+          apt-listchanges-parts: "listchanges.conf.d" # Additional configuration parts for apt-listchanges
+
+  # Configuration for unattended upgrades behavior
+  - filename: "50unattended-upgrades"
+    config:
+      Unattended-Upgrade::Origins-Pattern: # Patterns for allowed origins of unattended upgrades
+        - "origin=Debian,codename=${distro_codename},label=Debian"
+        - "origin=Debian,codename=${distro_codename},label=Debian-Security"
+        - "origin=Debian,codename=${distro_codename}-security,label=Debian-Security"
+      Unattended-Upgrade::Package-Blacklist: [] # List of packages to blacklist from unattended upgrades
+      Unattended-Upgrade::MinimalSteps: "false" # Option for minimal upgrade steps
+      Unattended-Upgrade::Mail: "root@localhost" # Email for unattended upgrade notifications
+      Unattended-Upgrade::MailOnlyOnError: "true" # Send email only on error
+      Unattended-Upgrade::Remove-Unused-Dependencies: "true" # Auto-remove unused dependencies
+      Unattended-Upgrade::Automatic-Reboot: "false" # Disable automatic reboot
+      Unattended-Upgrade::Automatic-Reboot-Time: "02:00" # Time for automatic reboot if enabled
+
+  # Configuration for APT archives
+  - filename: "10archives"
+    config:
+      APT:
+        Archives:
+          MaxAge: "30" # Maximum age for cache in days
+          MinAge: "2" # Minimum age for cache in days
+          MaxSize: "500" # Maximum size for cache in MB
+
+  # General APT configuration settings
+  - filename: "10general"
+    config:
+      APT:
+        Install-Recommends: "true" # Install recommended packages by default
+        AutoRemove:
+          RecommendsImportant: "true" # Allow auto-remove to remove recommended packages
+        Install-Suggests: "false" # Don't install suggested packages by default
+        Get:
+          Show-Upgraded: "true" # Show packages that can be upgraded

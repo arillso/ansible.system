@@ -22,7 +22,7 @@ Variables for customizing the APT cache update are defined in `defaults/main.yml
 
 For detailed information and advanced usage, please refer to our guide:
 
-[Arillso System Guide](https://guide.arillso.io/collections/arillso/system/apt_cache.html#ansible-collections-arillso-system-apt-cache-role)
+[Arillso System Guide](https://guide.arillso.io/collections/arillso/system/apt_cache_role.html#ansible-collections-arillso-system-apt-cache-role)
 
 ## Dependencies
 

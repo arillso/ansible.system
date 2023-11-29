@@ -115,17 +115,14 @@ argument_specs:
       chocolatey_packages_architecture:
         type: str
         description: Architecture of the package (e.g., 'x86', 'x64'), default is unset.
-        default: "{{ omit }}"
 
       chocolatey_packages_bootstrap_script:
         type: str
         description: Script for bootstrapping Chocolatey, default is unset.
-        default: "{{ omit }}"
 
       chocolatey_packages_choco_args:
         type: str
         description: Additional arguments to pass to Chocolatey, default is unset.
-        default: "{{ omit }}"
 
       chocolatey_packages_force:
         type: bool

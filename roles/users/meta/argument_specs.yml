@@ -1,10 +1,9 @@
----
 argument_specs:
   main:
     short_description: "Cross-platform user management"
     description:
-      - This role manages user accounts on both Linux and Windows systems,
-      - applying OS-specific configurations and handling user attributes
+      - This role manages user accounts on both Linux and Windows systems.
+      - It applies OS-specific configurations and handles user attributes,
       - such as home directories, SSH keys, and permissions.
     options:
       users_list: &users_list
@@ -18,51 +17,79 @@ argument_specs:
             type: "str"
             required: true
           uid:
-            description: "The numeric user id for the user."
+            description: "The numeric user id for the user. Optional for system-generated IDs."
             type: "int"
             required: false
           home:
-            description: "Home directory to create or manage."
+            description: "Home directory to create or manage. Optional if system default is used."
             type: "path"
             required: false
           name:
-            description: "Full name of the user."
+            description: "Full name of the user. Optional, but recommended for clarity."
             type: "str"
             required: false
           system:
-            description: "Whether the user is a system account."
+            description: "Specifies if the user is a system account. Default is false."
             type: "bool"
             required: false
           ssh_key_generate:
-            description: "Whether to generate SSH keys for the user."
+            description: "Indicates whether to generate SSH keys for the user. Default is false."
             type: "bool"
             required: false
           group:
-            description: "Primary group for the user."
+            description: "Primary group for the user. Optional, system default is used if not specified."
             type: "str"
             required: false
           groups:
-            description: "List of groups the user will be added to."
+            description: "List of additional groups the user will be added to. Optional."
             type: "list"
             elements: "str"
             required: false
           password:
-            description: "Password for the user (optionally hashed)."
+            description: "Password for the user, can be optionally hashed. Optional, but recommended for security."
             type: "str"
             required: false
           shell:
-            description: "The shell for the user."
+            description: "The shell assigned to the user. Optional, defaults to system standard."
             type: "str"
             required: false
           update_password:
-            description: "Whether to update the password if it differs."
+            description: "Determines whether to update the password if it differs from the current one. Optional."
             type: "str"
             required: false
           authorized_keys:
-            description: "SSH keys to add to the user's authorized_keys file."
+            description: "SSH keys to add to the user's authorized_keys file. Optional."
             type: "list"
             elements: "str"
             required: false
+      users_home:
+        description: "Default home directory path for users. Default is '/home'."
+        type: "path"
+        default: "/home"
+      users_group:
+        description: "Default primary group for users. Not set by default."
+        type: "str"
+      users_groups:
+        description: "List of default secondary groups for users. Defaults to an empty list."
+        type: "list"
+        elements: "str"
+        default: []
+      users_home_mode:
+        description: "Default permissions for users' home directories. Default is '0755'."
+        type: "str"
+        default: "0755"
+      users_ssh_key_type:
+        description: "Default SSH key type for users. Default is 'rsa'."
+        type: "str"
+        default: "rsa"
+      users_ssh_key_bits:
+        description: "Default SSH key bit length for users. Default is 2048."
+        type: "int"
+        default: 2048
+      users_authorized_keys_exclusive:
+        description: "Whether to exclusively manage the 'authorized_keys' file. Default is 'no'."
+        type: "str"
+        default: "no"
       users_host_list: *users_list
       users_group_list: *users_list
 

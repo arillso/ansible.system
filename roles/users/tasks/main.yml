@@ -3,7 +3,6 @@
 - name: Add OS specific variables
   ansible.builtin.include_vars:
     file: "{{ lookup('ansible.builtin.first_found', params) }}"
-    errors: "ignore"
   vars:
     params:
       files:
@@ -20,7 +19,7 @@
   block:
     - name: Add host users
       ansible.builtin.set_fact:
-        users_list: "{{ users | union(users_host_list) | unique }}"
+        users_list: "{{ users_list | union(users_host_list) | unique }}"
       when: users_host_list is defined | bool
 
     - name: Add group users

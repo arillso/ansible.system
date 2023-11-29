@@ -1,7 +1,92 @@
 ---
+# Default setting to allow downgrading packages
 dnf_packages_allow_downgrade: false
-dnf_packages_install_recommends: false
-dnf_packages_lock_timeout: 60
-dnf_packages_purge: true
-dnf_packages_state: present
+
+# Default setting to allow erasing of installed packages
+dnf_packages_allowerasing: false
+
+# Default setting for automatic removal of packages
+dnf_packages_autoremove: false
+
+# Default setting to limit updates to bugfix versions
+dnf_packages_bugfix: false
+
+# Default setting to only use the cache
+dnf_packages_cacheonly: false
+
+# Default configuration file for DNF
+dnf_packages_conf_file: "{{ omit }}"
+
+# Default setting to disable GPG check
+dnf_packages_disable_gpg_check: false
+
+# Default plugins to disable
+dnf_packages_disable_plugin: "{{ omit }}"
+
+# Default repositories to disable
+dnf_packages_disablerepo: "{{ omit }}"
+
+# Default directory for downloading packages
+dnf_packages_download_dir: "{{ omit }}"
+
+# Default setting for download-only mode
+dnf_packages_download_only: false
+
+# Default plugins to enable
+dnf_packages_enable_plugin: "{{ omit }}"
+
+# Default repositories to enable
+dnf_packages_enablerepo: "{{ omit }}"
+
+# Default packages to exclude
+dnf_packages_exclude: "{{ omit }}"
+
+# Default setting to install 'repoquery'
+dnf_packages_install_repoquery: false
+
+# Default setting for installing weak dependencies
+dnf_packages_install_weak_deps: true
+
+# Default installation root
+dnf_packages_installroot: "{{ omit }}"
+
+# Default lock timeout
+dnf_packages_lock_timeout: 30
+
+# Default setting to ignore best version of package
+dnf_packages_nobest: false
+
+# Default release version
+dnf_packages_releasever: "{{ omit }}"
+
+# Default setting to limit updates to security versions
+dnf_packages_security: false
+
+# Default setting to skip broken packages
+dnf_packages_skip_broken: false
+
+# Default setting for SSL verification
+dnf_packages_sslverify: true
+
+# Default package state (present, absent, latest)
+dnf_packages_state: "present"
+
+# Default setting to update the cache
+dnf_packages_update_cache: true
+
+# Default setting for update-only mode
+dnf_packages_update_only: false
+
+# Default setting for certificate validation
+dnf_packages_validate_certs: true
+
+# Default list of packages to manage
+# Example:
+# dnf_packages_list:
+#   - name: nginx
+#     state: latest
+#   - name: httpd
+#     state: present
+#   - name: python3
+#     state: absent
 dnf_packages_list: []

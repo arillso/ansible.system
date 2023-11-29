@@ -1,5 +1,5 @@
 ---
-- name: "Ensure package {{ dnf_package_name | default(omit) }}"
+- name: "Ensure package {{ dnf_package.name | default(omit) }}"
   become: true
   ansible.builtin.dnf:
     allow_downgrade: "{{ dnf_package_allow_downgrade | default(omit) }}"
@@ -21,13 +21,13 @@
     installroot: "{{ dnf_package_installroot | default(omit) }}"
     list: "{{ dnf_package_list | default(omit) }}"
     lock_timeout: "{{ dnf_package_lock_timeout | default(omit) }}"
-    name: "{% if dnf_package_version and dnf_package_version > 0 %}{{ dnf_package_name }}={{ dnf_package_version }}{% else %}{{ dnf_package_name }}{% endif %}"
+    name: "{{ dnf_package_name }}{{ ('=' + dnf_package_version) if dnf_package_version else '' }}"
     nobest: "{{ dnf_package_nobest | default(omit) }}"
     releasever: "{{ dnf_package_releasever | default(omit) }}"
     security: "{{ dnf_package_security | default(omit) }}"
     skip_broken: "{{ dnf_package_skip_broken | default(omit) }}"
     sslverify: "{{ dnf_package_sslverify | default(omit) }}"
-    state: "{{ dnf_package_state | default(omit) }}"
+    state: "{{ dnf_package_state | default('present') }}"
     update_cache: "{{ dnf_package_update_cache | default(omit) }}"
     update_only: "{{ dnf_package_update_only | default(omit) }}"
     validate_certs: "{{ dnf_package_validate_certs | default(omit) }}"

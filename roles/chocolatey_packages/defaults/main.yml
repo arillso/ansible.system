@@ -1,3 +1,82 @@
 ---
-chocolatey_packages_list: []
+# Allow empty checksums for packages by default
 chocolatey_packages_allow_empty_checksums: false
+
+# Allow multiple versions of a package by default
+chocolatey_packages_allow_multiple: false
+
+# Include pre-release versions by default
+chocolatey_packages_allow_prerelease: false
+
+# Architecture (e.g., x86, x64), default is unset
+chocolatey_packages_architecture: "{{ omit }}"
+
+# Script for bootstrapping Chocolatey, default is unset
+chocolatey_packages_bootstrap_script: "{{ omit }}"
+
+# Additional arguments to pass to Chocolatey, default is unset
+chocolatey_packages_choco_args: "{{ omit }}"
+
+# Force the installation by default
+chocolatey_packages_force: false
+
+# Ignore checksums by default
+chocolatey_packages_ignore_checksums: false
+
+# Ignore dependencies by default
+chocolatey_packages_ignore_dependencies: false
+
+# Additional arguments for the installer, default is unset
+chocolatey_packages_install_args: "{{ omit }}"
+
+# Override the default installation arguments by default
+chocolatey_packages_override_args: false
+
+# Parameters to pass to the package, default is unset
+chocolatey_packages_package_params: "{{ omit }}"
+
+# Pin the package version by default
+chocolatey_packages_pinned: false
+
+# Proxy password, default is unset
+chocolatey_packages_proxy_password: "{{ omit }}"
+
+# URL of the proxy server, default is unset
+chocolatey_packages_proxy_url: "{{ omit }}"
+
+# Username for the proxy server, default is unset
+chocolatey_packages_proxy_username: "{{ omit }}"
+
+# Remove package dependencies by default
+chocolatey_packages_remove_dependencies: false
+
+# Skip running Chocolatey scripts by default
+chocolatey_packages_skip_scripts: false
+
+# The source to install the package from, default is unset
+chocolatey_packages_source: "{{ omit }}"
+
+# Password for the package source, default is unset
+chocolatey_packages_source_password: "{{ omit }}"
+
+# Username for the package source, default is unset
+chocolatey_packages_source_username: "{{ omit }}"
+
+# Timeout for the installation process, default is unset
+chocolatey_packages_timeout: "{{ omit }}"
+
+# Validate SSL certificates by default
+chocolatey_packages_validate_certs: true
+
+# List of Chocolatey packages to install. Each item in the list is a dictionary defining
+# various properties of the package, such as its name and version.
+# Example:
+# chocolatey_packages_list:
+#   - name: git
+#     version: latest
+#   - name: vlc
+#     state: present
+#   - name: 7zip
+#     state: latest
+#     ignore_checksums: true
+chocolatey_packages_list: []

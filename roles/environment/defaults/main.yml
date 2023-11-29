@@ -1,7 +1,10 @@
 ---
-# Files
+# Files: This list defines the specific files where environment variables will be set.
+# 'pam' is an example entry. You can add more files to this list as required.
 environment_files:
   - pam
 
-# Variables
+# Variables: This dictionary holds the environment variables to be set.
+# It's initially empty. Add variable key-value pairs as needed.
+# Example: environment_variables: { "VAR_NAME": "value" }
 environment_variables: {}

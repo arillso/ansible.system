@@ -1,0 +1,209 @@
+---
+argument_specs:
+  install_dnf_package:
+    short_description: Manage DNF packages
+    description:
+      - This specification manages the installation, upgrade, and removal of DNF packages on a system.
+    options:
+      dnf_packages_allow_downgrade:
+        type: bool
+        description: Allow downgrading of packages.
+        default: false
+      dnf_packages_allowerasing:
+        type: bool
+        description: Allow erasing of installed packages.
+        default: false
+      dnf_packages_autoremove:
+        type: bool
+        description: Automatic removal of packages.
+        default: false
+      dnf_packages_bugfix:
+        type: bool
+        description: Limit updates to bugfix versions.
+        default: false
+      dnf_packages_cacheonly:
+        type: bool
+        description: Use only the cache.
+        default: false
+      dnf_packages_conf_file:
+        type: str
+        description: Configuration file for DNF.
+        default: "{{ omit }}"
+      dnf_packages_disable_gpg_check:
+        type: bool
+        description: Disable GPG check.
+        default: false
+      dnf_packages_disable_plugin:
+        type: str
+        description: Plugins to disable.
+        default: "{{ omit }}"
+      dnf_packages_disablerepo:
+        type: str
+        description: Repositories to disable.
+        default: "{{ omit }}"
+      dnf_packages_download_dir:
+        type: str
+        description: Directory for downloading packages.
+        default: "{{ omit }}"
+      dnf_packages_download_only:
+        type: bool
+        description: Download-only mode.
+        default: false
+      dnf_packages_enable_plugin:
+        type: str
+        description: Plugins to enable.
+        default: "{{ omit }}"
+      dnf_packages_enablerepo:
+        type: str
+        description: Repositories to enable.
+        default: "{{ omit }}"
+      dnf_packages_exclude:
+        type: str
+        description: Packages to exclude.
+        default: "{{ omit }}"
+      dnf_packages_install_repoquery:
+        type: bool
+        description: Install 'repoquery'.
+        default: false
+      dnf_packages_install_weak_deps:
+        type: bool
+        description: Install weak dependencies.
+        default: true
+      dnf_packages_installroot:
+        type: str
+        description: Installation root.
+        default: "{{ omit }}"
+      dnf_packages_lock_timeout:
+        type: int
+        description: Lock timeout.
+        default: 30
+      dnf_packages_nobest:
+        type: bool
+        description: Ignore best version of package.
+        default: false
+      dnf_packages_releasever:
+        type: str
+        description: Release version.
+        default: "{{ omit }}"
+      dnf_packages_security:
+        type: bool
+        description: Limit updates to security versions.
+        default: false
+      dnf_packages_skip_broken:
+        type: bool
+        description: Skip broken packages.
+        default: false
+      dnf_packages_sslverify:
+        type: bool
+        description: SSL verification.
+        default: true
+      dnf_packages_state:
+        type: str
+        description: Default package state (present, absent, latest).
+        default: "present"
+      dnf_packages_update_cache:
+        type: bool
+        description: Update the cache.
+        default: true
+      dnf_packages_update_only:
+        type: bool
+        description: Update-only mode.
+        default: false
+      dnf_packages_validate_certs:
+        type: bool
+        description: Validate certificates.
+        default: true
+
+  main:
+    short_description: Manage DNF packages
+    description:
+      - This specification manages the installation, upgrade, and removal of DNF packages on a system.
+    options:
+      dnf_packages_list:
+        type: list
+        elements: dict
+        description:
+          - A list of dictionaries specifying Chocolatey packages to manage.
+        default: []
+        options:
+          allow_downgrade:
+            type: bool
+            description: Allow downgrading of packages.
+          allowerasing:
+            type: bool
+            description: Allow erasing of installed packages.
+          autoremove:
+            type: bool
+            description: Automatic removal of packages.
+          bugfix:
+            type: bool
+            description: Limit updates to bugfix versions.
+          cacheonly:
+            type: bool
+            description: Use only the cache.
+          conf_file:
+            type: str
+            description: Configuration file for DNF.
+          disable_gpg_check:
+            type: bool
+            description: Disable GPG check.
+          disable_plugin:
+            type: str
+            description: Plugins to disable.
+          disablerepo:
+            type: str
+            description: Repositories to disable.
+          download_dir:
+            type: str
+            description: Directory for downloading packages.
+          download_only:
+            type: bool
+            description: Download-only mode.
+          enable_plugin:
+            type: str
+            description: Plugins to enable.
+          enablerepo:
+            type: str
+            description: Repositories to enable.
+          exclude:
+            type: str
+            description: Packages to exclude.
+          install_repoquery:
+            type: bool
+            description: Install 'repoquery'.
+          install_weak_deps:
+            type: bool
+            description: Install weak dependencies.
+          installroot:
+            type: str
+            description: Installation root.
+          lock_timeout:
+            type: int
+            description: Lock timeout.
+          nobest:
+            type: bool
+            description: Ignore best version of package.
+          releasever:
+            type: str
+            description: Release version.
+          security:
+            type: bool
+            description: Limit updates to security versions.
+          skip_broken:
+            type: bool
+            description: Skip broken packages.
+          sslverify:
+            type: bool
+            description: SSL verification.
+          state:
+            type: str
+            description: Default package state (present, absent, latest).
+          update_cache:
+            type: bool
+            description: Update the cache.
+          update_only:
+            type: bool
+            description: Update-only mode.
+          validate_certs:
+            type: bool
+            description: Validate certificates.

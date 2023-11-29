@@ -1,3 +1,3 @@
 ---
-- name: Ensure environment variables
+- name: Import environment variable tasks
   ansible.builtin.import_tasks: variables.yml

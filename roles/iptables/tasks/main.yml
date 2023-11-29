@@ -67,28 +67,22 @@
     label: "{{ iptables_rule_chain }}"
     loop_var: iptables_rule
 
-- name: Install iptables
+- name: Install iptables packages
   become: true
   ansible.builtin.package:
-    name: "{{ item }}"
-  with_items:
-    - "{{ iptables_packages }}"
+    name: "{{ iptables_packages }}"
   notify:
     - Start iptables
     - Enable iptables
     - Start iptables 6
     - Enable iptables 6
 
-- name: Save in File IPv4
+- name: "Save iptables configuration for {{ item }}"
   become: true
   community.general.iptables_state:
-    ip_version: ipv4
-    path: "{{ iptables_configuration }}"
+    ip_version: "{{ item }}"
+    path: "{{ lookup('vars', 'iptables_configuration_' + item) }}"
     state: saved
-
-- name: Save in File IPv6
-  become: true
-  community.general.iptables_state:
-    ip_version: ipv6
-    path: "{{ ip6tables_configuration }}"
-    state: saved
+  loop:
+    - ipv4
+    - ipv6

@@ -3,4 +3,4 @@
   ansible.builtin.include_role:
     name: arillso.system.apt_packages
   vars:
-    apt_packages_list_list: "{{ packages_list }}"
+    apt_packages_list: "{{ packages_list }}"

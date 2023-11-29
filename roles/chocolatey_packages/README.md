@@ -48,7 +48,7 @@ This section outlines the default values for global settings that apply to all C
 
 - `chocolatey_packages_allow_empty_checksums`: Whether to allow empty checksums for packages by default. (Default: `false`)
 - `chocolatey_packages_allow_multiple`: Allow multiple versions of a package to be installed by default. (Default: `false`)
-- `chocolatey_packages_allow_prerelease`: Include pre-release versions of packages by default. (Default: `false`)
+- `chocolatey_packages_allow_prerelease`: Include prerelease versions of packages by default. (Default: `false`)
 - `chocolatey_packages_architecture`: The default architecture (e.g., 'x86', 'x64') for packages. (Default: `{{ omit }}`)
 - `chocolatey_packages_bootstrap_script`: Script for bootstrapping Chocolatey. Unset by default. (Default: `{{ omit }}`)
 - `chocolatey_packages_choco_args`: Additional default arguments to pass to Chocolatey. Unset by default. (Default: `{{ omit }}`)

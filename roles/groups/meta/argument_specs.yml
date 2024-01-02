@@ -1,0 +1,52 @@
+argument_specs:
+  main:
+    short_description: "Cross-platform group management"
+    description:
+      - This role manages group accounts on both Linux and Windows systems.
+      - It applies OS-specific configurations and handles group attributes,
+      - such as GID, system status, and uniqueness.
+    options:
+      groups_list: &groups_list
+        description: "A list of groups with their properties to be ensured on the system."
+        type: "list"
+        elements: "dict"
+        required: false
+        options:
+          name:
+            description: "The name of the group."
+            type: "str"
+            required: true
+          gid:
+            description: "The numeric group id for the group. Optional for system-generated IDs."
+            type: "int"
+            required: false
+          system:
+            description: "Specifies if the group is a system group. Default is false."
+            type: "bool"
+            required: false
+          state:
+            description: "Desired state of the group. Can be 'present' or 'absent'. Default is 'present'."
+            type: "str"
+            required: false
+          non_unique:
+            description: "Specifies whether the GID can be non-unique. Default is 'no'."
+            type: "bool"
+            required: false
+      groups_host_list: *groups_list
+      groups_group_list: *groups_list
+
+  create_group_linux:
+    short_description: "Linux group management"
+    description:
+      - This role manages Linux groups, handling GID assignments and system group status,
+      - based on OS-specific variables.
+    options:
+      groups_list: *groups_list
+
+  create_group_windows:
+    short_description: "Windows group management"
+    description:
+      - This section manages Windows group accounts, setting properties,
+      - and managing group memberships based on Windows system configurations.
+    options:
+      groups_list: *groups_list

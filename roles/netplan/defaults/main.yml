@@ -1,6 +1,41 @@
 ---
+# netplan_packages: Defines the packages needed for Netplan configuration.
+# 'nplan' is usually for some systems, while 'netplan.io' is more common.
 netplan_packages:
   - name: nplan
   - name: netplan.io
 
-netplan_configurations: []
+# netplan_configurations: List for defining specific Netplan configurations.
+# Below are examples for DHCP and Static IP configurations. Uncomment and
+# modify as necessary for your setup.
+
+# DHCP Configuration Example:
+# - name: "dhcp-example"
+#   content:
+#     network:
+#       version: 2
+#       renderer: networkd
+#       ethernets:
+#         enp3s0:
+#           dhcp4: true
+
+# Static IP Configuration Example:
+# - name: "static-ip-example"
+#   content:
+#     network:
+#       version: 2
+#       renderer: networkd
+#       ethernets:
+#         enp3s0:
+#           addresses:
+#             - 10.10.10.2/24
+#           nameservers:
+#             search: [mydomain, otherdomain]
+#             addresses: [10.10.10.1, 1.1.1.1]
+#           routes:
+#             - to: default
+#               via: 10.10.10.1
+
+netplan_configurations:
+  - name: ""
+    content: ""

@@ -1,2 +1,182 @@
 ---
-yum_repositories_list: []
+# A list of YUM repositories to be managed. Each entry in the list should be a dictionary defining the repository details.
+yum_repositories_list:
+  []
+  # Example entry:
+  # - baseurl: "http://example.com/repo"
+  #   description: "Example Repository"
+  #   enabled: true
+  #   gpgcheck: true
+  #   gpgkey: "http://example.com/gpgkey"
+  #   name: "example_repo"
+  #   other options...
+
+# Default async operation setting for the repository. Ansible's default is usually synchronous operation.
+yum_repositories_async: false
+
+# Default bandwidth limit for downloading packages. In Ansible, the default is usually no limit.
+yum_repositories_bandwidth: 0
+
+# Default base URL for the repository. Typically, there is no default value in Ansible.
+yum_repositories_baseurl: ""
+
+# Default cost for the repository. In Ansible, the default cost is usually not set.
+yum_repositories_cost: null
+
+# Default delta RPM metadata percentage. Typically, there is no default in Ansible.
+yum_repositories_deltarpm_metadata_percentage: null
+
+# Default delta RPM percentage. Ansible usually does not set this by default.
+yum_repositories_deltarpm_percentage: null
+
+# Default description for the repository. Typically, there is no default description in Ansible.
+yum_repositories_description: ""
+
+# Default enabled state of the repository. In Ansible, the default is usually true.
+yum_repositories_enabled: true
+
+# Default enablegroups setting. Typically not set by default in Ansible.
+yum_repositories_enablegroups: false
+
+# Default exclude list for the repository. Usually, no packages are excluded by default in Ansible.
+yum_repositories_exclude: ""
+
+# Default failover method for the repository. In Ansible, there's typically no default setting.
+yum_repositories_failovermethod: ""
+
+# Default file name for the repository configuration. Ansible does not set this by default.
+yum_repositories_file: ""
+
+# Default GPG CA key URL. Typically, there is no default GPG CA key in Ansible.
+yum_repositories_gpgcakey: ""
+
+# Default GPG check setting. In Ansible, the default is usually true.
+yum_repositories_gpgcheck: true
+
+# Default GPG key URL. Typically, there is no default GPG key in Ansible.
+yum_repositories_gpgkey: ""
+
+# ...
+
+# Default group for the repository. Typically not set by default in Ansible.
+yum_repositories_group: ""
+
+# Default HTTP caching behavior. In Ansible, the default is usually not set.
+yum_repositories_http_caching: ""
+
+# Default include list for the repository. Usually, there's no default setting in Ansible.
+yum_repositories_include: ""
+
+# Default IP resolution setting. Typically not set by default in Ansible.
+yum_repositories_ip_resolve: ""
+
+# Default keepalive setting for the repository. In Ansible, the default is usually not set.
+yum_repositories_keepalive: false
+
+# Default keepcache setting. In Ansible, the default is usually to not keep the cache.
+yum_repositories_keepcache: false
+
+# Default metadata expiration time. Typically, there's no default setting in Ansible.
+yum_repositories_metadata_expire: 21600 # 6 hours
+
+# Default metadata expiration filter. Usually not set by default in Ansible.
+yum_repositories_metadata_expire_filter: ""
+
+# Default metalink for the repository. Typically, there is no default metalink in Ansible.
+yum_repositories_metalink: ""
+
+# Default mirrorlist for the repository. Usually, there's no default mirrorlist in Ansible.
+yum_repositories_mirrorlist: ""
+
+# Default expiration time for the mirrorlist. Typically, there's no default setting in Ansible.
+yum_repositories_mirrorlist_expire: 21600 # 6 hours
+
+# Default mode for the repository. Typically not set by default in Ansible.
+yum_repositories_mode: ""
+
+# Default setting for module hotfixes. Usually not set by default in Ansible.
+yum_repositories_module_hotfixes: false
+
+# Default name for the repository. Typically, there is no default name in Ansible.
+yum_repositories_name: ""
+
+# Default owner for the repository file. Typically not set by default in Ansible.
+yum_repositories_owner: ""
+
+# Default password for secured repositories. Usually not set by default in Ansible.
+yum_repositories_password: ""
+
+# Default priority for the repository. In Ansible, the default is usually not set.
+yum_repositories_priority: null
+
+# Default protection setting for the repository. Typically not set by default in Ansible.
+yum_repositories_protect: false
+
+# Default proxy server for the repository. Usually, there's no default proxy in Ansible.
+yum_repositories_proxy: ""
+
+# Default proxy password. Typically not set by default in Ansible.
+yum_repositories_proxy_password: ""
+
+# Default proxy username. Usually not set by default in Ansible.
+yum_repositories_proxy_username: ""
+
+# Default repo GPG check setting. In Ansible, the default is usually true.
+yum_repositories_repo_gpgcheck: true
+
+# Default repository directory. Usually, there's no default repository directory in Ansible.
+yum_repositories_reposdir: ""
+
+# Default retries for repository operations. In Ansible, the default is usually not set.
+yum_repositories_retries: null
+
+# Default S3 enabled setting. Typically not set by default in Ansible.
+yum_repositories_s3_enabled: false
+
+# Default SELinux level for the repository. Usually not set by default in Ansible.
+yum_repositories_selevel: ""
+
+# Default SELinux role for the repository. Typically not set by default in Ansible.
+yum_repositories_serole: ""
+
+# Default SELinux type for the repository. Usually not set by default in Ansible.
+yum_repositories_setype: ""
+
+# Default SELinux user for the repository. Typically not set by default in Ansible.
+yum_repositories_seuser: ""
+
+# Default skip if unavailable setting. In Ansible, the default is usually false.
+yum_repositories_skip_if_unavailable: false
+
+# Default SSL check for cert permissions. Typically not set by default in Ansible.
+yum_repositories_ssl_check_cert_permissions: false
+
+# Default SSL CA certificate. Usually not set by default in Ansible.
+yum_repositories_sslcacert: ""
+
+# Default SSL client certificate. Typically not set by default in Ansible.
+yum_repositories_sslclientcert: ""
+
+# Default SSL client key. Usually not set by default in Ansible.
+yum_repositories_sslclientkey: ""
+
+# Default SSL verification setting. In Ansible, the default is usually true.
+yum_repositories_sslverify: true
+
+# Default state of the repository. In Ansible, the default is usually 'present'.
+yum_repositories_state: "present"
+
+# Default throttle for downloading packages. Typically not set by default in Ansible.
+yum_repositories_throttle: 0
+
+# Default timeout for repository operations. In Ansible, the default is usually 30 seconds.
+yum_repositories_timeout: 30
+
+# Default UI repo ID variables. Usually not set by default in Ansible.
+yum_repositories_ui_repoid_vars: ""
+
+# Default setting for unsafe writes. In Ansible, the default is usually false.
+yum_repositories_unsafe_writes: false
+
+# Default username for secured repositories. Usually not set by default in Ansible.
+yum_repositories_username: ""

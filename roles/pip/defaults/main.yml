@@ -1,6 +1,23 @@
 ---
-# By default no modules should be installed.
-pip_modules: []
+# List of Python packages to be installed via the package manager.
+pip_packages:
+  - name: python3-pip
 
-# You can use something other than the default pip binary.
-pip_executable: pip3
+# Default executable path for Pip. Can be overridden if needed.
+pip_executable: /usr/bin/pip3
+
+# Additional arguments to pass to the Pip executable. Default is none.
+# Can be used to pass specific flags or options to the Pip command.
+pip_extra_args:
+
+pip_modules:
+# List of Python modules to be installed or managed via Pip.
+# Example:
+# pip_modules:
+#   - name: requests
+#     state: latest
+#   - name: numpy
+#     state: present
+#     version: "1.18.5"
+#   - name: pandas
+#     state: absent

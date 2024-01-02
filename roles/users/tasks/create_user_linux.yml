@@ -21,7 +21,6 @@
   loop: "{{ users_list }}"
   loop_control:
     label: "{{ item.username }}"
-  no_log: "{{ item.password is defined or item.authorized_keys is defined }}"
 
 - name: "Linux : setting users home permission"
   become: true
@@ -34,7 +33,6 @@
   when: item.home_create | default(true)
   loop_control:
     label: "{{ item.username }}"
-  no_log: "{{ item.password is defined or item.authorized_keys is defined }}"
 
 - name: "Linux : adding users .ssh directory"
   become: true
@@ -48,7 +46,6 @@
   when: item.home_create | default(true)
   loop_control:
     label: "{{ item.username }}"
-  no_log: "{{ item.password is defined or item.authorized_keys is defined }}"
 
 - name: "Linux : adding users authorized keys"
   become: true
@@ -60,4 +57,3 @@
   when: item.home_create | default(true)
   loop_control:
     label: "{{ item.username }}"
-  no_log: "{{ item.password is defined or item.authorized_keys is defined }}"

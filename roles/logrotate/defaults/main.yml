@@ -1,16 +1,25 @@
 ---
-# How often to rotate logs, either daily, weekly or monthly.
+# logrotate_frequency: Defines how often logs should be rotated. Options are 'daily', 'weekly', or 'monthly'.
 logrotate_frequency: weekly
 
-# How many files to keep.
+# logrotate_keep: Specifies the number of rotated log files to keep.
 logrotate_keep: 4
 
-# Should rotated logs be compressed??
+# logrotate_compress: Determines whether rotated logs should be compressed. Set to 'true' to enable compression.
 logrotate_compress: true
 
-# User/Group for rotated log files (Loaded by OS-Specific vars if found, or and can be set manually)
+# logrotate_user: Defines the user who will own the rotated log files.
+# This is loaded from OS-specific variables if available, or it can be set manually.
 logrotate_user: "{{ _logrotate_user[ansible_distribution] | default(_logrotate_user['default']) }}"
+
+# logrotate_group: Defines the group that will own the rotated log files.
+# Like logrotate_user, this is loaded from OS-specific variables or can be set manually.
 logrotate_group: "{{ _logrotate_group[ansible_distribution] | default(_logrotate_group['default']) }}"
+
+# logrotate_dateext: Determines whether to append a date extension to the rotated log files.
+# This is loaded from OS-specific variables or can be set manually.
 logrotate_dateext: "{{ _logrotate_dateext[ansible_distribution] | default(_logrotate_dateext['default']) }}"
 
+# logrotate_entries: A list to define specific log rotation configurations.
+# Each entry can include its own rotation frequency, compression setting, and other parameters.
 logrotate_entries: []

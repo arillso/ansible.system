@@ -1,0 +1,19 @@
+---
+# Define default values for DNS configuration
+
+# 'resolv_search' is a list of search domains.
+resolv_search: []
+
+# 'resolv_domain' is the local domain name.
+resolv_domain: ""
+
+# 'resolv_nameservers' is a list of DNS nameservers.
+resolv_nameservers:
+  - "8.8.8.8" # Google's public DNS
+  - "8.8.4.4" # Google's secondary public DNS
+
+# 'resolv_sortlist' is a list of IP addresses to sort.
+resolv_sortlist: []
+
+# 'resolv_options' contains options like timeout, attempts, etc.
+resolv_options: []

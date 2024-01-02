@@ -142,7 +142,7 @@ argument_specs:
       chocolatey_packages_install_args:
         type: str
         description: Additional arguments for the installer, default is unset.
-        default: "{{ omit }}"
+        default: ""
 
       chocolatey_packages_override_args:
         type: bool
@@ -152,7 +152,7 @@ argument_specs:
       chocolatey_packages_package_params:
         type: str
         description: Parameters to pass to the package, default is unset.
-        default: "{{ omit }}"
+        default: ""
 
       chocolatey_packages_pinned:
         type: bool
@@ -162,17 +162,17 @@ argument_specs:
       chocolatey_packages_proxy_password:
         type: str
         description: Proxy password, default is unset.
-        default: "{{ omit }}"
+        default: ""
 
       chocolatey_packages_proxy_url:
         type: str
         description: URL of the proxy server, default is unset.
-        default: "{{ omit }}"
+        default: ""
 
       chocolatey_packages_proxy_username:
         type: str
         description: Username for the proxy server, default is unset.
-        default: "{{ omit }}"
+        default: ""
 
       chocolatey_packages_remove_dependencies:
         type: bool
@@ -187,22 +187,22 @@ argument_specs:
       chocolatey_packages_source:
         type: str
         description: The source to install the package from, default is unset.
-        default: "{{ omit }}"
+        default: ""
 
       chocolatey_packages_source_password:
         type: str
         description: Password for the package source, default is unset.
-        default: "{{ omit }}"
+        default: ""
 
       chocolatey_packages_source_username:
         type: str
         description: Username for the package source, default is unset.
-        default: "{{ omit }}"
+        default: ""
 
       chocolatey_packages_timeout:
         type: int
         description: Timeout for the installation process, default is unset.
-        default: "{{ omit }}"
+        default: ""
 
       chocolatey_packages_validate_certs:
         type: bool

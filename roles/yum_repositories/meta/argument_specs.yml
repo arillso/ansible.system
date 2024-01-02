@@ -1,0 +1,227 @@
+argument_specs:
+  main:
+    short_description: "Manage YUM repositories on Red Hat-based systems."
+    description:
+      - "This role facilitates the management and configuration of YUM repositories on Red Hat-based systems."
+      - "It allows for setting various repository attributes such as base URL, GPG keys, enabled state, and more."
+    options:
+      yum_repositories_list:
+        description: "A list of YUM repositories to be managed. Each entry is a dictionary defining the repository details."
+        type: "list"
+        elements: "dict"
+        required: false
+
+      yum_repositories_async:
+        description: "Determines whether repository operations should be asynchronous."
+        type: "bool"
+        required: false
+        default: false
+
+      yum_repositories_bandwidth:
+        description: "Limit for downloading packages."
+        type: "int"
+        required: false
+        default: 0
+
+      yum_repositories_baseurl:
+        description: "Base URL for the repository."
+        type: "str"
+        required: false
+
+      yum_repositories_sslverify:
+        description: "Whether to perform SSL verification for repository URLs."
+        type: "bool"
+        required: false
+        default: true
+      yum_repositories_state:
+        description: "State of the repository (e.g., 'present', 'absent')."
+        type: "str"
+        required: false
+        default: "present"
+
+      yum_repositories_keepalive:
+        description: "Determines whether to use keepalive for repository connections."
+        type: "bool"
+        required: false
+        default: false
+
+      yum_repositories_keepcache:
+        description: "Whether to keep the cache of headers and packages after successful installation."
+        type: "bool"
+        required: false
+        default: false
+
+      yum_repositories_metadata_expire:
+        description: "Time (in seconds) after which the metadata will expire."
+        type: "int"
+        required: false
+        default: 21600
+
+      yum_repositories_metadata_expire_filter:
+        description: "Filter for the metadata expiration."
+        type: "str"
+        required: false
+
+      yum_repositories_metalink:
+        description: "URL to the metalink file for the repository."
+        type: "str"
+        required: false
+
+      yum_repositories_mirrorlist:
+        description: "URL to the mirror list for the repository."
+        type: "str"
+        required: false
+
+      yum_repositories_mirrorlist_expire:
+        description: "Time (in seconds) after which the mirror list will expire."
+        type: "int"
+        required: false
+        default: 21600
+
+      yum_repositories_mode:
+        description: "File mode of the .repo file on disk."
+        type: "str"
+        required: false
+
+      yum_repositories_module_hotfixes:
+        description: "Whether to enable module hotfixes for the repository."
+        type: "bool"
+        required: false
+        default: false
+
+      yum_repositories_name:
+        description: "Name of the repository."
+        type: "str"
+        required: false
+
+      yum_repositories_owner:
+        description: "Owner of the .repo file on disk."
+        type: "str"
+        required: false
+
+      yum_repositories_password:
+        description: "Password for accessing the repository."
+        type: "str"
+        required: false
+
+      yum_repositories_priority:
+        description: "Priority of the repository."
+        type: "int"
+        required: false
+
+      yum_repositories_protect:
+        description: "Whether to protect the repository."
+        type: "bool"
+        required: false
+        default: false
+
+      yum_repositories_proxy:
+        description: "Proxy server URL for accessing the repository."
+        type: "str"
+        required: false
+
+      yum_repositories_proxy_password:
+        description: "Password for the proxy server."
+        type: "str"
+        required: false
+
+      yum_repositories_proxy_username:
+        description: "Username for the proxy server."
+        type: "str"
+        required: false
+
+      yum_repositories_repo_gpgcheck:
+        description: "Whether to perform GPG checks on the repository."
+        type: "bool"
+        required: false
+        default: true
+
+      yum_repositories_reposdir:
+        description: "Directory where the .repo files are located."
+        type: "str"
+        required: false
+
+      yum_repositories_retries:
+        description: "Number of retries for repository operations."
+        type: "int"
+        required: false
+
+      yum_repositories_s3_enabled:
+        description: "Whether to enable S3 support for the repository."
+        type: "bool"
+        required: false
+        default: false
+
+      yum_repositories_selevel:
+        description: "SELinux level for the repository configuration file."
+        type: "str"
+        required: false
+
+      yum_repositories_serole:
+        description: "SELinux role for the repository configuration file."
+        type: "str"
+        required: false
+
+      yum_repositories_setype:
+        description: "SELinux type for the repository configuration file."
+        type: "str"
+        required: false
+
+      yum_repositories_seuser:
+        description: "SELinux user for the repository configuration file."
+        type: "str"
+        required: false
+
+      yum_repositories_skip_if_unavailable:
+        description: "Whether to skip the repository if it is unavailable."
+        type: "bool"
+        required: false
+        default: false
+
+      yum_repositories_ssl_check_cert_permissions:
+        description: "Whether to check SSL certificate permissions."
+        type: "bool"
+        required: false
+        default: false
+
+      yum_repositories_sslcacert:
+        description: "Path to the SSL CA certificate."
+        type: "str"
+        required: false
+
+      yum_repositories_sslclientcert:
+        description: "Path to the SSL client certificate."
+        type: "str"
+        required: false
+
+      yum_repositories_sslclientkey:
+        description: "Path to the SSL client key."
+        type: "str"
+        required: false
+
+      yum_repositories_throttle:
+        description: "Bandwidth throttle for downloading packages."
+        type: "str"
+        required: false
+
+      yum_repositories_timeout:
+        description: "Timeout for repository operations."
+        type: "int"
+        required: false
+        default: 30
+
+      yum_repositories_ui_repoid_vars:
+        description: "Variables used in the UI for representing the repository."
+        type: "str"
+        required: false
+
+      yum_repositories_unsafe_writes:
+        description: "Whether to perform unsafe writes to the repository configuration."
+        type: "bool"
+        required: false
+        default: false
+
+      yum_repositories_username:
+        description: "Username for accessing the repository."
+        type: "str"
+        required: false

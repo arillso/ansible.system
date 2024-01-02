@@ -3,6 +3,7 @@ galaxy_info:
   author: arillso
   description: Role to manage groups on Linux and Windows.
   license: MIT
+  role_name: groups
   min_ansible_version: "2.15"
   platforms:
     - name: Ubuntu

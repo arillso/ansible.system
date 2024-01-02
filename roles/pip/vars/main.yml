@@ -1,15 +1,15 @@
 ---
 _pip_packages:
   Alpine:
-    - py3-pip
-    - py3-setuptools
-    - python3-dev
+    - name: py3-pip
+    - name: py3-setuptools
+    - name: python3-dev
   Debian:
-    - python3-pip
-    - python3-setuptools
+    - name: python3-pip
+    - name: python3-setuptools
   RedHat: &redhat_packages
-    - python3-pip
-    - python3-setuptools
+    - name: python3-pip
+    - name: python3-setuptools
   Rocky: *redhat_packages
 
 pip_packages: "{{ _pip_packages[ansible_os_family] }}"

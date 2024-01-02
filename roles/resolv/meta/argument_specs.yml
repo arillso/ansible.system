@@ -1,0 +1,28 @@
+# argument_specs.yml
+
+argument_specs:
+  main:
+    short_description: "DNS configuration management for Linux systems"
+    description:
+      - "This role manages DNS configurations."
+      - "It allows setting search domains, nameservers, domain name, sortlist, and options."
+    options:
+      resolv_search:
+        description: "A list of search domains."
+        type: "list"
+        elements: "str"
+      resolv_domain:
+        description: "The local domain name."
+        type: "str"
+      resolv_nameservers:
+        description: "A list of DNS nameservers."
+        type: "list"
+        elements: "str"
+      resolv_sortlist:
+        description: "A list of IP addresses to sort."
+        type: "list"
+        elements: "str"
+      resolv_options:
+        description: "Options such as timeout, attempts, etc."
+        type: "list"
+        elements: "str"

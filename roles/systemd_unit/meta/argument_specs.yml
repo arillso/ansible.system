@@ -1,0 +1,71 @@
+argument_specs:
+  main:
+    short_description: "Manage systemd units on various systems."
+    description:
+      - "This role configures and manages systemd units across different systems."
+      - "It allows for the creation, modification, and deletion of systemd unit files and their override configurations."
+    options:
+      systemd_unit_name:
+        description: "The name of the systemd unit to be managed."
+        type: "str"
+        required: true
+
+      systemd_unit_type:
+        description: "The type of the systemd unit (e.g., 'service', 'timer')."
+        type: "str"
+        choices: ["service", "timer"]
+        required: true
+
+      systemd_unit_directory:
+        description: "The directory where systemd unit files are stored. Defaults to '/etc/systemd/system'."
+        type: "path"
+        required: false
+        default: "/etc/systemd/system"
+
+      systemd_unit_file:
+        description: "Full path of the systemd unit file. Automatically constructed from the unit name and type."
+        type: "path"
+        required: false
+
+      systemd_unit_override_name:
+        description: "Name of the override file for the systemd unit."
+        type: "str"
+        required: false
+
+      systemd_unit_override_directory:
+        description: "Directory for the systemd unit override files, specific to the unit name and type."
+        type: "path"
+        required: false
+
+      systemd_unit_override_file:
+        description: "Full path for the systemd unit override file. Automatically constructed using the override directory and override name."
+        type: "path"
+        required: false
+
+      systemd_unit_generic_options:
+        description: "Generic options for systemd units, applied regardless of the unit type."
+        type: "list"
+        elements: "str"
+        required: false
+        default: []
+
+      systemd_unit_options:
+        description: "Specific options for the systemd unit, dependent on the unit type and configuration."
+        type: "list"
+        elements: "str"
+        required: false
+        default: []
+
+      systemd_unit_install_options:
+        description: "Options related to the 'Install' section of a systemd unit file."
+        type: "list"
+        elements: "str"
+        required: false
+        default: []
+
+      systemd_unit_types_supported:
+        description: "List of supported systemd unit types."
+        type: "list"
+        elements: "str"
+        required: false
+        default: ["service", "timer"]

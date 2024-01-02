@@ -1,0 +1,19 @@
+argument_specs:
+  main:
+    short_description: "Manage timezone settings on various systems."
+    description:
+      - "This role configures timezone settings across different operating systems."
+      - "It handles the installation of necessary timezone packages and sets the desired timezone."
+    options:
+      timezone_packages:
+        description: "A list of packages required for timezone configuration, determined based on the target system's distribution."
+        type: "list"
+        elements: "str"
+        required: false
+        default: "tzdata"
+
+      timezone_name:
+        description: "The name of the timezone to be set. Defaults to 'Etc/UTC'."
+        type: "str"
+        required: false
+        default: "Etc/UTC"

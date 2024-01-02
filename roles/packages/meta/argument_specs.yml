@@ -1,0 +1,48 @@
+argument_specs:
+  main:
+    short_description: "Package management for Linux systems"
+    description:
+      - This role manages package installations, upgrades, and removals on Linux systems.
+      - It provides options for specifying package names, versions, and desired states.
+    options:
+      packages_list:
+        description: "A list of packages to be managed."
+        type: "list"
+        elements: "dict"
+        options:
+          name:
+            description: "The name of the package."
+            type: "str"
+            required: true
+          version:
+            description: "Specific version of the package to be installed. Use 'latest' for the most recent version."
+            type: "str"
+            required: false
+          state:
+            description: "Desired state of the package: 'present', 'latest', or 'absent'."
+            type: "str"
+            required: false
+          install_recommends:
+            description: "Whether to install recommended packages. Default is true."
+            type: "bool"
+            required: false
+          allow_downgrade:
+            description: "Allow downgrading the package if necessary. Default is false."
+            type: "bool"
+            required: false
+          purge:
+            description: "Purge configurations on package removal. Default is false."
+            type: "bool"
+            required: false
+          force_apt_get:
+            description: "Force usage of apt-get instead of aptitude. Default is false."
+            type: "bool"
+            required: false
+          lock_timeout:
+            description: "Timeout for the apt lockfile. Default is 30 seconds."
+            type: "int"
+            required: false
+          ignore_checksums:
+            description: "Ignore checksums during installation. Default is false."
+            type: "bool"
+            required: false

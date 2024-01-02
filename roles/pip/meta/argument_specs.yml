@@ -1,0 +1,38 @@
+argument_specs:
+  main:
+    short_description: "Python package and module management for Linux systems"
+    description:
+      - This role manages the installation and management of Python packages and modules.
+      - It allows specifying package names, versions, additional arguments, and module management.
+    options:
+      pip_packages:
+        description: "A list of Python packages to be installed via the package manager."
+        type: "list"
+        elements: "str"
+      pip_executable:
+        description: "Default executable path for Pip. Can be overridden if needed."
+        type: "str"
+      pip_extra_args:
+        description: "Additional arguments to pass to the Pip executable."
+        type: "str"
+      pip_modules:
+        description: "A list of Python modules to be installed or managed via Pip."
+        type: "list"
+        elements: "dict"
+        options:
+          name:
+            description: "The name of the Python module."
+            type: "str"
+            required: true
+          state:
+            description: "Desired state of the module: 'present', 'latest', or 'absent'."
+            type: "str"
+            required: false
+          version:
+            description: "Specific version of the module to be installed. Optional."
+            type: "str"
+            required: false
+          extra_args:
+            description: "Extra arguments to pass during the module installation."
+            type: "str"
+            required: false

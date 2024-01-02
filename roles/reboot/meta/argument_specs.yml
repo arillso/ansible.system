@@ -1,0 +1,23 @@
+---
+argument_specs:
+  main:
+    short_description: "Reboot management for systems"
+    description:
+      - "This role manages system reboots."
+      - "It allows specifying delays, a custom message, and timeout settings for reboot operations."
+    options:
+      reboot_delay:
+        description: "How long to wait before sending a reboot command (in seconds)."
+        type: "int"
+      reboot_up_delay:
+        description: "Number of seconds to wait before checking if the machine is up after a reboot."
+        type: "int"
+      reboot_message:
+        description: "Custom message to log when initiating a reboot. Useful for auditing."
+        type: "str"
+      reboot_timeout:
+        description: "Maximum time to wait for the system to reboot (in seconds)."
+        type: "int"
+      reboot_post_reboot_delay:
+        description: "Time to wait after the system has rebooted and before continuing with the next task (in seconds)."
+        type: "int"

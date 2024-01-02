@@ -1,0 +1,28 @@
+---
+- name: Add groups and Groups
+  when: groups_list is defined | bool
+  block:
+    - name: Add host groups
+      ansible.builtin.set_fact:
+        groups_list: "{{ groups_list | union(groups_host_list) | unique }}"
+      when: groups_host_list is defined | bool
+
+    - name: Add group groups
+      ansible.builtin.set_fact:
+        groups_list: "{{ groups_list | union(groups_group_list) | unique }}"
+      when: groups_group_list is defined | bool
+
+- name: Include distribution tasks
+  ansible.builtin.include_tasks: "{{ lookup('ansible.builtin.first_found', params) }}"
+  vars:
+    distribution: "{{ ansible_distribution }}"
+    distribution_version: "{{ ansible_distribution_version }}"
+    distribution_major_version: "{{ ansible_distribution_major_version }}"
+    params:
+      files:
+        - "create_group_{{ distribution | lower }}_{{ distribution_version | lower }}.yml"
+        - "create_group_{{ distribution | lower }}_{{ distribution_major_version | lower }}.yml"
+        - "create_group_{{ distribution | lower }}.yml"
+        - "create_group_{{ ansible_os_family | lower }}.yml"
+        - "create_group_{{ ansible_system | lower }}.yml"
+        - "defaults.yml"

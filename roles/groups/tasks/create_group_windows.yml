@@ -1,0 +1,10 @@
+---
+- name: "Windows: : adding groups"
+  become: true
+  ansible.windows.win_group:
+    name: "{{ item.name }}"
+    description: "{{ item.description | default(omit) }}"
+    state: "{{ item.state | default(groups_state) }}"
+  loop: "{{ groups_list }}"
+  loop_control:
+    label: "{{ item.name }}"

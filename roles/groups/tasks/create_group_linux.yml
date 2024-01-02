@@ -1,0 +1,14 @@
+---
+- name: "Linux : adding groups"
+  become: true
+  ansible.builtin.group:
+    name: "{{ item.name | default(omit) }}"
+    state: "{{ item.state | default(groups_state | default(omit)) }}"
+    gid: "{{ item.gid | default(groups_gid | default(omit)) }}"
+    system: "{{ item.system | default(groups_system | default(omit)) }}"
+    non_unique: "{{ item.non_unique | default(groups_non_unique | default(omit)) }}"
+    local: "{{ item.local | default(omit) }}"
+    force: "{{ item.force | default(omit) }}"
+  loop: "{{ groups_list }}"
+  loop_control:
+    label: "{{ item.name }}"

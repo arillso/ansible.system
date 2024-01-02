@@ -4,8 +4,8 @@
     name: "{{ item.name }}"
     state: "{{ item.state | default('present') }}"
     version: "{{ item.version | default(omit) }}"
-    executable: "{{ pip_executable | default(omit) }}"
-    extra_args: "{{ item.extra_args | default(omit) }}"
+    executable: "{{ pip_executable | default(pip_executable) }}"
+    extra_args: "{{ item.extra_args | default(pip_extra_args) }}"
   loop: "{{ pip_modules }}"
   loop_control:
     label: "{{ item.name }}"

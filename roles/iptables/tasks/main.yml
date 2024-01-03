@@ -81,7 +81,7 @@
   become: true
   community.general.iptables_state:
     ip_version: "{{ item }}"
-    path: "{{ lookup('vars', 'iptables_configuration_' + item) }}"
+    path: "{{ lookup('vars', 'iptables_' + item + '_configuration') }}"
     state: saved
   loop:
     - ipv4

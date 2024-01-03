@@ -4,7 +4,7 @@ iptables_packages:
   - iptables-services
   - conntrack
 
-iptables_service: iptables
-iptables_6_service: ip6tables
-iptables_configuration: /etc/sysconfig/iptables
-iptables_6_configuration: /etc/sysconfig/ip6tables
+iptables_ipv4_service: iptables
+iptables_ipv6_service: ip6tables
+iptables_ipv4_configuration: /etc/sysconfig/iptables
+iptables_ipv6_configuration: /etc/sysconfig/ip6tables

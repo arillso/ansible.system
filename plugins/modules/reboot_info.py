@@ -1,37 +1,42 @@
 #!/usr/bin/python3
-# Copyright: (c) 2022, Arillso
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Copyright: (c) 2024, Arillso
+#
+# Licensed under the MIT License. See LICENSE file in the project root for full license information.
+# License available at https://opensource.org/licenses/MIT
+"""
+Ansible module for checking if the system requires a reboot.
 
-from __future__ import absolute_import, division, print_function
+This module assesses the system state to determine if a reboot is required,
+typically useful after applying package updates or system changes that necessitate a restart.
+"""
 
-import os.path
+# pylint: disable=import-error
+import os
 
-__metaclass__ = type
 from ansible.module_utils.basic import AnsibleModule
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
 
 DOCUMENTATION = r"""
 ---
 module: arillso.system.reboot_info
-version_added: '0.0.1'
-short_description: checks if the system has to be restarted.
+version_added: '0.0.2'
+short_description: Checks if the system requires a reboot.
 description:
-  - checks if the system has to be restarted.
+  - This module checks if a system requires a reboot, typically after package updates.
 author:
   - arillso (@arillso) <hello@arillso.io>
 """
 
 
 def main():
-    result = dict(changed=False, reboot=False)
-    module = AnsibleModule(argument_spec=dict(), supports_check_mode=True)
+    """
+    Main function for the Ansible Module. It checks if a reboot is required on the system.
+    """
+    result = {"changed": False, "reboot": False}
+    module = AnsibleModule(argument_spec={}, supports_check_mode=True)
 
-    if os.path.isfile("/var/run/reboot-required"):
+    # Check for the presence of the file indicating a reboot is required.
+    reboot_required_path = "/var/run/reboot-required"
+    if os.path.isfile(reboot_required_path):
         result["reboot"] = True
 
     module.exit_json(**result)

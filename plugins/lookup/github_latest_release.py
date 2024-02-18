@@ -1,19 +1,22 @@
-# (c) 2019, arillso <hello@arillso.io>
-# MIT License (see LICENSE)
+#!/usr/bin/python3
+# Copyright: (c) 2024, Arillso
+#
+# Licensed under the MIT License. See LICENSE file in the project root for full license information.
+# License available at https://opensource.org/licenses/MIT
+"""
+Lookup plugin for Ansible to fetch the latest release version from GitHub repositories.
+This plugin returns the latest tagged release version of specified public GitHub repositories.
+"""
 
-# python 3 headers, required if submitting to Ansible
-from __future__ import absolute_import, division, print_function
-
+# pylint: disable=import-error
 from json import JSONDecodeError, loads
 from re import compile as regex_compile
 
-from ansible.errors import AnsibleLookupError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import open_url
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.display import Display
-
-__metaclass__ = type
 
 DOCUMENTATION = r"""
 lookup: latest_release
@@ -66,57 +69,57 @@ RETURN = r"""
     type: list
 """
 
-
 display = Display()
 
 
-class LookupModule(LookupBase):
-    def run(self, repos, variables=None, **kwargs):
-        # lookups in general are expected to both take a list as input and output a list
-        # this is done so they work with the looping construct 'with_'.
+class LookupModule(LookupBase):  # pylint: disable=too-few-public-methods
+    """Lookup plugin for fetching the latest release version from GitHub repositories."""
+
+    def run(self, terms, variables=None, **kwargs):  # pylint: disable=unused-argument
+        """Fetches the latest release version for given GitHub repositories.
+
+        Args:
+            terms (list): List of GitHub repositories to lookup.
+            variables (dict, optional): Unused in this context.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            list: Versions of the latest releases found for the given repositories.
+        """
         versions = []
 
-        if len(repos) == 0:
-            raise AnsibleParserError("You must specify at least one repo name")
+        if not terms:
+            raise AnsibleParserError("You must specify at least one repo name.")
 
-        for repo in repos:
+        valid_github_username_and_repo_name = regex_compile(r"[a-z\d\-]+\/[a-z\d\S]+")
 
-            # https://regex101.com/r/CHm7eZ/1
-            valid_github_username_and_repo_name = regex_compile(
-                r"[a-z\d\-]+\/[a-z\d\S]+"
-            )
-            if not repo or not valid_github_username_and_repo_name.match(repo):
-                # The Parser error indicates invalid options passed
+        for repo in terms:
+            if not valid_github_username_and_repo_name.match(repo):
                 raise AnsibleParserError(
-                    "repo name is incorrectly formatted: %s" % to_text(repo)
+                    f"Repo name is incorrectly formatted: {to_text(repo)}"
                 )
 
-            display.debug("Github version lookup term: '%s'" % to_text(repo))
+            display.debug(f"Github version lookup term: '{to_text(repo)}'")
 
-            # Retrieve the Github API Releases JSON
             try:
-                # ansible.module_utils.urls appears to handle the request errors for us
                 response = open_url(
-                    "https://api.github.com/repos/%s/releases/latest" % repo,
+                    f"https://api.github.com/repos/{repo}/releases/latest",
                     headers={"Accept": "application/vnd.github.v3+json"},
                 )
                 json_response = loads(response.read().decode("utf-8"))
 
                 version = json_response.get("tag_name")
-                if version is not None and len(version) != 0:
+                if version:
                     versions.append(version)
                 else:
-                    raise AnsibleLookupError(
-                        "Error extracting version from Github API response:\n%s"
-                        % to_text(response.text)
+                    raise AnsibleError(
+                        "Error extracting version from Github API response."
                     )
             except JSONDecodeError as e:
-                raise AnsibleLookupError(
-                    "Error parsing JSON from Github API response: %s" % to_native(
-                        e)
-                )
+                raise AnsibleError(
+                    f"Error parsing JSON from Github API response: {to_native(e)}"
+                ) from e
 
-            display.vvvv("Github version lookup using %s as repo" %
-                         to_text(repo))
+            display.vvvv(f"Github version lookup using {repo} as repo")
 
         return versions

@@ -1,5 +1,4 @@
 ---
-
 - name: "Ensure systemd service {{ systemd_service_name }}"
   become: true
   when:
@@ -28,3 +27,13 @@
         state: restarted
       when:
         - systemd_service_restart_on
+
+  rescue:
+    - name: "Handle failure in managing systemd service {{ systemd_service_name }}"
+      ansible.builtin.debug:
+        msg: "Failed to manage systemd service {{ systemd_service_name }}. Check system logs for more information."
+
+  always:
+    - name: "Log completion of systemd service management for {{ systemd_service_name }}"
+      ansible.builtin.debug:
+        msg: "Completed systemd service management block for {{ systemd_service_name }}, regardless of outcome."

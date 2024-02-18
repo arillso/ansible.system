@@ -12,6 +12,16 @@
         groups_list: "{{ groups_list | union(groups_group_list) | unique }}"
       when: groups_group_list is defined | bool
 
+  rescue:
+    - name: Handle errors for adding groups
+      ansible.builtin.debug:
+        msg: "An error occurred while adding groups."
+
+  always:
+    - name: Confirmation of block execution
+      ansible.builtin.debug:
+        msg: "The block for adding groups has been completed, regardless of errors."
+
 - name: Include distribution tasks
   ansible.builtin.include_tasks: "{{ lookup('ansible.builtin.first_found', params) }}"
   vars:

@@ -27,6 +27,16 @@
         users_list: "{{ users_list | union(users_group_list) | unique }}"
       when: users_group_list is defined | bool
 
+  rescue:
+    - name: Handle errors for adding users and groups
+      ansible.builtin.debug:
+        msg: "An error occurred while adding users or groups."
+
+  always:
+    - name: Confirmation of block execution
+      ansible.builtin.debug:
+        msg: "The block for adding users and groups has been completed, regardless of errors."
+
 - name: Include distribution tasks
   ansible.builtin.include_tasks: "{{ lookup('ansible.builtin.first_found', params) }}"
   vars:

@@ -1,22 +1,20 @@
 #!/usr/bin/python3
-# Copyright: (c) 2022, Arillso
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Copyright: (c) 2024, Arillso
+#
+# Licensed under the MIT License. See LICENSE file in the project root for full license information.
+# License available at https://opensource.org/licenses/MIT
+"""
+Ansible module to retrieve a list of updatable packages on an APT-based system.
+This module fetches and lists all packages that are available for update,
+providing current and available versions for each package.
+"""
 
-from __future__ import absolute_import, division, print_function
-
+# pylint: disable=import-error
 import apt
-import apt.debfile
-
-__metaclass__ = type
+import apt.progress.text
 from ansible.module_utils.basic import AnsibleModule
 
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: arillso.system.apt_update_info
 version_added: "0.0.1"
@@ -25,33 +23,36 @@ description:
     - This module fetches a list of all packages on an APT-based system that are available for update.
     - It's intended to be used within an Ansible environment.
     - Upon execution, it returns a detailed list of packages with information on current and available versions,
-    - aiding in the assessment of pending updates.
+      aiding in the assessment of pending updates.
 author: "arillso (@arillso) <hello@arillso.io>"
-'''
+"""
 
 
 def main():
-    result = dict(changed=False, packages=[])
-    module = AnsibleModule(argument_spec=dict(), supports_check_mode=True)
+    """
+    Main function to retrieve updatable packages information.
+    """
+    result = {"changed": False, "packages": []}
+    module = AnsibleModule(argument_spec={}, supports_check_mode=True)
 
-    packages = []
+    try:
+        cache = apt.Cache()
+        cache.update(fetch_progress=apt.progress.text.AcquireProgress())
+        cache.open(None)
 
-    cache = apt.Cache()
-    cache.update()
-    cache.upgrade()
-    for pkg in sorted(cache.get_changes()):
-        pkg_versions = pkg.versions
-        if cache[pkg.name].is_installed:
-            for pkg_version in pkg_versions:
-                if pkg_version.is_installed:
-                    pkg_new = {
-                        "package": pkg.name,
-                        "current": pkg_version.version,
-                        "available": pkg_versions[0].version,
-                    }
-                    packages.append(pkg_new)
+        for pkg in cache:
+            if pkg.is_upgradable:
+                pkg_new = {
+                    "package": pkg.name,
+                    "current": pkg.installed.version,
+                    "available": pkg.candidate.version,
+                }
+                result["packages"].append(pkg_new)
 
-    result["packages"] = packages
+    except apt.CacheException as e:  # Use a more specific exception if possible
+        module.fail_json(msg=f"Failed to fetch update information due to: {e}")
+    except Exception as e:  # pylint: disable=broad-except
+        module.fail_json(msg=f"An unexpected error occurred: {e}")
 
     module.exit_json(**result)
 

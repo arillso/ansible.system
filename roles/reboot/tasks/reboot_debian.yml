@@ -20,3 +20,13 @@
 
     - name: Gather facts after reboot
       ansible.builtin.setup:
+
+  rescue:
+    - name: Handle reboot failure
+      ansible.builtin.debug:
+        msg: "Reboot has failed, please check the system manually."
+
+  always:
+    - name: Log reboot attempt
+      ansible.builtin.debug:
+        msg: "Reboot block execution completed, regardless of outcome."

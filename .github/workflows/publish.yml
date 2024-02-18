@@ -5,9 +5,14 @@ on:
   release:
     types: [published]
 
+permissions: {}
+
 jobs:
   publish:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v4

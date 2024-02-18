@@ -20,7 +20,9 @@ Variables defined in `defaults/main.yml` customize the MOTD configuration. These
 - `motd_distribution_release`: The release name of the distribution.
 - `motd_virtualization_role`: Role in virtualization (host/guest/none).
 - `motd_virtualization_type`: Type of virtualization (KVM, VirtualBox, etc.).
-- `motd_date_time`: Date and time information.
+- `motd_date_time`: Date and time information. This is a dictionary that includes the following suboptions:
+  - `tz`: The timezone setting. It uses Ansible's built-in `ansible_date_time.tz` to dynamically set the timezone based on the target host's settings.
+  - `tz_offset`: The timezone offset. It uses Ansible's built-in `ansible_date_time.tz_offset` to dynamically set the timezone offset based on the host's settings.
 - `motd_region`: Regional variable.
 - `motd_zone`: Zone variable.
 - `motd_customer`: Customer variable.

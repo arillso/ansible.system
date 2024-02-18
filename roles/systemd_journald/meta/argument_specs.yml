@@ -88,12 +88,10 @@ argument_specs:
       systemd_journald_runtime_keep_free:
         description: Keeps a specified amount of disk space free (empty means default is used).
         type: str
-        default: ""
 
       systemd_journald_runtime_max_file_size:
         description: Maximum file size for runtime journal files (empty means default is used).
         type: str
-        default: ""
 
       systemd_journald_runtime_max_files:
         description: Maximum number of runtime journal files.
@@ -103,7 +101,6 @@ argument_specs:
       systemd_journald_runtime_max_use:
         description: Maximum disk space to be used for runtime journal files (empty means default is used).
         type: str
-        default: ""
 
       systemd_journald_seal:
         description: Whether to seal journal files.

@@ -1,0 +1,5 @@
+#!/bin/sh
+# {{ ansible_managed }}
+{% if motd_header is defined %}
+echo '{{ motd_header }}'
+{% endif %}

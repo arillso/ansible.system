@@ -25,7 +25,9 @@ Variables for managing environment variables are defined and can be overridden i
 
 ## Documentation
 
-For detailed information and advanced usage, please refer to the official documentation.
+For detailed information and advanced usage, please refer to our guide:
+
+[Arillso System Guide](https://guide.arillso.io/collections/arillso/system/environment_role.html#ansible-collections-arillso-system-environment-role)
 
 ## Dependencies
 

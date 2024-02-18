@@ -1,0 +1,25 @@
+#!/bin/sh
+# {{ ansible_managed }}
+echo "FQDN:                 {{ motd_fqdn }}"
+echo "Distro:               {{ motd_distribution }} {{ motd_distribution_version }} {{ motd_distribution_release }}"
+echo "Virtual:              {{ 'YES' if motd_virtualization_role == 'guest' else 'NO' }}"
+echo "Virtualization Type:  {{ motd_virtualization_type }}"
+echo "Timezone:             {{ motd_date_time.tz }}({{ motd_date_time.tz_offset }})"
+echo
+{% if motd_region is defined and motd_region != 'undefined'  %}
+echo "Region:               {{ motd_region }}"
+{% endif %}
+{% if motd_zone is defined and motd_zone != 'undefined' %}
+echo "Zone:                 {{ motd_zone }}"
+{% endif %}
+echo 
+{% if motd_customer is defined and motd_customer != 'undefined' %}
+echo "Customer:             {{ motd_customer }}"
+{% endif %}
+{% if motd_projects is defined and motd_projects != 'undefined' %}
+echo "Projects:             {{ motd_projects | join(',') }}"
+{% endif %}
+{% if motd_project is defined and motd_project != 'undefined' %}
+echo "Project:              {{ motd_project }}"
+{% endif %}
+echo

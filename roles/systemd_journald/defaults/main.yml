@@ -45,16 +45,16 @@ systemd_journald_rate_limit_burst: 1000
 systemd_journald_rate_limit_interval: 30s
 
 # Keeps a specified amount of disk space free (empty means default is used).
-systemd_journald_runtime_keep_free:
+systemd_journald_runtime_keep_free: ""
 
 # Maximum file size for runtime journal files (empty means default is used).
-systemd_journald_runtime_max_file_size:
+systemd_journald_runtime_max_file_size: ""
 
 # Maximum number of runtime journal files.
 systemd_journald_runtime_max_files: 100
 
 # Maximum disk space to be used for runtime journal files (empty means default is used).
-systemd_journald_runtime_max_use:
+systemd_journald_runtime_max_use: ""
 
 # Whether to seal journal files (true/false).
 systemd_journald_seal: true

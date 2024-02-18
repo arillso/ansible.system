@@ -7,37 +7,91 @@
 #  the Free Software Foundation; either version 2.1 of the License, or
 #  (at your option) any later version.
 #
-# Entries in this file show the compile time defaults.
-# You can change settings by editing this file.
-# Defaults can be restored by simply deleting this file.
+#  Entries in this file show the compile time defaults.
+#  You can change settings by editing this file.
+#  Defaults can be restored by simply deleting this file.
 #
-# See journald.conf(5) for details.
+#  See journald.conf(5) for details.
 
 [Journal]
-Compress={{ 'yes' if journald_compress else 'no' }}
-ForwardToConsole={{ 'yes' if journald_forward_to_console else 'no' }}
-ForwardToKMsg={{ 'yes' if journald_forward_to_kmsg else 'no' }}
-ForwardToSyslog={{ 'yes' if journald_forward_to_syslog else 'no' }}
-ForwardToWall={{ 'yes' if journald_forward_to_wall else 'no' }}
-LineMax={{ journald_line_max }}
-MaxFileSec={{ journald_max_file_sec }}
-MaxLevelConsole={{ journald_max_level_console }}
-MaxLevelKMsg={{ journald_max_level_kmsg }}
-MaxLevelStore={{ journald_max_level_store }}
-MaxLevelSyslog={{ journald_max_level_syslog }}
-MaxLevelWall={{ journald_max_level_wall }}
-MaxRetentionSec={{ journald_max_retention_sec }}
-RateLimitBurst={{ journald_rate_limit_burst }}
-RateLimitInterval={{ journald_rate_limit_interval }}
-RuntimeKeepFree={{ journald_runtime_keep_free }}
-RuntimeMaxFiles={{ journald_runtime_max_files }}
-RuntimeMaxFileSize={{ journald_runtime_max_file_size }}
-RuntimeMaxUse={{ journald_runtime_max_use }}
-Seal={{ 'yes' if journald_seal else 'no' }}
-SplitMode={{ journald_split_mode }}
-Storage={{ journald_storage }}
-SyncIntervalSec={{ journald_sync_interval_sec }}
-SystemKeepFree={{ journald_system_keep_free }}
-SystemMaxFiles={{ journald_system_max_files }}
-SystemMaxFileSize={{ journald_system_max_file_size }}
-SystemMaxUse={{ journald_system_max_use }}
+{% if systemd_journald_compress %}
+Compress={{ 'yes' if systemd_journald_compress else 'no' }}
+{% endif %}
+{% if systemd_journald_forward_to_console %}
+ForwardToConsole={{ 'yes' if systemd_journald_forward_to_console else 'no' }}
+{% endif %}
+{% if systemd_journald_forward_to_kmsg %}
+ForwardToKMsg={{ 'yes' if systemd_journald_forward_to_kmsg else 'no' }}
+{% endif %}
+{% if systemd_journald_forward_to_syslog %}
+ForwardToSyslog={{ 'yes' if systemd_journald_forward_to_syslog else 'no' }}
+{% endif %}
+{% if systemd_journald_forward_to_wall %}
+ForwardToWall={{ 'yes' if systemd_journald_forward_to_wall else 'no' }}
+{% endif %}
+{% if systemd_journald_line_max %}
+LineMax={{ systemd_journald_line_max }}
+{% endif %}
+{% if systemd_journald_max_file_sec %}
+MaxFileSec={{ systemd_journald_max_file_sec }}
+{% endif %}
+{% if systemd_journald_max_level_console %}
+MaxLevelConsole={{ systemd_journald_max_level_console }}
+{% endif %}
+{% if systemd_journald_max_level_kmsg %}
+MaxLevelKMsg={{ systemd_journald_max_level_kmsg }}
+{% endif %}
+{% if systemd_journald_max_level_store %}
+MaxLevelStore={{ systemd_journald_max_level_store }}
+{% endif %}
+{% if systemd_journald_max_level_syslog %}
+MaxLevelSyslog={{ systemd_journald_max_level_syslog }}
+{% endif %}
+{% if systemd_journald_max_level_wall %}
+MaxLevelWall={{ systemd_journald_max_level_wall }}
+{% endif %}
+{% if systemd_journald_max_retention_sec %}
+MaxRetentionSec={{ systemd_journald_max_retention_sec }}
+{% endif %}
+{% if systemd_journald_rate_limit_burst %}
+RateLimitBurst={{ systemd_journald_rate_limit_burst }}
+{% endif %}
+{% if systemd_journald_rate_limit_interval | default('', true) | bool %}
+RateLimitInterval={{ systemd_journald_rate_limit_interval }}
+{% endif %}
+{% if systemd_journald_runtime_keep_free | default('', true) | bool %}
+RuntimeKeepFree={{ systemd_journald_runtime_keep_free }}
+{% endif %}
+{% if systemd_journald_runtime_max_files %}
+RuntimeMaxFiles={{ systemd_journald_runtime_max_files }}
+{% endif %}
+{% if systemd_journald_runtime_max_file_size | default('', true) | bool %}
+RuntimeMaxFileSize={{ systemd_journald_runtime_max_file_size }}
+{% endif %}
+{% if systemd_journald_runtime_max_use | default('', true) | bool %}
+RuntimeMaxUse={{ systemd_journald_runtime_max_use }}
+{% endif %}
+{% if systemd_journald_seal %}
+Seal={{ 'yes' if systemd_journald_seal else 'no' }}
+{% endif %}
+{% if systemd_journald_split_mode %}
+SplitMode={{ systemd_journald_split_mode }}
+{% endif %}
+{% if systemd_journald_storage %}
+Storage={{ systemd_journald_storage }}
+{% endif %}
+{% if systemd_journald_sync_interval_sec %}
+SyncIntervalSec={{ systemd_journald_sync_interval_sec }}
+{% endif %}
+{% if systemd_journald_system_keep_free %}
+SystemKeepFree={{ systemd_journald_system_keep_free }}
+{% endif %}
+{% if systemd_journald_system_max_files %}
+SystemMaxFiles={{ systemd_journald_system_max_files }}
+{% endif %}
+{% if systemd_journald_system_max_file_size %}
+SystemMaxFileSize{{ systemd_journald_system_max_file_size }}
+{% endif %}
+{% if systemd_journald_system_max_use %}
+SystemMaxUse{{ systemd_journald_system_max_use }}
+{% endif %}

@@ -50,7 +50,15 @@ argument_specs:
       motd_date_time:
         description: Date and time information
         type: dict
-        default: "{{ ansible_date_time }}"
+        options:
+          tz:
+            description: Timezone of the motd_date_time
+            type: str
+            default: "{{ ansible_date_time.tz }}"
+          tz_offset:
+            description: Timezone offset of the motd_date_time
+            type: str
+            default: "{{ ansible_date_time.tz_offset }}"
 
       motd_region:
         description: Region variable

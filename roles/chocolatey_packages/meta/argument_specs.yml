@@ -202,7 +202,7 @@ argument_specs:
       chocolatey_packages_timeout:
         type: int
         description: Timeout for the installation process, default is unset.
-        default: ""
+        default: 2700
 
       chocolatey_packages_validate_certs:
         type: bool

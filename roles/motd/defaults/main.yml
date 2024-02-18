@@ -26,7 +26,9 @@ motd_virtualization_role: "{{ ansible_virtualization_role }}" # Uses Ansible's b
 motd_virtualization_type: "{{ ansible_virtualization_type }}" # Uses Ansible's built-in virtualization type fact
 
 # Date and time information
-motd_date_time: "{{ ansible_date_time }}" # Uses Ansible's built-in date time fact
+motd_date_time: # Uses Ansible's built-in date time fact to populate timezone and offset
+  tz: "{{ ansible_date_time.tz }}" # Sets the timezone using Ansible's ansible_date_time fact
+  tz_offset: "{{ ansible_date_time.tz_offset }}" # Sets the timezone offset using Ansible's ansible_date_time fact
 
 # Region variable, undefined by default
 motd_region: undefined # Custom variable, default set to 'undefined'

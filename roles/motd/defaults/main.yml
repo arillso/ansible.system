@@ -8,7 +8,7 @@ motd_header: |2-
    /_/   \_\_| |_|___/_|_.__/|_|\___|
 
 # Fully Qualified Domain Name of the host
-motd_fqdn: "{{ ansible_fqdn }}" # Uses Ansible's built-in FQDN fact
+motd_fqdn: "{{ inventory_hostname }}" # Uses Ansible's built-in FQDN fact
 
 # Operating System Distribution Name
 motd_distribution: "{{ ansible_distribution }}" # Uses Ansible's built-in distribution fact

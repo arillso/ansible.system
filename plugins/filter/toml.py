@@ -33,6 +33,7 @@ try:
     import tomli_w as tomlw
 except ImportError as exc:
     try:
+        # pylint: disable=import-self
         import toml as tomlw
     except ImportError:
         raise AnsibleFilterError(
@@ -55,11 +56,13 @@ def from_toml(o):
     :type o: str
     :return: The Python object generated from the TOML string.
     :rtype: dict
-    :raises AnsibleFilterError: If the input string is not a valid TOML string or another 
+    :raises AnsibleFilterError: If the input string is not a valid TOML string or another
         error occurs.
     """
     if not isinstance(o, str):
-        raise AnsibleFilterError(f"from_toml requires a string, received: {type(o).__name__}")
+        raise AnsibleFilterError(
+            f"from_toml requires a string, received: {type(o).__name__}"
+        )
     try:
         python_object = tomllib.loads(o)
         return json.dumps(python_object, default=datetime_converter)
@@ -78,7 +81,9 @@ def to_toml(o):
     :raises AnsibleFilterError: If the object cannot be converted or another error occurs.
     """
     if not isinstance(o, Mapping):
-        raise AnsibleFilterError(f"to_toml requires a dict, received: {type(o).__name__}")
+        raise AnsibleFilterError(
+            f"to_toml requires a dict, received: {type(o).__name__}"
+        )
     try:
         return to_text(tomlw.dumps(o), errors="surrogate_or_strict")
     except Exception as e:
@@ -88,11 +93,11 @@ def to_toml(o):
 def to_nice_toml(data):
     """
     Convert a Python dictionary to a nicely formatted TOML string.
-    
+
     This function formats a Python dictionary into a TOML string, taking special care to handle
     nested dictionaries and arrays of dictionaries. It ensures proper indentation and formatting
     to produce a readable TOML representation of the input dictionary.
-    
+
     :param data: The Python dictionary to convert.
     :type data: dict
     :return: A nicely formatted TOML string representing the input dictionary.
@@ -130,8 +135,8 @@ def to_nice_toml(data):
     def recurse(data, indent=0, parent_key=""):
         """
         Recursively traverses the data structure, formatting it into a TOML string.
-        
-        This helper function handles the recursion needed for nested dictionaries 
+
+        This helper function handles the recursion needed for nested dictionaries
         and arrays of dictionaries,ensuring proper TOML structure and indentation.
         """
         toml_str = ""
@@ -157,6 +162,7 @@ def to_nice_toml(data):
         return toml_str
 
     return recurse(data)
+
 
 # pylint: disable=R0903
 class FilterModule:

@@ -1,4 +1,8 @@
 ---
+- name: Gather information about all services
+  become: true
+  ansible.builtin.service_facts:
+
 - name: Ensure stopped systemd-resolved
   ansible.builtin.include_role:
     name: arillso.system.systemd_service
@@ -6,6 +10,7 @@
     systemd_service_name: systemd-resolved
     systemd_service_enabled: false
     systemd_service_state: stopped
+  when: ansible_facts.services | dict2items | selectattr('key', 'match', '^systemd-resolved') | list | length > 0
 
 - name: Ensure resolv
   ansible.builtin.import_tasks: configure_resolv.yml

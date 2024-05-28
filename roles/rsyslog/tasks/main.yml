@@ -1,0 +1,19 @@
+---
+- name: Run arillso Apt Package
+  ansible.builtin.include_role:
+    name: arillso.system.apt_packages
+  vars:
+    apt_packages_list: "{{ rsyslog_packages }}"
+
+- name: Deploy main rsyslog configuration to hosts
+  become: true
+  ansible.builtin.template:
+    src: etc/rsyslog.conf.j2
+    dest: /etc/rsyslog.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Restart rsyslog
+    - Start rsyslog
+    - Enable rsyslog

@@ -1,0 +1,18 @@
+---
+- name: Restart rsyslog
+  become: true
+  ansible.builtin.service:
+    name: "{{ rsyslog_service }}"
+    state: restarted
+
+- name: Start rsyslog
+  become: true
+  ansible.builtin.service:
+    name: "{{ rsyslog_service }}"
+    state: started
+
+- name: Enable rsyslog
+  become: true
+  ansible.builtin.service:
+    name: "{{ rsyslog_service }}"
+    enabled: true

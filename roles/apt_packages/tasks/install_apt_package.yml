@@ -2,7 +2,7 @@
 - name: Ensure apt package {{ apt_package_name }}
   become: true
   ansible.builtin.apt:
-    pkg: >-
+    name: >-
       {% if apt_package_version and apt_package_version | length > 0 %}
       {{ apt_package_name }}={{ apt_package_version }}
       {% else %}

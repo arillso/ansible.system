@@ -8,8 +8,11 @@
   arillso.system.apt_update_info:
   register: register_update
 
-- name: Run arillso Apt Package
+- name: Convert package list and run arillso Apt Package role
   ansible.builtin.include_role:
     name: arillso.system.apt_packages
   vars:
-    apt_packages_list: "{{ register_update.packages }}"
+    apt_packages_list: >-
+      {{
+        register_update.packages | map('dict', {'name': item.package, 'version': item.available}) | list
+      }}

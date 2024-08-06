@@ -216,6 +216,18 @@ argument_specs:
             type: str
             default: append
 
+          ctstate:
+            description: A list of the connection states to match in the conntrack module.
+            type: str
+
+          match:
+            description: Match criteria for the rule.
+            type: str
+
+          policy:
+            description: Set the policy for the chain to the given target.
+            type: str
+            
           protocol:
             description: Network protocol to match (e.g., tcp, udp, icmp).
             type: str

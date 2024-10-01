@@ -105,6 +105,10 @@ Match set for 'ipset' match. Default is not set.
 
 Flags for the 'ipset' match. Default is not set.
 
+### `iptables_rule_numeric`
+
+Skip DNS-lookup if 'TRUE'. Default is not set.
+
 ### `iptables_rule_out_interface`
 
 Outgoing interface to match (e.g., eth1). Default is not set.

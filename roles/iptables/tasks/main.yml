@@ -40,6 +40,7 @@
     iptables_rule_match: "{{ iptables_rule.match | default(omit) }}"
     iptables_rule_match_set: "{{ iptables_rule.match_set | default(omit) }}"
     iptables_rule_match_set_flags: "{{ iptables_rule.match_set_flags | default(omit) }}"
+    iptables_rule_numeric: "{{ iptables_rule.numeric | default(omit) }}"
     iptables_rule_out_interface: "{{ iptables_rule.out_interface | default(omit) }}"
     iptables_rule_policy: "{{ iptables_rule.policy | default(omit) }}"
     iptables_rule_protocol: "{{ iptables_rule.protocol | default(omit) }}"

@@ -105,6 +105,10 @@ argument_specs:
         description: Flags for the 'ipset' match.
         type: str
 
+      iptables_rule_numeric:
+        description: Skip DNS-lookup if 'TRUE'
+        type: bool
+
       iptables_rule_out_interface:
         description: Outgoing interface to match (e.g., eth1).
         type: str
@@ -227,7 +231,7 @@ argument_specs:
           policy:
             description: Set the policy for the chain to the given target.
             type: str
-            
+
           protocol:
             description: Network protocol to match (e.g., tcp, udp, icmp).
             type: str

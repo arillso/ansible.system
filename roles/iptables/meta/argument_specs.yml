@@ -228,6 +228,10 @@ argument_specs:
             description: Match criteria for the rule.
             type: str
 
+          numeric:
+            description: Skip DNS-lookup if 'TRUE'
+            type: bool
+
           policy:
             description: Set the policy for the chain to the given target.
             type: str

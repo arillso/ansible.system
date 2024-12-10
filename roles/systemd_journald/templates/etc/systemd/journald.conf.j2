@@ -56,8 +56,8 @@ MaxRetentionSec={{ systemd_journald_max_retention_sec }}
 {% if systemd_journald_rate_limit_burst %}
 RateLimitBurst={{ systemd_journald_rate_limit_burst }}
 {% endif %}
-{% if systemd_journald_rate_limit_interval | default('', true) | bool %}
-RateLimitInterval={{ systemd_journald_rate_limit_interval }}
+{% if systemd_journald_rate_limit_interval_sec %}
+RateLimitIntervalSec={{ systemd_journald_rate_limit_interval_sec }}
 {% endif %}
 {% if systemd_journald_runtime_keep_free | default('', true) | bool %}
 RuntimeKeepFree={{ systemd_journald_runtime_keep_free }}

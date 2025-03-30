@@ -71,6 +71,9 @@ iptables_rule_match_set: "{{ omit }}"
 # Flags for the 'ipset' match
 iptables_rule_match_set_flags: "{{ omit }}"
 
+# Numeric mode
+iptables_rule_numeric: "{{ omit }}"
+
 # Outgoing interface to match (e.g., 'eth1')
 iptables_rule_out_interface: "{{ omit }}"
 

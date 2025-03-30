@@ -26,6 +26,7 @@
     match: "{{ iptables_rule_match | default(omit) }}"
     match_set: "{{ iptables_rule_match_set | default(omit) }}"
     match_set_flags: "{{ iptables_rule_match_set_flags | default(omit) }}"
+    numeric: "{{ iptables_rule_numeric | default(omit) }}"
     out_interface: "{{ iptables_rule_out_interface | default(omit) }}"
     policy: "{{ iptables_rule_policy | default(omit) }}"
     protocol: "{{ iptables_rule_protocol | default(omit) }}"

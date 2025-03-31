@@ -1,6 +1,6 @@
 # Ansible Collection: arillso.system
 
-[![license](https://img.shields.io/github/license/mashape/apistatus.svg?style=popout-square)](licence) [![Ansible Galaxy](http://img.shields.io/badge/ansible--galaxy-arillso.system-blue.svg?style=popout-square)](https://galaxy.ansible.com/arillso/system)
+[![LICENSE](https://img.shields.io/github/license/mashape/apistatus.svg?style=popout-square)](LICENSE) [![Ansible Galaxy](http://img.shields.io/badge/ansible--galaxy-arillso.system-blue.svg?style=popout-square)](https://galaxy.ansible.com/arillso/system)
 
 ## Description
 
@@ -48,7 +48,7 @@ plugins/modules:
 
 <!-- markdownlint-disable -->
 
-This project is under the MIT License. See the [LICENSE](licence) file for the full license text.
+This project is under the MIT License. See the [LICENSE](LICENSE) file for the full license text.
 
 <!-- markdownlint-enable -->
 

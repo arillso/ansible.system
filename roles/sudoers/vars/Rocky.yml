@@ -1,9 +1,8 @@
 ---
-
 sudoers_sudoers_preset_defaults:
   - env_reset
   - 'secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"'
-  - '!visiblepw'
+  - "!visiblepw"
   - always_set_home
   - match_group_by_gid
   - env_reset
@@ -15,6 +14,6 @@ sudoers_sudoers_preset_defaults:
 
 sudoers_sudoers_preset_privileges:
   - name: root
-    entry: 'ALL=(ALL) ALL'
-  - name: '%wheel'
-    entry: 'ALL=NOPASSWD: ALL'
+    entry: "ALL=(ALL) ALL"
+  - name: "%wheel"
+    entry: "ALL=NOPASSWD: ALL"

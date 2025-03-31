@@ -1,15 +1,14 @@
 ---
 # A list of YUM repositories to be managed. Each entry in the list should be a dictionary defining the repository details.
-yum_repositories_list:
-  []
-  # Example entry:
-  # - baseurl: "http://example.com/repo"
-  #   description: "Example Repository"
-  #   enabled: true
-  #   gpgcheck: true
-  #   gpgkey: "http://example.com/gpgkey"
-  #   name: "example_repo"
-  #   other options...
+yum_repositories_list: []
+# Example entry:
+# - baseurl: "http://example.com/repo"
+#   description: "Example Repository"
+#   enabled: true
+#   gpgcheck: true
+#   gpgkey: "http://example.com/gpgkey"
+#   name: "example_repo"
+#   other options...
 
 # Default async operation setting for the repository. Ansible's default is usually synchronous operation.
 yum_repositories_async: false

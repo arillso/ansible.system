@@ -1,5 +1,4 @@
 ---
-
 galaxy_info:
   description: Configure sysctl
   author: "arillso (@arillso)"

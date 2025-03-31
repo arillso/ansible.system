@@ -1,3 +1,4 @@
+---
 argument_specs:
   main:
     short_description: "Cross-platform user management"
@@ -24,8 +25,8 @@ argument_specs:
             description: "Home directory to create or manage. Optional if system default is used."
             type: "path"
             required: false
-          name:
-            description: "Full name of the user. Optional, but recommended for clarity."
+          comment:
+            description: "The comment or full name for the user account. Optional, but recommended for clarity."
             type: "str"
             required: false
           system:
@@ -45,9 +46,29 @@ argument_specs:
             type: "list"
             elements: "str"
             required: false
+          append:
+            description: "If true, additional groups are appended to the existing group list instead of replacing it."
+            type: "bool"
+            required: false
           password:
-            description: "Password for the user, can be optionally hashed. Optional, but recommended for security."
+            description: "Password for the user, optionally hashed. Recommended for security."
             type: "str"
+            required: false
+          ssh_key_file:
+            description: "Path to the SSH key file (relative to the home directory)."
+            type: "str"
+            required: false
+          ssh_key_passphrase:
+            description: "Passphrase for the generated SSH key. Optional."
+            type: "str"
+            required: false
+          ssh_key_bits:
+            description: "Number of bits for the generated SSH key. Optional, default depends on ssh-keygen."
+            type: "int"
+            required: false
+          create_home:
+            description: "Determines if the home directory should be created if it does not exist. Default is true."
+            type: "bool"
             required: false
           shell:
             description: "The shell assigned to the user. Optional, defaults to system standard."
@@ -57,11 +78,83 @@ argument_specs:
             description: "Determines whether to update the password if it differs from the current one. Optional."
             type: "str"
             required: false
-          authorized_keys:
-            description: "SSH keys to add to the user's authorized_keys file. Optional."
-            type: "list"
-            elements: "str"
+          expires:
+            description: "Account expiration time as an epoch timestamp. Optional."
+            type: "float"
             required: false
+          force:
+            description: "Forces certain actions, such as overwriting an existing SSH key or removing an account."
+            type: "bool"
+            required: false
+          local:
+            description: "Use local commands for user management. Optional."
+            type: "bool"
+            required: false
+          login_class:
+            description: "Specifies the login class for the user (primarily BSD-specific). Optional."
+            type: "str"
+            required: false
+          move_home:
+            description: "Moves the user's home directory if it already exists. Optional."
+            type: "bool"
+            required: false
+          password_expire_account_disable:
+            description: "Number of days after which the account is disabled once the password expires. Optional."
+            type: "int"
+            required: false
+          password_expire_max:
+            description: "Maximum number of days between password changes (Linux only). Optional."
+            type: "int"
+            required: false
+          password_expire_min:
+            description: "Minimum number of days between password changes (Linux only). Optional."
+            type: "int"
+            required: false
+          password_expire_warn:
+            description: "Number of warning days before the password expires (Linux only). Optional."
+            type: "int"
+            required: false
+          password_lock:
+            description: "Specifies whether the password is locked. Optional."
+            type: "bool"
+            required: false
+          profile:
+            description: "Defines the user's profile (primarily Solaris-specific). Optional."
+            type: "str"
+            required: false
+          remove:
+            description: "Removes the user and associated directories (only with state=absent). Optional."
+            type: "bool"
+            required: false
+          role:
+            description: "Specifies the role of the user (primarily Solaris-specific). Optional."
+            type: "str"
+            required: false
+          seuser:
+            description: "Sets the SELinux user type (only relevant on SELinux-enabled systems). Optional."
+            type: "str"
+            required: false
+          skeleton:
+            description: "Specifies a skeleton directory for the home directory. Requires create_home. Optional."
+            type: "str"
+            required: false
+          ssh_key_comment:
+            description: "Comment to be added to the generated SSH key. Optional."
+            type: "str"
+            required: false
+          umask:
+            description: "Sets the umask for the user (Linux only). Optional."
+            type: "str"
+            required: false
+          uid_min:
+            description: "Minimum allowed UID value (Linux-specific). Optional."
+            type: "int"
+            required: false
+          uid_max:
+            description: "Maximum allowed UID value (Linux-specific). Optional."
+            type: "int"
+            required: false
+
       users_home:
         description: "Default home directory path for users. Default is '/home'."
         type: "path"

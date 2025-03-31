@@ -1,5 +1,4 @@
 ---
-
 - name: Ensure sysctl tasks
   ansible.builtin.include_tasks: configure_sysctl.yml
   vars:

@@ -1,27 +1,26 @@
 ---
-packages_list:
-  []
-  # Example configurations for package installation:
-  # - name: 'vim'                       # Package name
-  #   version: '8.0'                    # Specify version
-  #   install_recommends: false         # Whether to install recommended packages
-  #   allow_downgrade: false            # Allow package downgrades
-  #   purge: false                      # Remove package with its configuration
-  #   force_apt_get: false              # Force using apt-get over other methods
-  #   lock_timeout: 30                  # Lock timeout in seconds
-  #   state: 'present'                  # Desired state of the package
+packages_list: []
+# Example configurations for package installation:
+# - name: 'vim'                       # Package name
+#   version: '8.0'                    # Specify version
+#   install_recommends: false         # Whether to install recommended packages
+#   allow_downgrade: false            # Allow package downgrades
+#   purge: false                      # Remove package with its configuration
+#   force_apt_get: false              # Force using apt-get over other methods
+#   lock_timeout: 30                  # Lock timeout in seconds
+#   state: 'present'                  # Desired state of the package
 
-  # Additional examples with different package states and options:
-  # - name: nginx
-  #   state: latest                     # Install the latest version
-  # - name: httpd
-  #   state: present                    # Ensure the package is installed
-  # - name: python3
-  #   state: absent                     # Ensure the package is not installed
-  # - name: git
-  #   version: latest                   # Install the latest version of git
-  # - name: vlc
-  #   state: present                    # Ensure vlc is installed
-  # - name: 7zip
-  #   state: latest                     # Install the latest version of 7zip
-  #   ignore_checksums: true            # Ignore checksums during installation
+# Additional examples with different package states and options:
+# - name: nginx
+#   state: latest                     # Install the latest version
+# - name: httpd
+#   state: present                    # Ensure the package is installed
+# - name: python3
+#   state: absent                     # Ensure the package is not installed
+# - name: git
+#   version: latest                   # Install the latest version of git
+# - name: vlc
+#   state: present                    # Ensure vlc is installed
+# - name: 7zip
+#   state: latest                     # Install the latest version of 7zip
+#   ignore_checksums: true            # Ignore checksums during installation

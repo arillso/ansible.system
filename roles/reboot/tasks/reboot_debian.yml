@@ -1,3 +1,4 @@
+---
 - name: Check if reboot is required
   arillso.system.reboot_info:
   register: register_reboot

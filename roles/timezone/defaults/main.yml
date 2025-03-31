@@ -1,3 +1,4 @@
+---
 # Defines the timezone packages to be installed. It uses a conditional lookup based on the distribution.
 # The variable "_timezone_packages" is a dictionary where each key is a distribution name (like 'CentOS', 'Ubuntu'),
 # and the value is a list of package names. If the distribution is not found, it defaults to the 'default' key.

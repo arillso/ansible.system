@@ -1,3 +1,4 @@
+---
 # List of rsyslog packages to be installed
 rsyslog_packages:
   - name: rsyslog # The main package for rsyslog

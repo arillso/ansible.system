@@ -1,5 +1,4 @@
 ---
-
 systemd_service_name: ""
 systemd_service_enabled: true
 systemd_service_state: started

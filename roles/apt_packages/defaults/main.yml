@@ -1,15 +1,14 @@
 ---
 # A list of APT packages to be managed. Each entry in the list can be either a package name or a dictionary with additional options.
 apt_packages_list:
-  # Beispiel:
-  # - name: 'vim'
-  #   version: '8.0'
-  #   install_recommends: false
-  #   allow_downgrade: false
-  #   purge: false
-  #   force_apt_get: false
-  #   lock_timeout: 30
-  #   state: 'present'
+# - name: 'vim'
+#   version: '8.0'
+#   install_recommends: false
+#   allow_downgrade: false
+#   purge: false
+#   force_apt_get: false
+#   lock_timeout: 30
+#   state: 'present'
 
 # Default value for installing recommended packages along with the main package. Can be true or false.
 apt_packages_install_recommends: true

@@ -1,3 +1,4 @@
+---
 galaxy_info:
   description: The role manages Python packages and modules installations using Pip on Linux systems.
   author: "arillso (@arillso)"

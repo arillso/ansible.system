@@ -1,5 +1,4 @@
 ---
-
 - name: "Ensure entrie {{ sysctl_entrie_name }}"
   become: true
   ansible.posix.sysctl:

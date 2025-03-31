@@ -1,5 +1,4 @@
 ---
-
 sysctl_entries_ignoreerrors: false
 sysctl_entries_reload: true
 sysctl_entries_sysctl_file: "/etc/sysctl.conf"

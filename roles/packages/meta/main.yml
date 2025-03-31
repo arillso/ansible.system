@@ -1,5 +1,4 @@
 ---
-
 galaxy_info:
   description: The role installs different packages on the system.
   author: "arillso (@arillso)"
@@ -12,9 +11,6 @@ galaxy_info:
     - name: Debian
       versions:
         - all
-    # - name: Windows
-    #   versions:
-    #     - all
 
   galaxy_tags:
     - package

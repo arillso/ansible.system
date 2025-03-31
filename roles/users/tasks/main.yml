@@ -1,3 +1,4 @@
+---
 # tasks file
 
 - name: Add OS specific variables

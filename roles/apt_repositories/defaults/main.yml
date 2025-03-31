@@ -1,17 +1,16 @@
 ---
 # A list of APT repositories to be managed. Each entry should be a dictionary with repository details.
 apt_repositories_list:
-  # Beispiel:
-  # - codename: 'buster'
-  #   filename: 'myrepo.list'
-  #   install_python_apt: true
-  #   mode: '0644'
-  #   repo: 'deb http://myrepo.example.com/debian buster main'
-  #   state: 'present'
-  #   update_cache_retries: 3
-  #   update_cache_retry_max_delay: 12
-  #   update_cache: true
-  #   validate_certs: true
+# - codename: 'buster'
+#   filename: 'myrepo.list'
+#   install_python_apt: true
+#   mode: '0644'
+#   repo: 'deb http://myrepo.example.com/debian buster main'
+#   state: 'present'
+#   update_cache_retries: 3
+#   update_cache_retry_max_delay: 12
+#   update_cache: true
+#   validate_certs: true
 
 # Default filename for APT repositories if not specified in each repository dictionary.
 apt_repositories_filename: "default.list"

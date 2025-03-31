@@ -142,42 +142,42 @@ iptables_rule_wait: "{{ omit }}"
 
 # Default iptables rules
 iptables_rules:
-  # - chain: input
-  #   action: append
-  #   protocol: tcp
-  #   source: 0.0.0.0/0
-  #   destination: 0.0.0.0/0
-  #   destination_port: 22
-  #   source_port: omit
-  #   in_interface: eth0
-  #   out_interface: eth1
-  #   fragment: omit
-  #   set_counters: [0, 0]
-  #   source_range: 192.168.1.1-192.168.1.100
-  #   destination_range: 172.16.0.1-172.16.0.100
-  #   limit: 10/min
-  #   limit_burst: 5
-  #   uid_owner: 1000
-  #   gid_owner: 1000
-  #   icmp_type: echo-request
-  #   state: present
-  #   table: filter
-  #   jump: ACCEPT
-  #   goto: DROP
-  #   log_prefix: "iptables-logged: "
-  #   log_level: 6
-  #   ctstate: NEW,ESTABLISHED
-  #   tcp_flags: "SYN,ACK,FIN,RST"
-  #   match: state
-  #   match_set: "src_set,dst_set"
-  #   match_set_flags: "src,dst"
-  #   reject_with: icmp-port-unreachable
-  #   set_dscp_mark: 0x16
-  #   set_dscp_mark_class: EF
-  #   to_ports: 8080
-  #   to_destination: 10.0.0.1
-  #   to_source: 10.0.0.2
-  #   comment: "Beispielregel für OpenSSH"
-  #   syn: omit
-  #   wait: 0
-  #   ip_version: ipv4
+# - chain: input
+#   action: append
+#   protocol: tcp
+#   source: 0.0.0.0/0
+#   destination: 0.0.0.0/0
+#   destination_port: 22
+#   source_port: omit
+#   in_interface: eth0
+#   out_interface: eth1
+#   fragment: omit
+#   set_counters: [0, 0]
+#   source_range: 192.168.1.1-192.168.1.100
+#   destination_range: 172.16.0.1-172.16.0.100
+#   limit: 10/min
+#   limit_burst: 5
+#   uid_owner: 1000
+#   gid_owner: 1000
+#   icmp_type: echo-request
+#   state: present
+#   table: filter
+#   jump: ACCEPT
+#   goto: DROP
+#   log_prefix: "iptables-logged: "
+#   log_level: 6
+#   ctstate: NEW,ESTABLISHED
+#   tcp_flags: "SYN,ACK,FIN,RST"
+#   match: state
+#   match_set: "src_set,dst_set"
+#   match_set_flags: "src,dst"
+#   reject_with: icmp-port-unreachable
+#   set_dscp_mark: 0x16
+#   set_dscp_mark_class: EF
+#   to_ports: 8080
+#   to_destination: 10.0.0.1
+#   to_source: 10.0.0.2
+#   comment: "Beispielregel für OpenSSH"
+#   syn: omit
+#   wait: 0
+#   ip_version: ipv4

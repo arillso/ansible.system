@@ -59,16 +59,16 @@ RateLimitBurst={{ systemd_journald_rate_limit_burst }}
 {% if systemd_journald_rate_limit_interval_sec %}
 RateLimitIntervalSec={{ systemd_journald_rate_limit_interval_sec }}
 {% endif %}
-{% if systemd_journald_runtime_keep_free | default('', true) | bool %}
+{% if systemd_journald_runtime_keep_free %}
 RuntimeKeepFree={{ systemd_journald_runtime_keep_free }}
 {% endif %}
 {% if systemd_journald_runtime_max_files %}
 RuntimeMaxFiles={{ systemd_journald_runtime_max_files }}
 {% endif %}
-{% if systemd_journald_runtime_max_file_size | default('', true) | bool %}
+{% if systemd_journald_runtime_max_file_size %}
 RuntimeMaxFileSize={{ systemd_journald_runtime_max_file_size }}
 {% endif %}
-{% if systemd_journald_runtime_max_use | default('', true) | bool %}
+{% if systemd_journald_runtime_max_use %}
 RuntimeMaxUse={{ systemd_journald_runtime_max_use }}
 {% endif %}
 {% if systemd_journald_seal %}

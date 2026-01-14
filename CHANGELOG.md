@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-01-14
+
 ### Added
 
 - Added AGENTS.md for AI agent documentation
@@ -45,6 +47,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use systemd role for all systemd operations (DRY principle)
 - Inline systemd units as structured YAML (remove separate template files)
 - Unify defaults/main.yml format (remove banners, keep examples)
+- Updated ansible.posix dependency from >=1.4.0 to >=2.0.0
+- Removed unused devsec.hardening dependency
+
+### Fixed
+
+- Fixed firewall Tailscale service dependency handling (#82)
+- Fixed systemd_journald_runtime variables (#67)
 
 ### Security
 

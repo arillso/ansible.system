@@ -4,7 +4,7 @@ name: Publish Collection
 on:
     push:
         tags:
-            - "v*"
+            - "[0-9]+.[0-9]+.[0-9]+"
 
 permissions:
     contents: write
@@ -20,7 +20,7 @@ jobs:
 
             - name: Get version from tag
               id: get_version
-              run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+              run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
             - name: Extract changelog for version
               id: changelog

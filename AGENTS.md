@@ -76,9 +76,39 @@ Key roles:
 
 ### Release Process
 
-1. Update CHANGELOG.md with version and changes
-2. Create git tag with version (e.g., v1.0.0)
-3. Push tag to trigger Galaxy publish workflow
+**IMPORTANT: Always update CHANGELOG.md before releasing!**
+
+1. **Update CHANGELOG.md** (REQUIRED - DO NOT SKIP!)
+   - Add new version section (e.g., `## [1.0.1] - 2026-01-14`)
+   - Document all changes under appropriate sections:
+     - Added - new features
+     - Changed - changes in existing functionality
+     - Deprecated - soon-to-be removed features
+     - Removed - removed features
+     - Fixed - bug fixes
+     - Security - security fixes
+   - Move items from `## [Unreleased]` to the new version section
+
+2. **Update galaxy.yml version**
+   - Change `version:` field to match the new release version
+
+3. **Create and push git tag**
+   - Use version without 'v' prefix (e.g., `1.0.1` not `v1.0.1`)
+   - Follow Ansible Collections best practice (no v prefix)
+   - Command: `git tag 1.0.1 && git push origin 1.0.1`
+
+4. **Automated workflow triggers**
+   - Tag push automatically triggers `publish.yml` workflow
+   - Workflow extracts changelog for the version
+   - Publishes to Ansible Galaxy
+   - Creates GitHub Release with changelog notes
+
+**Release Checklist:**
+- [ ] CHANGELOG.md updated with new version
+- [ ] galaxy.yml version updated
+- [ ] All CI tests passing
+- [ ] README.md reflects current state (if needed)
+- [ ] Git tag created and pushed (without v prefix)
 
 ## Do Not
 

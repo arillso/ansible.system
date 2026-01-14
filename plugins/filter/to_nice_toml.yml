@@ -1,0 +1,33 @@
+---
+DOCUMENTATION:
+  name: to_nice_toml
+  author: arillso (@arillso)
+  version_added: "1.0.0"
+  short_description: Convert dictionary to nicely formatted TOML
+  description:
+    - Converts a Python dictionary into a nicely formatted TOML string.
+    - Handles nested dictionaries and arrays with proper indentation.
+    - Formats date-time values correctly as YYYY-MM-DDTHH:MM:SSZ.
+  positional: _input
+  options:
+    _input:
+      description: Dictionary to convert to TOML
+      type: dict
+      required: true
+
+EXAMPLES: |
+  # Convert dict to nicely formatted TOML
+  - name: Generate TOML config
+    ansible.builtin.copy:
+      content: "{{ config_dict | arillso.system.to_nice_toml }}"
+      dest: /etc/app/config.toml
+
+  # Format complex nested structure
+  - name: Create formatted TOML
+    ansible.builtin.set_fact:
+      toml_output: "{{ complex_data | arillso.system.to_nice_toml }}"
+
+RETURN:
+  _value:
+    description: Nicely formatted TOML string representation of the input dictionary
+    type: str

@@ -1,0 +1,16 @@
+---
+- name: Manage system groups
+  ansible.builtin.group:
+      name: "{{ _access_group_item.name }}"
+      gid: "{{ _access_group_item.gid | default(omit) }}"
+      state: "{{ _access_group_item.state | default('present') }}"
+      system: "{{ _access_group_item.system | default(false) }}"
+  become: true
+  loop: "{{ access_groups }}"
+  loop_control:
+      loop_var: _access_group_item
+      label: "{{ _access_group_item.name }}"
+  retries: "{{ access_retry_count }}"
+  delay: "{{ access_retry_delay }}"
+  register: _access_groups_result
+  until: _access_groups_result is succeeded

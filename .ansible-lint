@@ -1,3 +1,20 @@
 ---
+exclude_paths:
+  - .ansible/
+  - .github/
+  - .venv/
+  - venv/
+
 skip_list:
-  - galaxy[version-incorrect]
+  - experimental  # Allow experimental features
+  - galaxy[version-incorrect]  # Allow flexible versioning
+  - var-naming[no-role-prefix]  # Allow internal variables with _ prefix
+  - command-instead-of-module  # Allow curl for gpg key operations
+  - no-handler  # Allow task-based state changes
+  - package-latest  # Allow pip upgrade to latest
+
+warn_list:
+  - name[casing]  # Warn on task naming
+  - yaml[line-length]  # Warn on long lines
+
+use_default_rules: true

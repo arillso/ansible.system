@@ -1,0 +1,11 @@
+---
+# Internal variables for logging role
+
+# Default logrotate options
+_logging_logrotate_default_options:
+    - daily
+    - rotate 14
+    - compress
+    - delaycompress
+    - notifempty
+    - missingok

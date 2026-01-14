@@ -1,0 +1,199 @@
+---
+# File: roles/system_tuning/tasks/swap.yml
+# Robust swap file management with proper validation
+
+- name: Validate swap configuration
+  block:
+      - name: Check if swap file path is valid
+        ansible.builtin.fail:
+            msg: "Invalid swap file path: {{ tuning_swap_file_path }}"
+        when:
+            - tuning_swap_file_path is not defined
+            - tuning_swap_file_path == ""
+            - not tuning_swap_file_path.startswith("/")
+
+      - name: Validate swap file size
+        ansible.builtin.fail:
+            msg: "Invalid swap file size: {{ tuning_swap_file_size_mb }}MB (minimum 64MB)"
+        when:
+            - tuning_swap_file_size_mb is not defined
+            - tuning_swap_file_size_mb | int < 64
+
+- name: Check available disk space using facts
+  block:
+      - name: Get mount point for swap file directory
+        ansible.builtin.set_fact:
+            swap_mount_point: >-
+                {%- set swap_dir = tuning_swap_file_path | dirname -%}
+                {%- for mount in ansible_mounts -%}
+                {%- if swap_dir.startswith(mount.mount) -%}
+                {{ mount.mount }}{%- endif -%}
+                {%- endfor -%}
+
+      - name: Get available space from mount facts
+        ansible.builtin.set_fact:
+            available_space_mb: >-
+                {%- for mount in ansible_mounts -%}
+                {%- if mount.mount == swap_mount_point -%}
+                {{ (mount.size_available / 1024 / 1024) | int }}{%- endif -%}
+                {%- endfor -%}
+
+      - name: Ensure sufficient disk space
+        ansible.builtin.fail:
+            msg: "Insufficient disk space. Need {{ tuning_swap_file_size_mb }}MB, available {{ available_space_mb }}MB"
+        when: (available_space_mb | int) < (tuning_swap_file_size_mb | int + 100)
+
+- name: Check current swap status
+  block:
+      - name: Check if swap file exists
+        ansible.builtin.stat:
+            path: "{{ tuning_swap_file_path }}"
+        register: swap_file_stat
+
+      - name: Get current swap information
+        ansible.builtin.command: swapon --show=NAME,SIZE --noheadings --bytes
+        register: active_swaps
+        changed_when: false
+        failed_when: false
+
+      - name: Parse active swap information
+        ansible.builtin.set_fact:
+            swap_file_active: "{{ tuning_swap_file_path in active_swaps.stdout }}"
+            current_swap_size: >-
+                {%- for line in active_swaps.stdout_lines -%}
+                {%- if tuning_swap_file_path in line -%}
+                {{ (line.split()[1] | int / 1024 / 1024) | int }}{%- endif -%}
+                {%- endfor -%}
+
+- name: Create or resize swap file
+  block:
+      - name: Backup existing swap file
+        ansible.builtin.copy:
+            src: "{{ tuning_swap_file_path }}"
+            dest: "{{ tuning_swap_file_path }}.backup.{{ ansible_date_time.epoch }}"
+            remote_src: true
+            mode: preserve
+        become: true
+        when:
+            - swap_file_stat.stat.exists
+            - current_swap_size != (tuning_swap_file_size_mb | string)
+
+      - name: Disable existing swap file if resizing
+        ansible.builtin.command: swapoff {{ tuning_swap_file_path }}
+        become: true
+        changed_when: true
+        when:
+            - swap_file_active
+            - current_swap_size != (tuning_swap_file_size_mb | string)
+
+      - name: Remove existing swap file if resizing
+        ansible.builtin.file:
+            path: "{{ tuning_swap_file_path }}"
+            state: absent
+        become: true
+        when:
+            - swap_file_stat.stat.exists
+            - current_swap_size != (tuning_swap_file_size_mb | string)
+
+      - name: Create swap file using fallocate
+        ansible.builtin.command: fallocate -l {{ tuning_swap_file_size_mb }}M {{ tuning_swap_file_path }}
+        become: true
+        register: fallocate_result
+        changed_when: fallocate_result.rc == 0
+        failed_when: false
+        when: not swap_file_stat.stat.exists or current_swap_size != (tuning_swap_file_size_mb | string)
+
+      - name: Create swap file using dd (fallback)
+        ansible.builtin.command: >-
+            dd if=/dev/zero of={{ tuning_swap_file_path }}
+            bs=1M count={{ tuning_swap_file_size_mb }}
+        become: true
+        register: dd_result
+        changed_when: dd_result.rc == 0
+        when:
+            - fallocate_result.rc is defined
+            - fallocate_result.rc != 0
+
+      - name: Verify swap file was created
+        ansible.builtin.stat:
+            path: "{{ tuning_swap_file_path }}"
+        register: new_swap_file_stat
+
+      - name: Fail if swap file creation failed
+        ansible.builtin.fail:
+            msg: "Failed to create swap file {{ tuning_swap_file_path }}"
+        when: not new_swap_file_stat.stat.exists
+
+- name: Configure swap file
+  block:
+      - name: Set swap file permissions
+        ansible.builtin.file:
+            path: "{{ tuning_swap_file_path }}"
+            mode: "0600"
+            owner: root
+            group: root
+        become: true
+
+      - name: Verify swap file size
+        ansible.builtin.shell: |
+            actual_size=$(stat -c%s {{ tuning_swap_file_path }})
+            expected_size=$(({{ tuning_swap_file_size_mb }} * 1024 * 1024))
+            if [ $actual_size -ne $expected_size ]; then
+                echo "Size mismatch: expected $expected_size, got $actual_size"
+                exit 1
+            fi
+        register: size_check
+        changed_when: false
+
+      - name: Format swap file
+        ansible.builtin.command: mkswap {{ tuning_swap_file_path }}
+        become: true
+        register: mkswap_result
+        changed_when: mkswap_result.rc == 0
+        when: not swap_file_active or current_swap_size != (tuning_swap_file_size_mb | string)
+
+      - name: Enable swap file
+        ansible.builtin.command: swapon {{ tuning_swap_file_path }}
+        become: true
+        register: swapon_result
+        changed_when: swapon_result.rc == 0
+        when: not swap_file_active
+
+      - name: Verify swap is active
+        ansible.builtin.command: swapon --show=NAME --noheadings
+        register: verify_swap
+        changed_when: false
+
+      - name: Fail if swap activation failed
+        ansible.builtin.fail:
+            msg: "Swap file {{ tuning_swap_file_path }} is not active after swapon"
+        when: tuning_swap_file_path not in verify_swap.stdout
+
+- name: Configure swap persistence
+  block:
+      - name: Check if swap entry exists in fstab
+        ansible.builtin.command: grep -q "^{{ tuning_swap_file_path }}" /etc/fstab
+        register: fstab_check
+        changed_when: false
+        failed_when: false
+
+      - name: Add swap file to fstab
+        ansible.posix.mount:
+            path: none
+            src: "{{ tuning_swap_file_path }}"
+            fstype: swap
+            opts: sw
+            passno: 0
+            dump: 0
+            state: present
+        become: true
+        when: fstab_check.rc != 0
+
+- name: Report swap configuration status
+  ansible.builtin.debug:
+      msg:
+          - "Swap file configuration completed:"
+          - "  - File: {{ tuning_swap_file_path }}"
+          - "  - Size: {{ tuning_swap_file_size_mb }}MB"
+          - "  - Status: {{ 'Active' if tuning_swap_file_path in verify_swap.stdout else 'Inactive' }}"
+          - "  - Persistent: Added to /etc/fstab"

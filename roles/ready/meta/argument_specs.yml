@@ -1,0 +1,63 @@
+---
+# Argument specifications for System Ready role
+# Defines and validates all input parameters for the role
+
+argument_specs:
+    main:
+        short_description: "Wait for system readiness before configuration"
+        description: |
+            This role waits for system readiness by checking SSH connectivity
+            and cloud-init completion. Includes automatic error recovery for
+            scenarios where cloud-init triggers a system restart.
+        options:
+            ready_ssh_port:
+                type: "int"
+                required: false
+                default: 22
+                description: "SSH port to check for availability"
+
+            ready_ssh_delay:
+                type: "int"
+                required: false
+                default: 10
+                description: "Delay in seconds between SSH availability checks"
+
+            ready_ssh_timeout:
+                type: "int"
+                required: false
+                default: 300
+                description: "Maximum time in seconds to wait for SSH availability"
+
+            ready_check_retries:
+                type: "int"
+                required: false
+                default: 60
+                description: "Number of retries for cloud-init status checks"
+
+            ready_check_delay:
+                type: "int"
+                required: false
+                default: 2
+                description: "Delay in seconds between cloud-init status checks"
+
+            ready_rescue_pause:
+                type: "int"
+                required: false
+                default: 30
+                description: "Pause in seconds after failed check before retry"
+
+            ready_gather_facts:
+                type: "bool"
+                required: false
+                default: true
+                description: "Gather system facts after system is ready"
+
+            ready_gather_subset:
+                type: "list"
+                elements: "str"
+                required: false
+                default: []
+                description: |
+                    Subset of facts to gather. Example:
+                    ['!all', '!any', 'network', 'hardware']
+                    Empty list for full fact gathering.

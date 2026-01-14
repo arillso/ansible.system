@@ -1,4 +1,4 @@
 {
-  "reportMissingImports": false,
-  "stubPath": "./typings"
+    "reportMissingImports": false,
+    "stubPath": "./typings"
 }

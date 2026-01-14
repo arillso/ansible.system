@@ -1,0 +1,299 @@
+{{ "#!/bin/bash" }}
+# Cloud metadata collector with intelligent caching and performance optimization
+# Enterprise-grade reliability with minimal network dependencies
+
+set -euo pipefail
+
+# Universal configuration variables from Ansible (harmonized across all facts scripts)
+readonly CACHE_DIR="{{ facts_cache_dir | default('/var/cache/ansible-facts') }}"
+readonly CACHE_FILE="${CACHE_DIR}/cloud.json"
+readonly CACHE_TTL="{{ facts_cache_ttl_cloud | default(facts_cache_default_ttl) | default(3600) }}"  # 1 hour cache TTL
+readonly TIMEOUT="{{ facts_timeout_default | default(5) }}"
+readonly MAX_RETRIES="{{ facts_max_retries | default(1) }}"
+readonly METADATA_BASE_URL="{{ facts_cloud_metadata_base_url | default('http://169.254.169.254') }}"
+readonly DEBUG_ENABLED="{{ facts_debug_enabled | default(false) }}"
+readonly CLOUD_PROVIDER="{{ provider | default(ansible_cloud_provider) | default('auto') }}"
+
+# Logging with proper levels (harmonized with universal debug configuration)
+log_debug() {
+    [[ "${DEBUG_ENABLED}" == "true" ]] && echo "[DEBUG] $*" >&2
+}
+
+log_info() {
+    echo "[INFO] $*" >&2
+}
+
+log_error() {
+    echo "[ERROR] $*" >&2
+}
+
+log_warn() {
+    echo "[WARN] $*" >&2
+}
+
+# Cache management functions
+is_cache_valid() {
+    local cache_file="$1"
+    local ttl="$2"
+
+    if [[ ! -f "$cache_file" ]]; then
+        log_debug "Cache file does not exist: $cache_file"
+        return 1
+    fi
+
+    local cache_age
+    cache_age=$(($(date +%s) - $(stat -c %Y "$cache_file" 2>/dev/null || echo 0)))
+
+    if [[ $cache_age -gt $ttl ]]; then
+        log_debug "Cache expired: age=$cache_age, ttl=$ttl"
+        return 1
+    fi
+
+    log_debug "Cache valid: age=$cache_age, ttl=$ttl"
+    return 0
+}
+
+create_cache_dir() {
+    if [[ ! -d "$CACHE_DIR" ]]; then
+        mkdir -p "$CACHE_DIR" 2>/dev/null || {
+            log_warn "Cannot create cache directory: $CACHE_DIR"
+            return 1
+        }
+        chmod 700 "$CACHE_DIR"
+        log_debug "Created cache directory: $CACHE_DIR"
+    fi
+    return 0
+}
+
+read_cache() {
+    local cache_file="$1"
+
+    if [[ -f "$cache_file" && -r "$cache_file" ]]; then
+        if jq -e . "$cache_file" >/dev/null 2>&1; then
+            # Return cached data with original timestamps, only mark cache as used
+            jq '.meta.cache_used = true' "$cache_file"
+            return 0
+        else
+            log_warn "Cache file corrupted, removing: $cache_file"
+            rm -f "$cache_file"
+        fi
+    fi
+    return 1
+}
+
+write_cache() {
+    local cache_file="$1"
+    local data="$2"
+
+    if create_cache_dir; then
+        echo "$data" > "$cache_file" 2>/dev/null || {
+            log_warn "Cannot write cache file: $cache_file"
+            return 1
+        }
+        chmod 600 "$cache_file"
+        log_debug "Cached cloud metadata to: $cache_file"
+        return 0
+    fi
+    return 1
+}
+
+# Network operations with proper error handling
+check_url_with_retry() {
+    local url="$1"
+    local retries="${2:-$MAX_RETRIES}"
+    local timeout="${3:-$TIMEOUT}"
+
+    for ((i=0; i<=retries; i++)); do
+        local http_code
+        http_code=$(curl -s --connect-timeout "$timeout" --max-time "$timeout" \
+                    -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
+
+        if [[ "$http_code" == "200" ]]; then
+            log_debug "URL check successful: $url (attempt $((i+1)))"
+            return 0
+        fi
+
+        if [[ $i -lt $retries ]]; then
+            log_debug "URL check failed: $url (attempt $((i+1))), retrying..."
+            sleep 0.5
+        fi
+    done
+
+    log_debug "URL check failed after $((retries+1)) attempts: $url"
+    return 1
+}
+
+fetch_metadata_with_retry() {
+    local url="$1"
+    local retries="${2:-$MAX_RETRIES}"
+    local timeout="${3:-$TIMEOUT}"
+
+    for ((i=0; i<=retries; i++)); do
+        local result
+        result=$(curl -s --connect-timeout "$timeout" --max-time "$timeout" \
+                 "$url" 2>/dev/null || echo "")
+
+        if [[ -n "$result" && "$result" != "null" ]]; then
+            log_debug "Metadata fetch successful: $url (attempt $((i+1)))"
+            echo "$result"
+            return 0
+        fi
+
+        if [[ $i -lt $retries ]]; then
+            log_debug "Metadata fetch failed: $url (attempt $((i+1))), retrying..."
+            sleep 0.5
+        fi
+    done
+
+    log_debug "Metadata fetch failed after $((retries+1)) attempts: $url"
+    return 1
+}
+
+# Enhanced check for specific provider identification
+check_provider_specific() {
+    local provider="$1"
+    local url="$2"
+    local expected_content="${3:-}"
+
+    local response
+    response=$(curl -s --connect-timeout "$TIMEOUT" --max-time "$TIMEOUT" "$url" 2>/dev/null || echo "")
+
+    if [[ -n "$response" && "$response" != "null" ]]; then
+        if [[ -n "$expected_content" ]]; then
+            if echo "$response" | grep -q "$expected_content"; then
+                log_debug "Provider $provider confirmed with expected content in response"
+                return 0
+            fi
+        else
+            log_debug "Provider $provider confirmed with valid response"
+            return 0
+        fi
+    fi
+    log_debug "Provider $provider check failed or no valid response"
+    return 1
+}
+
+# Optimized metadata collection with minimal calls
+get_cloud_metadata() {
+    local provider="$1"
+    local hostname="unknown"
+    local instance_id="unknown"
+    local region="unknown"
+
+    case "$provider" in
+        aws)
+            hostname=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/latest/meta-data/hostname" || echo "unknown")
+            instance_id=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/latest/meta-data/instance-id" || echo "unknown")
+            region=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/latest/meta-data/placement/region" || echo "unknown")
+            ;;
+        digitalocean)
+            hostname=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/metadata/v1/hostname" || echo "unknown")
+            instance_id=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/metadata/v1/id" || echo "unknown")
+            region=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/metadata/v1/region" || echo "unknown")
+            ;;
+        hetzner)
+            hostname=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/hetzner/v1/metadata/hostname" || echo "unknown")
+            instance_id=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/hetzner/v1/metadata/instance-id" || echo "unknown")
+            region=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/hetzner/v1/metadata/availability-zone" || echo "unknown")
+            ;;
+        vultr)
+            hostname=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/v1/hostname" || echo "unknown")
+            instance_id=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/v1/instanceid" || echo "unknown")
+            region=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/v1/region" || echo "unknown")
+            ;;
+        gcp)
+            hostname=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/computeMetadata/v1/instance/hostname" || echo "unknown")
+            instance_id=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/computeMetadata/v1/instance/id" || echo "unknown")
+            region=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/computeMetadata/v1/instance/zone" || echo "unknown")
+            ;;
+        generic)
+            hostname=$(hostname -f)
+            instance_id="local"
+            region="local"
+            ;;
+    esac
+
+    # Fallback to system hostname if all cloud calls failed
+    if [[ "$hostname" == "unknown" || -z "$hostname" ]]; then
+        hostname=$(hostname -f)
+        log_warn "Cloud hostname unavailable, using system hostname: $hostname"
+    fi
+
+    # Generate structured output with meta separation and multiple timestamp formats
+    local iso_timestamp human_timestamp epoch_timestamp
+    iso_timestamp="$(date -Iseconds)"
+    human_timestamp="$(date '+%Y-%m-%d %H:%M:%S %Z')"
+    epoch_timestamp="$(date +%s)"
+
+    jq -n \
+        --arg provider "$provider" \
+        --arg hostname "$hostname" \
+        --arg instance_id "$instance_id" \
+        --arg region "$region" \
+        --arg iso_timestamp "$iso_timestamp" \
+        --arg human_timestamp "$human_timestamp" \
+        --arg epoch_timestamp "$epoch_timestamp" \
+        --arg metadata_available "$([ "$provider" != "generic" ] && echo "true" || echo "false")" \
+        '{
+            provider: $provider,
+            hostname: $hostname,
+            instance_id: $instance_id,
+            region: $region,
+            metadata_available: ($metadata_available | test("true")),
+            meta: {
+                collection_timestamp: $iso_timestamp,
+                collection_timestamp_human: $human_timestamp,
+                collection_timestamp_epoch: ($epoch_timestamp | tonumber),
+                cache_used: false,
+                script_type: "cloud_metadata",
+                ttl_seconds: 3600
+            }
+        }'
+}
+
+# Main execution with caching logic
+main() {
+    # Check if cloud metadata is disabled
+    if [[ "${facts_enable_cloud_metadata:-true}" != "true" ]]; then
+        jq -n \
+            --arg hostname "$(hostname -f)" \
+            --arg timestamp "$(date -Iseconds)" \
+            '{
+                provider: "disabled",
+                hostname: $hostname,
+                instance_id: "disabled",
+                region: "disabled",
+                metadata_available: false,
+                meta: {
+                    collection_timestamp: $timestamp,
+                    cache_used: false,
+                    script_type: "cloud_metadata",
+                    disabled: true
+                }
+            }'
+        return 0
+    fi
+
+    # Try to use cached data first
+    if is_cache_valid "$CACHE_FILE" "$CACHE_TTL"; then
+        if read_cache "$CACHE_FILE"; then
+            return 0
+        fi
+    fi
+
+    local metadata
+    metadata=$(get_cloud_metadata "$CLOUD_PROVIDER")
+
+    # Update cache with fresh data (but don't depend on success for output)
+    write_cache "$CACHE_FILE" "$metadata" || log_error "Cache write failed, but continuing with output"
+
+    # Always output the collected metadata
+    echo "$metadata"
+    return 0
+}
+
+# Error handling wrapper
+trap 'log_error "Script failed at line $LINENO"' ERR
+
+# Execute main function
+main "$@"

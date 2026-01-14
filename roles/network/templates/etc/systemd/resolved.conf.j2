@@ -1,0 +1,19 @@
+# {{ ansible_managed }}
+# Systemd-resolved configuration
+
+[Resolve]
+{% if network_resolved_dns | length > 0 %}
+DNS={{ network_resolved_dns | join(' ') }}
+{% endif %}
+{% if network_resolved_fallback_dns | length > 0 %}
+FallbackDNS={{ network_resolved_fallback_dns | join(' ') }}
+{% endif %}
+{% if network_resolved_domains | length > 0 %}
+Domains={{ network_resolved_domains | join(' ') }}
+{% endif %}
+LLMNR={{ network_resolved_llmnr }}
+MulticastDNS={{ network_resolved_multicast_dns }}
+DNSSEC={{ network_resolved_dnssec }}
+DNSOverTLS={{ network_resolved_dns_over_tls }}
+Cache={{ network_resolved_cache }}
+DNSStubListener={{ network_resolved_dnsstublistener }}

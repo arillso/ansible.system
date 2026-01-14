@@ -1,0 +1,51 @@
+---
+# Entry Point Controls
+python_pip_enabled: true
+python_virtualenv_enabled: true
+
+# Python Packages
+python_packages: []
+# Example:
+# python_packages:
+#   - name: ansible
+#     version: "2.10.0"
+#     state: present
+#     virtualenv: /opt/venv
+#     virtualenv_command: python3 -m venv
+#     virtualenv_python: python3
+#     extra_args: ""
+#     executable: pip3
+
+python_pip_executable: pip3
+python_pip_extra_args: ""
+python_upgrade_pip: false
+python_virtualenv_command: python3 -m venv
+python_virtualenv_site_packages: false
+python_virtualenv_python: python3
+
+# System Package Installation
+python_install_packages: true
+python_system_packages:
+    - python3
+    - python3-pip
+    - python3-venv
+python_dev_packages: []
+# Example:
+# python_dev_packages:
+#   - python3-dev
+#   - build-essential
+
+# Requirements Files
+python_requirements_files: []
+# Example:
+# python_requirements_files:
+#   - path: /opt/app/requirements.txt
+#     virtualenv: /opt/app/venv
+#     state: present
+
+# Retry Configuration
+python_retry_count: 3
+python_retry_delay: 10
+
+# Debug Configuration
+python_debug_mode: false

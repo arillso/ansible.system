@@ -1,0 +1,12 @@
+---
+# Entry point for package cleanup and APT configuration
+- name: Configure APT settings
+  ansible.builtin.include_tasks: apt_config.yml
+  when: packages_apt_conf | length > 0
+
+- name: Clean package cache and remove unused packages
+  ansible.builtin.apt:
+      autoclean: "{{ packages_autoclean }}"
+      autoremove: "{{ packages_autoremove }}"
+  become: true
+  when: packages_autoclean or packages_autoremove

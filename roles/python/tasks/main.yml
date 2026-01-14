@@ -1,0 +1,35 @@
+---
+- name: Install Python system packages
+  ansible.builtin.package:
+      name: "{{ python_system_packages + python_dev_packages }}"
+      state: present
+  become: true
+  when: python_install_packages | default(true) | bool
+  retries: "{{ python_retry_count }}"
+  delay: "{{ python_retry_delay }}"
+  register: _python_install
+  until: _python_install is succeeded
+  tags: ["python", "packages"]
+
+- name: Upgrade pip if requested
+  ansible.builtin.pip:
+      name: pip
+      state: latest
+      executable: "{{ python_pip_executable }}"
+  become: true
+  when: python_upgrade_pip | default(false) | bool
+  tags: ["python", "pip"]
+
+- name: Manage Python packages
+  ansible.builtin.include_tasks: pip.yml
+  when:
+      - python_packages | length > 0
+      - python_pip_enabled | default(true) | bool
+  tags: ["python", "pip"]
+
+- name: Install from requirements files
+  ansible.builtin.include_tasks: requirements.yml
+  when:
+      - python_requirements_files | length > 0
+      - python_pip_enabled | default(true) | bool
+  tags: ["python", "pip", "requirements"]

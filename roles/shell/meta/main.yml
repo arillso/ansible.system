@@ -1,0 +1,39 @@
+---
+galaxy_info:
+    role_name: shell
+    author: "arillso"
+    description: "Shell environment and MOTD configuration for Linux systems"
+    company: "arillso"
+    license: "MIT"
+    min_ansible_version: "2.12"
+
+    platforms:
+        - name: Ubuntu
+          versions:
+              - focal
+              - jammy
+              - noble
+        - name: Debian
+          versions:
+              - bullseye
+              - bookworm
+        - name: EL
+          versions:
+              - "8"
+              - "9"
+
+    galaxy_tags:
+        - system
+        - shell
+        - motd
+        - ssh
+        - banner
+        - terminal
+        - environment
+
+dependencies:
+    - role: arillso.system.facts
+      when: shell_facts_dependency | default(true)
+
+collections:
+    - community.general

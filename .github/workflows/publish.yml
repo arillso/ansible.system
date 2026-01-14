@@ -2,28 +2,59 @@
 name: Publish Collection
 
 on:
-  release:
-    types: [published]
+    push:
+        tags:
+            - "v*"
 
-permissions: {}
+permissions:
+    contents: write
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
+    publish:
+        name: Publish to Ansible Galaxy
+        runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-    steps:
-      - uses: actions/checkout@v5
+            - name: Get version from tag
+              id: get_version
+              run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-      - name: Get the version name from the tags
-        run: |
-          # shellcheck disable=SC2086
-          echo "RELEASE_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+            - name: Extract changelog for version
+              id: changelog
+              run: |
+                  VERSION="${{ steps.get_version.outputs.VERSION }}"
+                  # Extract the section for this version from CHANGELOG.md
+                  if [ -f "CHANGELOG.md" ]; then
+                    # Get content between this version and the next version heading
+                    CONTENT=$(sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$d')
+                    # If the version section is empty, try without brackets
+                    if [ -z "$CONTENT" ]; then
+                      CONTENT=$(sed -n "/## $VERSION/,/## /p" CHANGELOG.md | sed '$d')
+                    fi
+                    # Save to file for multiline support
+                    echo "$CONTENT" > /tmp/changelog.txt
+                    echo "found=true" >> $GITHUB_OUTPUT
+                  else
+                    echo "found=false" >> $GITHUB_OUTPUT
+                  fi
 
-      - name: Publish Ansible Collection
-        uses: arillso/action.ansible.collection@1.3.0
-        with:
-          api_key: "${{ secrets.GALAXY_API_KEY }}"
-          galaxy_version: "${{ env.RELEASE_VERSION }}"
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+            - name: Build and Publish Collection
+              uses: artis3n/ansible_galaxy_collection@v2
+              with:
+                  api_key: ${{ secrets.GALAXY_API_KEY }}
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  body_path: ${{ steps.changelog.outputs.found == 'true' && '/tmp/changelog.txt' || '' }}
+                  generate_release_notes: ${{ steps.changelog.outputs.found != 'true' }}
+                  draft: false
+                  prerelease: false

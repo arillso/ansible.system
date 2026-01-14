@@ -1,24 +1,34 @@
 ---
 DOCUMENTATION:
-  name: to_toml
-  author: core team
-  version_added: "historical"
-  short_description: Convert variable to YAML string
-  description:
-    - Converts an Ansible variable into a YAML string representation.
-    - This filter functions as a wrapper to the L(Python PyYAML library, https://pypi.org/project/PyYAML/)'s C(yaml.dump) function.
-    - Ansible automatically converts YAML strings into variable structures so this plugin is used to forcibly retain a YAML string.
-  notes:
-    - More options may be available, see L(PyYAML documentation, https://pyyaml.org/wiki/PyYAMLDocumentation) for details.
+    name: to_toml
+    author: Arillso
+    version_added: "1.0.0"
+    short_description: Convert variable to TOML string
+    description:
+        - Converts an Ansible variable (dict) into a TOML string representation.
+        - This filter uses the tomli-w library (or toml as fallback) for writing TOML.
+        - For reading TOML, use the companion filter C(from_toml).
+    requirements:
+        - tomli-w (Python < 3.11) or toml library
+    seealso:
+        - plugin: arillso.system.from_toml
+          plugin_type: filter
+          description: Convert TOML string to Python object
+        - plugin: arillso.system.to_nice_toml
+          plugin_type: filter
+          description: Convert variable to nicely formatted TOML string
 
 EXAMPLES: |
-  # dump variable in a template to create a YAML document
-  {{ github_workflow | to_yaml }}
+    # Convert dictionary to TOML string
+    {{ config_dict | arillso.system.to_toml }}
 
-  # same as above but 'prettier' (equivalent to to_nice_yaml filter)
-  {{ docker_config | to_yaml(indent=4) }}
+    # Example with data
+    {{ {'title': 'Example', 'owner': {'name': 'Admin'}} | arillso.system.to_toml }}
+
+    # Use in template to create TOML config file
+    {{ application_config | arillso.system.to_toml }}
 
 RETURN:
-  _value:
-    description: The YAML serialized string representing the variable structure inputted.
-    type: string
+    _value:
+        description: The TOML serialized string representing the input dictionary.
+        type: string

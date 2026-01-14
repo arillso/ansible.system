@@ -1,0 +1,129 @@
+---
+# Argument specifications for System Tuning role
+# Defines and validates all input parameters for the role
+
+argument_specs:
+    main:
+        short_description: "Apply system performance tuning configurations"
+        description: |
+            This role configures system-level performance tuning including
+            sysctl parameters, network tuning, I/O schedulers, CPU governors,
+            and security limits for optimized server performance.
+        options:
+            tuning_sysctl_config:
+                type: "dict"
+                required: false
+                default: {}
+                description: |
+                    Dictionary of sysctl parameters for performance tuning.
+                    Includes VM, network, filesystem, and kernel tuning.
+
+            tuning_network_sysctl_config:
+                type: "dict"
+                required: false
+                default: {}
+                description: "Additional network-specific sysctl parameters"
+
+            tuning_grub_cmdline_linux_append:
+                type: "str"
+                required: false
+                default: "transparent_hugepage=never"
+                description: "Kernel parameters to append to GRUB configuration"
+
+            tuning_swap_swappiness:
+                type: "int"
+                required: false
+                default: 10
+                description: "Swappiness value (0-100, lower = less swap usage)"
+
+            tuning_swap_file_enabled:
+                type: "bool"
+                required: false
+                default: false
+                description: "Enable swap file creation"
+
+            tuning_swap_file_path:
+                type: "str"
+                required: false
+                default: "/swapfile"
+                description: "Path to swap file"
+
+            tuning_swap_file_size_mb:
+                type: "int"
+                required: false
+                default: 2048
+                description: "Swap file size in megabytes"
+
+            tuning_io_scheduler:
+                type: "str"
+                required: false
+                default: "auto"
+                description: |
+                    I/O scheduler to use. Set to 'auto' for automatic
+                    detection based on storage type.
+
+            tuning_io_scheduler_override:
+                type: "str"
+                required: false
+                default: null
+                description: "Override automatic I/O scheduler detection"
+
+            tuning_cpu_governor:
+                type: "str"
+                required: false
+                default: "auto"
+                description: |
+                    CPU governor to use. Set to 'auto' for automatic
+                    detection based on CPU type.
+
+            tuning_cpu_governor_override:
+                type: "str"
+                required: false
+                default: null
+                description: "Override automatic CPU governor detection"
+
+            tuning_transparent_hugepages:
+                type: "str"
+                required: false
+                default: "madvise"
+                choices: ["always", "madvise", "never"]
+                description: "Transparent Huge Pages configuration"
+
+            tuning_tuned_profile:
+                type: "str"
+                required: false
+                default: "balanced"
+                description: "Tuned profile to apply"
+
+            tuning_security_limits:
+                type: "list"
+                required: false
+                default: []
+                elements: "dict"
+                description: |
+                    List of security limit configurations.
+                    Each entry requires: domain, type, item, value.
+
+            tuning_network_tuning_enabled:
+                type: "bool"
+                required: false
+                default: true
+                description: "Enable network-specific tuning"
+
+            tuning_validate_settings:
+                type: "bool"
+                required: false
+                default: true
+                description: "Validate settings before applying"
+
+            tuning_sysctl_file:
+                type: "str"
+                required: false
+                default: "/etc/sysctl.d/99-tuning.conf"
+                description: "Path to sysctl configuration file"
+
+            tuning_network_sysctl_file:
+                type: "str"
+                required: false
+                default: "/etc/sysctl.d/99-network-tuning.conf"
+                description: "Path to network sysctl configuration file"

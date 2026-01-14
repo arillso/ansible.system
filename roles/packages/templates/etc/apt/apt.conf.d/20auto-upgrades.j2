@@ -1,0 +1,14 @@
+// {{ ansible_managed }}
+// Auto-Update configuration
+
+// Enable the update/upgrade script (0=disable)
+APT::Periodic::Update-Package-Lists "{{ '1' if packages_unattended_upgrades_auto_update else '0' }}";
+APT::Periodic::Unattended-Upgrade "{{ '1' if packages_unattended_upgrades_auto_upgrade else '0' }}";
+
+{% if packages_unattended_upgrades_auto_clean > 0 %}
+// Clean downloaded packages
+APT::Periodic::AutocleanInterval "{{ packages_unattended_upgrades_auto_clean }}";
+{% endif %}
+
+// Download upgradeable packages but don't install
+APT::Periodic::Download-Upgradeable-Packages "{{ '0' if packages_unattended_upgrades_download_only else '1' }}";

@@ -1,7 +1,0 @@
----
-environment_files_patterns:
-  pam:
-    file: /etc/environment
-  zsh:
-    file: /etc/zsh/zshenv
-    export: true

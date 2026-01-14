@@ -1,7 +1,0 @@
----
-- name: "Configure resolv.conf"
-  become: true
-  ansible.builtin.template:
-    src: "etc/resolv.conf.j2"
-    dest: "/etc/resolv.conf"
-    mode: "0644"

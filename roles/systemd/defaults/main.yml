@@ -1,0 +1,85 @@
+---
+# Entry Point Controls
+systemd_service_enabled: true
+systemd_unit_enabled: true
+systemd_journald_enabled: true
+
+# Service Management
+systemd_services: []
+# Example:
+# systemd_services:
+#   - name: nginx
+#     state: started
+#     enabled: true
+#     masked: false
+#     daemon_reload: false
+
+# Unit File Management
+systemd_units: []
+# Example:
+# systemd_units:
+#   - name: myapp.service
+#     state: present
+#     content: |
+#       [Unit]
+#       Description=My Application
+#       After=network.target
+#
+#       [Service]
+#       Type=simple
+#       ExecStart=/usr/bin/myapp
+#       Restart=always
+#
+#       [Install]
+#       WantedBy=multi-user.target
+
+systemd_unit_path: /etc/systemd/system
+systemd_unit_owner: root
+systemd_unit_group: root
+systemd_unit_mode: "0644"
+
+# Journald Configuration
+systemd_journald_storage: auto
+systemd_journald_compress: true
+systemd_journald_seal: true
+systemd_journald_max_retention_sec: 1month
+systemd_journald_max_file_sec: 1month
+systemd_journald_system_max_use: 1G
+systemd_journald_system_keep_free: 500M
+systemd_journald_system_max_file_size: 10M
+systemd_journald_system_max_files: 100
+systemd_journald_runtime_max_use: ""
+systemd_journald_runtime_keep_free: ""
+systemd_journald_runtime_max_file_size: ""
+systemd_journald_runtime_max_files: 100
+systemd_journald_rate_limit_interval: 30s
+systemd_journald_rate_limit_burst: 1000
+systemd_journald_forward_to_syslog: true
+systemd_journald_forward_to_kmsg: false
+systemd_journald_forward_to_console: false
+systemd_journald_forward_to_wall: true
+systemd_journald_max_level_store: info
+systemd_journald_max_level_syslog: info
+systemd_journald_max_level_kmsg: notice
+systemd_journald_max_level_console: warning
+systemd_journald_max_level_wall: emerg
+systemd_journald_line_max: 48K
+systemd_journald_sync_interval_sec: 5m
+systemd_journald_split_mode: uid
+systemd_journald_service_state: started
+systemd_journald_service_enabled: true
+systemd_journald_restart_on_change: true
+
+# Systemd Daemon Configuration
+systemd_daemon_reload: false
+
+# Retry Configuration
+systemd_retry_count: 3
+systemd_retry_delay: 5
+
+# Validation and Safety
+systemd_validate_units: true
+systemd_backup_units: true
+
+# Debug Configuration
+systemd_debug_mode: false

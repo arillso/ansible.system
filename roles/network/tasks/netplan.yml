@@ -1,0 +1,39 @@
+---
+- name: Install netplan package
+  ansible.builtin.package:
+      name: netplan.io
+      state: present
+  become: true
+  retries: "{{ network_retry_count }}"
+  delay: "{{ network_retry_delay }}"
+  register: _network_netplan_install
+  until: _network_netplan_install is succeeded
+
+- name: Deploy netplan configuration
+  ansible.builtin.copy:
+      content: "{{ network_netplan_config | to_nice_yaml(indent=2) }}"
+      dest: "/etc/netplan/{{ network_netplan_filename }}"
+      owner: root
+      group: root
+      mode: "0600"
+      backup: "{{ network_backup_configs }}"
+  become: true
+  register: _network_netplan_config
+  when: network_netplan_config | length > 0
+
+- name: Validate netplan configuration
+  ansible.builtin.command: netplan generate
+  become: true
+  changed_when: false
+  when:
+      - network_validate_netplan | default(true)
+      - _network_netplan_config is changed
+
+- name: Apply netplan configuration
+  ansible.builtin.command: netplan apply
+  become: true
+  when:
+      - network_netplan_apply | default(false)
+      - _network_netplan_config is changed
+  register: _network_netplan_apply
+  changed_when: _network_netplan_apply.rc == 0

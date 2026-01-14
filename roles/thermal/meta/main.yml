@@ -1,0 +1,34 @@
+---
+# Role metadata for thermal management
+
+galaxy_info:
+    role_name: thermal
+    namespace: arillso
+    author: sbaerlocher
+    description: Thermal management and fan control using thermald
+    license: MIT
+    min_ansible_version: "2.9"
+
+    platforms:
+        - name: Ubuntu
+          versions:
+              - focal
+              - jammy
+              - noble
+        - name: Debian
+          versions:
+              - bullseye
+              - bookworm
+
+    galaxy_tags:
+        - system
+        - thermal
+        - fan
+        - cooling
+        - hardware
+        - sensors
+
+dependencies: []
+
+collections:
+    - community.general

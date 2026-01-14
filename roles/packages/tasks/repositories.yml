@@ -1,0 +1,20 @@
+---
+# Entry point for repository management
+- name: Add APT repositories
+  ansible.builtin.apt_repository:
+      repo: "{{ _pkg_repo_item.repo }}"
+      state: "{{ _pkg_repo_item.state | default('present') }}"
+      filename: "{{ _pkg_repo_item.filename | default(omit) }}"
+      update_cache: false
+  become: true
+  loop: "{{ packages_repositories }}"
+  loop_control:
+      loop_var: _pkg_repo_item
+  when: packages_repositories | length > 0
+  register: _packages_repos_added
+  notify: "packages update cache"
+
+- name: Set repository change flag
+  ansible.builtin.set_fact:
+      packages_repositories_changed: true
+  when: _packages_repos_added is changed

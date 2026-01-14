@@ -1,0 +1,16 @@
+---
+# Internal variables for systemd role
+
+# Common systemd unit types
+_systemd_unit_types:
+    - service
+    - socket
+    - device
+    - mount
+    - automount
+    - swap
+    - target
+    - path
+    - timer
+    - slice
+    - scope

@@ -1,0 +1,83 @@
+---
+# OS-specific variables for tuning role
+_tuning_packages:
+    Debian:
+        - name: sysstat
+        - name: iotop
+        - name: htop
+        - name: tuned
+        - name: cpufrequtils
+        - name: ethtool
+        - name: util-linux # For lscpu, lsblk
+        - name: pciutils # For lspci
+    RedHat:
+        - name: sysstat
+        - name: iotop
+        - name: htop
+        - name: tuned
+        - name: tuned-utils
+        - name: ethtool
+        - name: util-linux # For lscpu, lsblk
+        - name: pciutils # For lspci
+    Suse:
+        - name: sysstat
+        - name: iotop
+        - name: htop
+        - name: tuned
+        - name: ethtool
+        - name: util-linux
+        - name: pciutils
+
+# CPU governor mapping based on CPU type
+_cpu_governor_mapping:
+    intel:
+        performance: "performance"
+        balanced: "powersave"
+        powersave: "powersave"
+    amd:
+        performance: "performance"
+        balanced: "ondemand"
+        powersave: "powersave"
+    default:
+        performance: "performance"
+        balanced: "ondemand"
+        powersave: "powersave"
+
+# I/O scheduler mapping based on storage type
+_io_scheduler_mapping:
+    nvme: "none" # NVMe drives work best with none (bypasses kernel scheduler)
+    ssd: "mq-deadline" # SSDs work well with mq-deadline
+    hdd: "bfq" # HDDs benefit from BFQ for fairness
+    default: "mq-deadline"
+
+# GRUB update commands per OS family
+_grub_update_commands:
+    Debian: "update-grub"
+    RedHat: "grub2-mkconfig -o /boot/grub2/grub.cfg"
+    Suse: "grub2-mkconfig -o /boot/grub2/grub.cfg"
+
+# Service management commands per OS family
+_service_commands:
+    Debian:
+        cpufreq: "cpufrequtils"
+    RedHat:
+        cpufreq: "cpupower"
+    Suse:
+        cpufreq: "cpupower"
+
+# Available I/O schedulers to validate against
+_available_io_schedulers:
+    - none
+    - mq-deadline
+    - kyber
+    - bfq
+    - cfq
+
+# Available CPU governors to validate against
+_available_cpu_governors:
+    - performance
+    - powersave
+    - ondemand
+    - conservative
+    - userspace
+    - schedutil

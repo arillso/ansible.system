@@ -1,0 +1,316 @@
+---
+argument_specs:
+    main:
+        short_description: Configure nftables firewall with intuitive YAML structure
+        description:
+            - Manages nftables firewall using your elegant YAML table/chain/rule structure
+            - Supports hierarchical Global → Group → Host inheritance and merging
+            - Direct mapping from YAML to nftables configuration
+
+        options:
+            firewall:
+                description: Main nftables configuration (defaults/main.yml)
+                type: list
+                elements: dict
+                default: []
+                options: &firewall_structure
+                    table:
+                        description: nftables table configuration
+                        type: dict
+                        required: true
+                        options:
+                            name:
+                                description: Table name (filter, nat, etc.)
+                                type: str
+                                required: true
+                            family:
+                                description: Address family
+                                type: str
+                                choices:
+                                    [
+                                        "inet",
+                                        "ip",
+                                        "ip6",
+                                        "arp",
+                                        "bridge",
+                                        "netdev",
+                                    ]
+                                default: "inet"
+                            chains:
+                                description: List of chains in this table
+                                type: list
+                                elements: dict
+                                options:
+                                    name:
+                                        description: Chain name
+                                        type: str
+                                        required: true
+                                    type:
+                                        description: Chain type
+                                        type: str
+                                        choices: ["filter", "nat", "route"]
+                                        required: true
+                                    hook:
+                                        description: Netfilter hook
+                                        type: str
+                                        choices:
+                                            [
+                                                "prerouting",
+                                                "input",
+                                                "forward",
+                                                "output",
+                                                "postrouting",
+                                            ]
+                                        required: true
+                                    priority:
+                                        description: Chain priority
+                                        type: int
+                                        required: true
+                                    policy:
+                                        description: Default chain policy
+                                        type: str
+                                        choices: ["accept", "drop"]
+                                        required: true
+                                    rules:
+                                        description: List of rules in this chain
+                                        type: list
+                                        elements: dict
+                                        options:
+                                            comment:
+                                                description: Rule comment/description
+                                                type: str
+                                                required: false
+                                            iifname:
+                                                description: Input interface name
+                                                type: str
+                                                required: false
+                                            oifname:
+                                                description: Output interface name
+                                                type: str
+                                                required: false
+                                            ip_protocol:
+                                                description: IP protocol
+                                                type: str
+                                                required: false
+                                            ip6_nexthdr:
+                                                description: IPv6 next header
+                                                type: str
+                                                required: false
+                                            ip_saddr:
+                                                description: Source IP address/network
+                                                type: str
+                                                required: false
+                                            ip_daddr:
+                                                description: Destination IP address/network
+                                                type: str
+                                                required: false
+                                            ip6_saddr:
+                                                description: IPv6 source address/network
+                                                type: str
+                                                required: false
+                                            ip6_daddr:
+                                                description: IPv6 destination address/network
+                                                type: str
+                                                required: false
+                                            # Set references for performance optimization
+                                            ip_saddr_set:
+                                                description: >-
+                                                    Reference to IPv4 source address set
+                                                    (e.g., "@trusted_networks")
+                                                type: str
+                                                required: false
+                                            ip_daddr_set:
+                                                description: Reference to IPv4 destination address set
+                                                type: str
+                                                required: false
+                                            ip6_saddr_set:
+                                                description: Reference to IPv6 source address set
+                                                type: str
+                                                required: false
+                                            ip6_daddr_set:
+                                                description: Reference to IPv6 destination address set
+                                                type: str
+                                                required: false
+                                            tcp_dport:
+                                                description: TCP destination port(s)
+                                                type: raw # Can be int, str, or list
+                                                required: false
+                                            tcp_sport:
+                                                description: TCP source port(s)
+                                                type: raw
+                                                required: false
+                                            udp_dport:
+                                                description: UDP destination port(s)
+                                                type: raw
+                                                required: false
+                                            udp_sport:
+                                                description: UDP source port(s)
+                                                type: raw
+                                                required: false
+                                            # Port set references for performance
+                                            tcp_dport_set:
+                                                description: Reference to TCP destination port set (e.g., "@web_ports")
+                                                type: str
+                                                required: false
+                                            tcp_sport_set:
+                                                description: Reference to TCP source port set
+                                                type: str
+                                                required: false
+                                            udp_dport_set:
+                                                description: Reference to UDP destination port set
+                                                type: str
+                                                required: false
+                                            udp_sport_set:
+                                                description: Reference to UDP source port set
+                                                type: str
+                                                required: false
+                                            # Extended connection tracking
+                                            ct_state:
+                                                description: Connection tracking state
+                                                type: raw # Can be string or list
+                                                required: false
+                                            ct_status:
+                                                description: Connection tracking status
+                                                type: str
+                                                required: false
+                                            ct_mark:
+                                                description: Connection tracking mark
+                                                type: str
+                                                required: false
+                                            ct_direction:
+                                                description: Connection tracking direction
+                                                type: str
+                                                choices: ["original", "reply"]
+                                                required: false
+                                            # ICMP handling
+                                            icmp_type:
+                                                description: ICMP type
+                                                type: str
+                                                required: false
+                                            icmp_code:
+                                                description: ICMP code
+                                                type: int
+                                                required: false
+                                            icmpv6_type:
+                                                description: ICMPv6 type
+                                                type: str
+                                                required: false
+                                            # Meta expressions
+                                            meta_mark:
+                                                description: Packet mark value
+                                                type: str
+                                                required: false
+                                            meta_nfproto:
+                                                description: Network protocol family
+                                                type: str
+                                                choices:
+                                                    [
+                                                        "ipv4",
+                                                        "ipv6",
+                                                        "arp",
+                                                        "bridge",
+                                                    ]
+                                                required: false
+                                            meta_length:
+                                                description: Packet length condition (e.g., "> 1000")
+                                                type: str
+                                                required: false
+                                            meta_protocol:
+                                                description: Protocol type
+                                                type: str
+                                                required: false
+                                            log_prefix:
+                                                description: Log prefix for logging rules
+                                                type: str
+                                                required: false
+                                            # Enhanced logging options
+                                            log_level:
+                                                description: Log level
+                                                type: str
+                                                choices:
+                                                    [
+                                                        "emerg",
+                                                        "alert",
+                                                        "crit",
+                                                        "err",
+                                                        "warn",
+                                                        "notice",
+                                                        "info",
+                                                        "debug",
+                                                    ]
+                                                required: false
+                                            log_group:
+                                                description: NFLOG group number
+                                                type: int
+                                                required: false
+                                            log_snaplen:
+                                                description: Snapshot length for logging
+                                                type: int
+                                                required: false
+                                            log_queue_threshold:
+                                                description: Queue threshold for logging
+                                                type: int
+                                                required: false
+                                            # Enhanced actions and verdicts
+                                            action:
+                                                description: Rule action
+                                                type: str
+                                                choices:
+                                                    [
+                                                        "accept",
+                                                        "drop",
+                                                        "reject",
+                                                        "dnat",
+                                                        "masquerade",
+                                                        "queue",
+                                                        "jump",
+                                                        "goto",
+                                                    ]
+                                                default: "accept"
+                                            to:
+                                                description: Target for DNAT action
+                                                type: str
+                                                required: false
+                                            reject_with:
+                                                description: Reject with specific reason
+                                                type: str
+                                                choices:
+                                                    [
+                                                        "icmp-admin-prohibited",
+                                                        "icmp-port-unreachable",
+                                                        "icmp-net-unreachable",
+                                                        "icmp-host-unreachable",
+                                                    ]
+                                                required: false
+                                            queue_num:
+                                                description: Queue number for userspace processing
+                                                type: int
+                                                required: false
+                                            target_chain:
+                                                description: Target chain for jump action
+                                                type: str
+                                                required: false
+                                            goto_chain:
+                                                description: Target chain for goto action
+                                                type: str
+                                                required: false
+            firewall_global:
+                description: Global nftables configuration (from group_vars/all.yml)
+                type: list
+                elements: dict
+                required: false
+                options: *firewall_structure
+
+            firewall_group:
+                description: Group-specific nftables configuration (from group_vars)
+                type: list
+                elements: dict
+                required: false
+                options: *firewall_structure
+
+            firewall_host:
+                description: Host-specific nftables configuration (from host_vars)
+                type: list
+                elements: dict
+                required: false
+                options: *firewall_structure

@@ -1,0 +1,123 @@
+{{ "#!/bin/bash" }}
+# Ansible last run metadata collector
+# Reads execution context and metadata information (READ-ONLY)
+# Template processed by Ansible
+
+set -uo pipefail
+set +e
+
+# Universal configuration variables from Ansible (harmonized across all facts scripts)
+readonly CACHE_DIR="{{ facts_cache_dir | default('/var/cache/ansible-facts') }}"
+readonly LAST_RUN_FILE="${CACHE_DIR}/last_run.json"
+
+# Logging functions
+log_debug() {
+    [[ "${DEBUG:-false}" == "true" ]] && echo "[DEBUG] $*" >&2
+}
+
+log_warn() {
+    echo "[WARN] $*" >&2
+}
+
+# Read last run info (READ-ONLY - does not update timestamp)
+get_last_run_info() {
+    if [[ -f "$LAST_RUN_FILE" ]] && command -v jq >/dev/null 2>&1 && jq -e . "$LAST_RUN_FILE" >/dev/null 2>&1; then
+        cat "$LAST_RUN_FILE"
+    else
+        # Fallback if no run data exists yet
+        jq -n \
+            --arg user "{{ ansible_user | default('system') }}" \
+            --arg playbook "{{ facts_playbook_name }}" \
+            --arg playbook_dir "{{ playbook_dir | default('unknown') }}" \
+            --arg ansible_version "{{ ansible_version.full }}" \
+            '{
+                timestamp: "1970-01-01T00:00:00Z",
+                epoch: 0,
+                date: "1970-01-01",
+                time: "00:00:00",
+                user: $user,
+                playbook: $playbook,
+                playbook_dir: $playbook_dir,
+                ansible_version: $ansible_version,
+                execution_type: "no_previous_run"
+            }'
+    fi
+}
+
+# Main execution (READ-ONLY)
+main() {
+    # Get current timestamp for facts collection (not ansible run!) with multiple formats
+    local current_timestamp current_timestamp_human current_timestamp_epoch
+    current_timestamp="$(date -Iseconds)"
+    current_timestamp_human="$(date '+%Y-%m-%d %H:%M:%S %Z')"
+    current_timestamp_epoch="$(date +%s)"
+
+    # Read last run info (without updating it)
+    local last_run_info
+    last_run_info=$(get_last_run_info)
+
+    # Generate and output the run facts JSON
+    jq -n \
+        --argjson last_run "$last_run_info" \
+        --arg collection "{{ facts_collection_name | default('system') }}" \
+        --arg role "{{ facts_role_name | default(role_name | default('facts')) }}" \
+        --arg role_path "{{ role_path | default('unknown') }}" \
+        --argjson tags '{{ facts_system_tags | default(['facts', 'metadata']) | to_json }}' \
+        --arg owner "{{ facts_system_owner | default(ansible_user | default('ops')) }}" \
+        --arg node_type "{{ facts_node_type | default(ansible_virtualization_type | default('unknown')) }}" \
+        --arg ansible_user "{{ ansible_user | default(ansible_env.USER | default('system')) }}" \
+        --arg ansible_host "{{ ansible_host | default(inventory_hostname) }}" \
+        --arg ansible_connection "{{ ansible_connection | default('ssh') }}" \
+        --arg inventory_hostname "{{ inventory_hostname }}" \
+        --arg inventory_hostname_short "{{ inventory_hostname_short }}" \
+        --arg ansible_python_interpreter "{{ ansible_python_interpreter | default('unknown') }}" \
+        --arg ansible_forks "{{ ansible_forks | default('5') }}" \
+        --arg ansible_verbosity "{{ ansible_verbosity | default(0) }}" \
+        --arg collection_timestamp "$current_timestamp" \
+        --arg collection_timestamp_human "$current_timestamp_human" \
+        --arg collection_timestamp_epoch "$current_timestamp_epoch" \
+        '{
+            # Last Ansible run information (READ-ONLY)
+            last_run: $last_run,
+
+            # Classification
+            node_type: $node_type,
+
+            # Execution context
+            execution_context: {
+                ansible_user: $ansible_user,
+                ansible_host: $ansible_host,
+                ansible_connection: $ansible_connection,
+                inventory_hostname: $inventory_hostname,
+                inventory_hostname_short: $inventory_hostname_short,
+                ansible_python_interpreter: $ansible_python_interpreter,
+                ansible_forks: ($ansible_forks | tonumber),
+                ansible_verbosity: ($ansible_verbosity | tonumber)
+            },
+
+            # Meta information
+            meta: {
+                managed_by: "ansible",
+                collection: $collection,
+                role: $role,
+                role_path: $role_path,
+                tags: $tags,
+                owner: $owner,
+                script_type: "run_metadata",
+                collection_timestamp: $collection_timestamp,
+                collection_timestamp_human: $collection_timestamp_human,
+                collection_timestamp_epoch: ($collection_timestamp_epoch | tonumber),
+                cache_used: false
+            }
+        }'
+
+    return 0
+}
+
+# Error handling
+trap 'echo "[ERROR] Script failed" >&2; exit 1' ERR
+
+main "$@" || {
+    echo "[ERROR] Main function failed" >&2
+    exit 1
+}

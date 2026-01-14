@@ -1,0 +1,53 @@
+---
+- name: "Configure global bash aliases"
+  ansible.builtin.template:
+      src: etc/profile.d/bash_aliases.sh.j2
+      dest: /etc/profile.d/bash_aliases.sh
+      mode: "0644"
+      owner: root
+      group: root
+  become: true
+  when: shell_configure_aliases
+  tags:
+      - shell
+      - aliases
+
+- name: "Configure custom shell prompt"
+  ansible.builtin.template:
+      src: etc/profile.d/custom_prompt.sh.j2
+      dest: /etc/profile.d/custom_prompt.sh
+      mode: "0644"
+      owner: root
+      group: root
+  become: true
+  when: shell_configure_prompt
+  tags:
+      - shell
+      - prompt
+
+- name: "Configure bash history settings"
+  ansible.builtin.template:
+      src: etc/profile.d/bash_history.sh.j2
+      dest: /etc/profile.d/bash_history.sh
+      mode: "0644"
+      owner: root
+      group: root
+  become: true
+  when: shell_configure_history
+  tags:
+      - shell
+      - history
+
+- name: "Update global bash profile"
+  ansible.builtin.lineinfile:
+      path: "{{ item }}"
+      line: "# Shell customizations loaded from /etc/profile.d/"
+      create: true
+      mode: "0644"
+      backup: true
+  become: true
+  loop: "{{ _shell_profiles[ansible_facts['os_family']] | default(_shell_profiles['default']) }}"
+  when: shell_configure_profiles
+  tags:
+      - shell
+      - profiles

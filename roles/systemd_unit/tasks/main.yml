@@ -1,3 +1,0 @@
----
-- name: "Ensure systemd unit {{ systemd_unit_name }}"
-  ansible.builtin.import_tasks: systemd_unit.yml

@@ -1,0 +1,16 @@
+# /etc/profile.d/bash_history.sh
+# Global bash history settings for all users
+# This file is managed by Ansible (arillso.system.ui)
+
+# Increase history size for usability
+export HISTSIZE=10000
+export HISTFILESIZE=20000
+
+# Avoid duplicate entries and commands starting with space
+export HISTCONTROL=ignoredups:ignorespace
+
+# Record timestamp for each command
+export HISTTIMEFORMAT="%F %T "
+
+# Append to the history file, don't overwrite it
+shopt -s histappend

@@ -1,0 +1,11 @@
+---
+- name: Unhold packages from unified list
+  ansible.builtin.dpkg_selections:
+      name: "{{ _pkg_package_item.name }}"
+      selection: install
+  become: true
+  loop: "{{ packages_list }}"
+  loop_control:
+      loop_var: _pkg_package_item
+  when: _pkg_package_item.state | default('present') == 'unhold'
+  register: _packages_unified_unheld

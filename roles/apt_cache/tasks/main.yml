@@ -1,3 +1,0 @@
----
-- name: Ensure apt cache
-  ansible.builtin.import_tasks: update_cache.yml

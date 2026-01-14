@@ -1,0 +1,68 @@
+---
+- name: Install rsyslog packages
+  ansible.builtin.package:
+      name: "{{ logging_rsyslog_packages }}"
+      state: present
+  become: true
+  retries: "{{ logging_retry_count }}"
+  delay: "{{ logging_retry_delay }}"
+  register: _logging_rsyslog_install
+  until: _logging_rsyslog_install is succeeded
+
+- name: Deploy rsyslog configuration
+  ansible.builtin.template:
+      src: etc/rsyslog.conf.j2
+      dest: /etc/rsyslog.conf
+      owner: root
+      group: root
+      mode: "0644"
+      backup: "{{ logging_backup_configs }}"
+  become: true
+  notify: "Logging restart rsyslog"
+  retries: "{{ logging_retry_count }}"
+  delay: "{{ logging_retry_delay }}"
+  register: _logging_rsyslog_config
+  until: _logging_rsyslog_config is succeeded
+
+- name: Deploy rsyslog entries
+  ansible.builtin.template:
+      src: etc/rsyslog.d/entry.j2
+      dest: "/etc/rsyslog.d/{{ _logging_rsyslog_item.priority | default('50') }}-{{ _logging_rsyslog_item.name }}.conf"
+      owner: root
+      group: root
+      mode: "0644"
+      backup: "{{ logging_backup_configs }}"
+  become: true
+  loop: "{{ logging_rsyslog_entries }}"
+  loop_control:
+      loop_var: _logging_rsyslog_item
+      label: "{{ _logging_rsyslog_item.name }}"
+  when:
+      - logging_rsyslog_entries | length > 0
+      - _logging_rsyslog_item.state | default('present') == 'present'
+  notify: "Logging restart rsyslog"
+
+- name: Remove rsyslog entries
+  ansible.builtin.file:
+      path: "/etc/rsyslog.d/{{ _logging_rsyslog_item.priority | default('50') }}-{{ _logging_rsyslog_item.name }}.conf"
+      state: absent
+  become: true
+  loop: "{{ logging_rsyslog_entries }}"
+  loop_control:
+      loop_var: _logging_rsyslog_item
+      label: "{{ _logging_rsyslog_item.name }}"
+  when:
+      - logging_rsyslog_entries | length > 0
+      - _logging_rsyslog_item.state | default('present') == 'absent'
+  notify: "Logging restart rsyslog"
+
+- name: Manage rsyslog service via systemd role
+  ansible.builtin.include_role:
+      name: arillso.system.systemd
+      tasks_from: service
+  become: true
+  vars:
+      systemd_services:
+          - name: rsyslog
+            enabled: "{{ logging_rsyslog_service_enabled }}"
+            state: "{{ logging_rsyslog_service_state }}"

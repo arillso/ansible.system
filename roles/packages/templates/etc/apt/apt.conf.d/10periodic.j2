@@ -1,0 +1,14 @@
+// {{ ansible_managed }}
+// APT Periodic Configuration
+
+// Update package lists
+APT::Periodic::Update-Package-Lists "{{ packages_apt_periodic_update }}";
+
+// Download upgradeable packages
+APT::Periodic::Download-Upgradeable-Packages "{{ packages_apt_periodic_download }}";
+
+// Auto-clean old packages
+APT::Periodic::AutocleanInterval "{{ packages_apt_periodic_autoclean }}";
+
+// Verbose level (0-3)
+APT::Periodic::Verbose "{{ packages_apt_periodic_verbose }}";

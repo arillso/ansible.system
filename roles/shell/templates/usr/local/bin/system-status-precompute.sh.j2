@@ -1,0 +1,264 @@
+{{ "#!/bin/bash" }}
+# System status pre-computer - Enterprise-grade background processing
+# Runs periodically to pre-compute expensive system metrics for MOTD display
+
+set -euo pipefail
+
+# Configuration
+readonly STATUS_CACHE_DIR="/var/cache/ansible-facts"
+readonly STATUS_CACHE_FILE="${STATUS_CACHE_DIR}/system-status.json"
+readonly LOG_RETENTION_DAYS=7
+readonly MAX_LOG_LINES=1000
+
+# Logging functions
+log_info() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] INFO: $*" >&2
+}
+
+log_error() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $*" >&2
+}
+
+log_debug() {
+    [[ "${DEBUG:-false}" == "true" ]] && echo "[$(date '+%Y-%m-%d %H:%M:%S')] DEBUG: $*" >&2
+}
+
+# Ensure cache directory exists
+ensure_cache_dir() {
+    if [[ ! -d "$STATUS_CACHE_DIR" ]]; then
+        mkdir -p "$STATUS_CACHE_DIR" 2>/dev/null || {
+            log_error "Cannot create cache directory: $STATUS_CACHE_DIR"
+            return 1
+        }
+        chmod 700 "$STATUS_CACHE_DIR"
+    fi
+    return 0
+}
+
+# Safe log parsing with error handling
+parse_auth_failures() {
+    local log_file="/var/log/auth.log"
+    local today_pattern
+    today_pattern=$(date '+%b %d')
+
+    if [[ ! -f "$log_file" || ! -r "$log_file" ]]; then
+        log_debug "Auth log not accessible: $log_file"
+        echo "0"
+        return 0
+    fi
+
+    # Safe log parsing with limits
+    local failed_logins
+    failed_logins=$(grep 'authentication failure' "$log_file" 2>/dev/null | \
+                   grep "$today_pattern" | \
+                   head -n "$MAX_LOG_LINES" | \
+                   wc -l || echo "0")
+
+    echo "$failed_logins"
+}
+
+# Safe process analysis
+analyze_processes() {
+    local zombie_count=0
+    local total_processes=0
+    local high_cpu_processes=0
+
+    # Count zombies safely
+    zombie_count=$(ps aux 2>/dev/null | awk '$8 ~ /^Z/ {count++} END {print count+0}' || echo "0")
+
+    # Count total processes
+    total_processes=$(ps aux 2>/dev/null | wc -l || echo "0")
+
+    # Count high CPU processes (>10% CPU usage)
+    high_cpu_processes=$(ps aux 2>/dev/null | awk '$3 > 10 {count++} END {print count+0}' || echo "0")
+
+    cat <<EOF
+{
+    "zombie_count": $zombie_count,
+    "total_processes": $total_processes,
+    "high_cpu_processes": $high_cpu_processes
+}
+EOF
+}
+
+# System resource analysis
+analyze_resources() {
+    local load_avg
+    local memory_percent
+    local disk_percent
+    local cpu_count
+
+    # Load average (1-minute)
+    load_avg=$(uptime | awk -F'load average:' '{print $2}' | awk '{print $1}' | tr -d ',' || echo "0")
+
+    # Memory usage percentage
+    memory_percent=$(free | awk 'NR==2{printf "%.1f", $3*100/$2}' || echo "0")
+
+    # Root disk usage percentage
+    disk_percent=$(df / | awk 'NR==2{print int($5)}' || echo "0")
+
+    # CPU core count
+    cpu_count=$(nproc || echo "1")
+
+    cat <<EOF
+{
+    "load_average": "$load_avg",
+    "memory_percent": $memory_percent,
+    "disk_percent": $disk_percent,
+    "cpu_count": $cpu_count
+}
+EOF
+}
+
+# Service status analysis
+analyze_services() {
+    local services=("ssh" "docker" "containerd" "k3s" "systemd-resolved")
+    local service_status="{"
+    local first=true
+
+    for service in "${services[@]}"; do
+        if systemctl list-unit-files | grep -q "^${service}.service"; then
+            local status="unknown"
+
+            if systemctl is-active "$service" &>/dev/null; then
+                status="active"
+            elif systemctl is-enabled "$service" &>/dev/null; then
+                status="inactive"
+            else
+                status="disabled"
+            fi
+
+            if [[ "$first" == "true" ]]; then
+                first=false
+            else
+                service_status+=", "
+            fi
+
+            service_status+="\"$service\": \"$status\""
+        fi
+    done
+
+    service_status+="}"
+    echo "$service_status"
+}
+
+# Network connectivity check
+check_connectivity() {
+    local dns_status="unknown"
+    local internet_status="unknown"
+
+    # Quick DNS check
+    if nslookup google.com >/dev/null 2>&1; then
+        dns_status="ok"
+    else
+        dns_status="failed"
+    fi
+
+    # Quick internet connectivity check
+    if ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then
+        internet_status="ok"
+    else
+        internet_status="failed"
+    fi
+
+    cat <<EOF
+{
+    "dns_status": "$dns_status",
+    "internet_status": "$internet_status"
+}
+EOF
+}
+
+# Generate comprehensive system status
+generate_status() {
+    log_info "Generating system status report"
+
+    local auth_failures
+    local processes
+    local resources
+    local services
+    local connectivity
+
+    # Collect all metrics with error handling
+    auth_failures=$(parse_auth_failures)
+    processes=$(analyze_processes)
+    resources=$(analyze_resources)
+    services=$(analyze_services)
+    connectivity=$(check_connectivity)
+
+    # Generate comprehensive JSON status
+    cat <<EOF
+{
+    "generated_at": "$(date -Iseconds)",
+    "hostname": "$(hostname -f)",
+    "uptime": "$(uptime -p 2>/dev/null || uptime | awk '{print $3,$4}' | sed 's/,//')",
+    "security": {
+        "failed_logins_today": $auth_failures,
+        "failed_services": $(systemctl --failed --no-legend | wc -l)
+    },
+    "processes": $processes,
+    "resources": $resources,
+    "services": $services,
+    "connectivity": $connectivity,
+    "collection_duration_ms": 0
+}
+EOF
+}
+
+# Write status to cache with proper error handling
+write_status_cache() {
+    local status_data="$1"
+
+    if ! ensure_cache_dir; then
+        log_error "Cannot ensure cache directory exists"
+        return 1
+    fi
+
+    # Write atomically using temporary file
+    local temp_file="${STATUS_CACHE_FILE}.tmp"
+
+    if echo "$status_data" > "$temp_file" 2>/dev/null; then
+        chmod 644 "$temp_file"
+        mv "$temp_file" "$STATUS_CACHE_FILE" || {
+            log_error "Cannot move temporary file to cache file"
+            rm -f "$temp_file"
+            return 1
+        }
+        log_info "System status cached successfully"
+        return 0
+    else
+        log_error "Cannot write to temporary cache file"
+        return 1
+    fi
+}
+
+# Main execution
+main() {
+    local start_time
+    start_time=$(date +%s%3N)
+
+    log_info "Starting system status pre-computation"
+
+    # Generate status with timing
+    local status
+    status=$(generate_status)
+
+    # Calculate execution time
+    local end_time
+    end_time=$(date +%s%3N)
+    local duration=$((end_time - start_time))
+
+    # Update duration in JSON
+    status=$(echo "$status" | jq --arg duration "$duration" '.collection_duration_ms = ($duration | tonumber)')
+
+    # Write to cache
+    write_status_cache "$status"
+
+    log_info "System status pre-computation completed in ${duration}ms"
+}
+
+# Error handling
+trap 'log_error "Status pre-computation failed at line $LINENO"' ERR
+
+# Execute main function
+main "$@"

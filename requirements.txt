@@ -1,0 +1,6 @@
+# Python dependencies for arillso.system collection
+# Required for filter plugins
+
+# TOML support for filter plugins
+tomli-w>=1.0.0  # TOML writer for Python < 3.11
+tomli>=2.0.0; python_version < "3.11"  # TOML reader for Python < 3.11

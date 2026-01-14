@@ -1,2 +1,68 @@
 [tool.black]
-# line-length = 88
+line-length = 100
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | \.ansible
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_gitignore = true
+extend_skip_glob = [".ansible/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".ansible", ".venv", "venv"]
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # pyflakes
+  "I",   # isort
+  "C90", # mccabe complexity
+  "N",   # pep8-naming
+  "UP",  # pyupgrade
+  "B",   # flake8-bugbear
+  "A",   # flake8-builtins
+  "COM", # flake8-commas
+  "C4",  # flake8-comprehensions
+  "PIE", # flake8-pie
+  "PT",  # flake8-pytest-style
+  "SIM", # flake8-simplify
+]
+
+ignore = [
+  "E501",   # line too long (handled by black)
+  "COM812", # trailing comma (handled by black)
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.pylint.messages_control]
+disable = [
+  "line-too-long",
+  "missing-module-docstring",
+  "invalid-name",
+  "too-few-public-methods",
+]
+
+[tool.pylint.format]
+max-line-length = 100

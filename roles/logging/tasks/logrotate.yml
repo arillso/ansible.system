@@ -1,0 +1,54 @@
+---
+- name: Install logrotate packages
+  ansible.builtin.package:
+      name: "{{ logging_logrotate_packages }}"
+      state: present
+  become: true
+  retries: "{{ logging_retry_count }}"
+  delay: "{{ logging_retry_delay }}"
+  register: _logging_logrotate_install
+  until: _logging_logrotate_install is succeeded
+
+- name: Deploy global logrotate configuration
+  ansible.builtin.template:
+      src: etc/logrotate.conf.j2
+      dest: /etc/logrotate.conf
+      owner: root
+      group: root
+      mode: "0644"
+      backup: "{{ logging_backup_configs }}"
+  become: true
+  retries: "{{ logging_retry_count }}"
+  delay: "{{ logging_retry_delay }}"
+  register: _logging_logrotate_config
+  until: _logging_logrotate_config is succeeded
+
+- name: Deploy logrotate entries
+  ansible.builtin.template:
+      src: etc/logrotate.d/entry.j2
+      dest: "/etc/logrotate.d/{{ _logging_logrotate_item.name }}"
+      owner: root
+      group: root
+      mode: "0644"
+      backup: "{{ logging_backup_configs }}"
+  become: true
+  loop: "{{ logging_logrotate_entries }}"
+  loop_control:
+      loop_var: _logging_logrotate_item
+      label: "{{ _logging_logrotate_item.name }}"
+  when:
+      - logging_logrotate_entries | length > 0
+      - _logging_logrotate_item.state | default('present') == 'present'
+
+- name: Remove logrotate entries
+  ansible.builtin.file:
+      path: "/etc/logrotate.d/{{ _logging_logrotate_item.name }}"
+      state: absent
+  become: true
+  loop: "{{ logging_logrotate_entries }}"
+  loop_control:
+      loop_var: _logging_logrotate_item
+      label: "{{ _logging_logrotate_item.name }}"
+  when:
+      - logging_logrotate_entries | length > 0
+      - _logging_logrotate_item.state | default('present') == 'absent'

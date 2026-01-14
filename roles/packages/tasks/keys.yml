@@ -1,0 +1,133 @@
+---
+# Entry point for APT key management
+# Modern implementation using keyring files instead of deprecated apt_key
+
+- name: Create keyrings directory
+  ansible.builtin.file:
+      path: /usr/share/keyrings
+      state: directory
+      mode: "0755"
+      owner: root
+      group: root
+  become: true
+
+- name: Download APT signing keys (URL with keyring)
+  ansible.builtin.get_url:
+      url: "{{ _pkg_key_item.url }}"
+      dest: >-
+          {{ _pkg_key_item.keyring |
+             default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
+                     '-keyring.gpg') }}
+      mode: "0644"
+      owner: root
+      group: root
+      backup: true
+      timeout: 30
+  loop: "{{ packages_keys }}"
+  loop_control:
+      loop_var: _pkg_key_item
+  when:
+      - packages_keys | length > 0
+      - _pkg_key_item.url is defined
+      - _pkg_key_item.keyring is defined
+      - _pkg_key_item.state | default('present') == 'present'
+      - not (_pkg_key_item.dearmor | default(false))
+  register: _packages_keys_added_url_keyring
+  become: true
+
+- name: Download and dearmor APT signing keys (URL with keyring and dearmor)
+  ansible.builtin.shell:
+      cmd: >-
+          set -o pipefail &&
+          curl -fsSL {{ _pkg_key_item.url | quote }} | gpg --dearmor -o
+          {{ _pkg_key_item.keyring |
+             default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
+                     '-keyring.gpg') | quote }}
+      executable: /bin/bash
+      creates: >-
+          {{ _pkg_key_item.keyring |
+             default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
+                     '-keyring.gpg') }}
+  loop: "{{ packages_keys }}"
+  loop_control:
+      loop_var: _pkg_key_item
+  when:
+      - packages_keys | length > 0
+      - _pkg_key_item.url is defined
+      - _pkg_key_item.keyring is defined
+      - _pkg_key_item.state | default('present') == 'present'
+      - _pkg_key_item.dearmor | default(false)
+  register: _packages_keys_added_url_keyring_dearmor
+  become: true
+
+- name: Set correct permissions for dearmored keys
+  ansible.builtin.file:
+      path: >-
+          {{ _pkg_key_item.keyring |
+             default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
+                     '-keyring.gpg') }}
+      mode: "0644"
+      owner: root
+      group: root
+  loop: "{{ packages_keys }}"
+  loop_control:
+      loop_var: _pkg_key_item
+  when:
+      - packages_keys | length > 0
+      - _pkg_key_item.url is defined
+      - _pkg_key_item.keyring is defined
+      - _pkg_key_item.state | default('present') == 'present'
+      - _pkg_key_item.dearmor | default(false)
+  become: true
+
+- name: Add APT signing keys (URL - legacy apt_key)
+  ansible.builtin.apt_key:
+      url: "{{ _pkg_key_item.url }}"
+      state: "{{ _pkg_key_item.state | default('present') }}"
+  become: true
+  loop: "{{ packages_keys }}"
+  loop_control:
+      loop_var: _pkg_key_item
+  when:
+      - packages_keys | length > 0
+      - _pkg_key_item.url is defined
+      - _pkg_key_item.keyring is not defined
+  register: _packages_keys_added_url
+
+- name: Add APT signing keys (keyserver)
+  ansible.builtin.apt_key:
+      keyserver: "{{ _pkg_key_item.keyserver }}"
+      id: "{{ _pkg_key_item.id }}"
+      state: "{{ _pkg_key_item.state | default('present') }}"
+  become: true
+  loop: "{{ packages_keys }}"
+  loop_control:
+      loop_var: _pkg_key_item
+  when:
+      - packages_keys | length > 0
+      - _pkg_key_item.keyserver is defined
+      - _pkg_key_item.id is defined
+  register: _packages_keys_added_keyserver
+
+- name: Add APT signing keys (data)
+  ansible.builtin.apt_key:
+      data: "{{ _pkg_key_item.data }}"
+      state: "{{ _pkg_key_item.state | default('present') }}"
+  become: true
+  loop: "{{ packages_keys }}"
+  loop_control:
+      loop_var: _pkg_key_item
+  when:
+      - packages_keys | length > 0
+      - _pkg_key_item.data is defined
+  register: _packages_keys_added_data
+
+- name: Set keys change flag
+  ansible.builtin.set_fact:
+      packages_keys_changed: true
+  when: >
+      (_packages_keys_added_url_keyring is defined and _packages_keys_added_url_keyring is changed) or
+      (_packages_keys_added_url_keyring_dearmor is defined and _packages_keys_added_url_keyring_dearmor is changed) or
+      (_packages_keys_added_url is defined and _packages_keys_added_url is changed) or
+      (_packages_keys_added_keyserver is defined and _packages_keys_added_keyserver is changed) or
+      (_packages_keys_added_data is defined and _packages_keys_added_data is changed)

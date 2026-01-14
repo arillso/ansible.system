@@ -1,0 +1,26 @@
+---
+galaxy_info:
+    author: sbaerlocher
+    description: Configure Ansible automation (ansible-pull or ansible-playbook) with systemd timer
+    license: MIT
+    min_ansible_version: "2.14"
+
+    platforms:
+        - name: Debian
+          versions:
+              - bullseye
+              - bookworm
+        - name: Ubuntu
+          versions:
+              - jammy
+              - noble
+
+    galaxy_tags:
+        - ansible
+        - pull
+        - playbook
+        - systemd
+        - automation
+        - timer
+
+dependencies: []

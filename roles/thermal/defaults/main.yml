@@ -1,0 +1,34 @@
+---
+# Enable thermal management
+thermal_enabled: true
+
+# Packages to install
+thermal_packages:
+    - lm-sensors
+    - fancontrol
+    - thermald
+
+# Platform name
+thermal_platform_name: "{{ ansible_product_name | default('Generic') }}"
+
+# Thermal preference: QUIET, PERFORMANCE, or BALANCED
+thermal_preference: "QUIET"
+
+# Temperature thresholds in millidegrees Celsius
+thermal_acpitz_passive_temp: 70000
+thermal_acpitz_active_temp: 80000
+thermal_cpu_passive_temp: 75000
+thermal_cpu_active_temp: 85000
+
+# Sampling periods in seconds
+thermal_passive_sampling_period: 12
+thermal_active_sampling_period: 8
+thermal_cpu_passive_sampling_period: 10
+thermal_cpu_active_sampling_period: 6
+
+# Enable/disable specific thermal zones
+thermal_enable_acpitz: true
+thermal_enable_cpu_temp: true
+
+# Run sensors-detect automatically
+thermal_run_sensors_detect: false

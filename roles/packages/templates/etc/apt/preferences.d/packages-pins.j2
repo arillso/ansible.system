@@ -1,0 +1,9 @@
+# {{ ansible_managed }}
+# APT Preferences (Pinning)
+
+{% for pref in packages_apt_preferences %}
+Package: {{ pref.package }}
+Pin: {{ pref.pin }}
+Pin-Priority: {{ pref.priority }}
+
+{% endfor %}

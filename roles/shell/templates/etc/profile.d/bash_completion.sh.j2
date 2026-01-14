@@ -1,0 +1,8 @@
+# /etc/profile.d/bash_completion.sh
+# Enable bash completion for all users
+# This file is managed by Ansible (arillso.system.ui)
+
+# Load bash completion if available
+if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
+    . /etc/bash_completion
+fi

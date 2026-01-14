@@ -1,0 +1,55 @@
+---
+- name: Configure systemd-resolved
+  when: network_use_systemd_resolved | default(true) | bool
+  block:
+      - name: Deploy systemd-resolved configuration
+        ansible.builtin.template:
+            src: etc/systemd/resolved.conf.j2
+            dest: /etc/systemd/resolved.conf
+            owner: root
+            group: root
+            mode: "0644"
+            backup: "{{ network_backup_configs }}"
+        become: true
+        notify: "Network restart resolved"
+        retries: "{{ network_retry_count }}"
+        delay: "{{ network_retry_delay }}"
+        register: _network_resolved_config
+        until: _network_resolved_config is succeeded
+
+      - name: Ensure systemd-resolved is enabled and started via systemd role
+        ansible.builtin.include_role:
+            name: arillso.system.systemd
+            tasks_from: service
+        become: true
+        vars:
+            systemd_services:
+                - name: systemd-resolved
+                  enabled: true
+                  state: started
+
+      - name: Create symlink for /etc/resolv.conf
+        ansible.builtin.file:
+            src: /run/systemd/resolve/stub-resolv.conf
+            dest: /etc/resolv.conf
+            state: link
+            force: true
+        become: true
+        when: network_resolved_dnsstublistener != "no"
+
+- name: Configure traditional /etc/resolv.conf
+  when: not (network_use_systemd_resolved | default(true) | bool)
+  block:
+      - name: Deploy resolv.conf
+        ansible.builtin.template:
+            src: etc/resolv.conf.j2
+            dest: /etc/resolv.conf
+            owner: root
+            group: root
+            mode: "0644"
+            backup: "{{ network_backup_configs }}"
+        become: true
+        retries: "{{ network_retry_count }}"
+        delay: "{{ network_retry_delay }}"
+        register: _network_resolv_config
+        until: _network_resolv_config is succeeded

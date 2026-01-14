@@ -1,6 +1,0 @@
----
-- name: Ensure apt keys packages
-  ansible.builtin.import_tasks: install_key_packages.yml
-
-- name: Ensure apt keys
-  ansible.builtin.import_tasks: add_keys.yml

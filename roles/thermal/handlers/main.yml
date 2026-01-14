@@ -1,0 +1,14 @@
+---
+# Handlers for thermal management role
+
+- name: Restart thermald
+  ansible.builtin.systemd:
+      name: thermald
+      state: restarted
+  become: true
+
+- name: Restart cpufrequtils
+  ansible.builtin.systemd:
+      name: cpufrequtils
+      state: restarted
+  become: true

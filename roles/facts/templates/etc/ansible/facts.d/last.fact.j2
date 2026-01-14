@@ -1,0 +1,86 @@
+{{ "#!/bin/bash" }}
+# Update last run metadata - executed by Ansible to track when it last ran
+# This script ONLY updates the timestamp, it doesn't output anything
+# Template processed by Ansible
+
+set -euo pipefail
+
+# Universal configuration variables from Ansible (harmonized across all facts scripts)
+readonly CACHE_DIR="{{ facts_cache_dir | default('/var/cache/ansible-facts') }}"
+readonly LAST_RUN_FILE="${CACHE_DIR}/last_run.json"
+
+# Logging functions
+log_debug() {
+    if [[ "${DEBUG:-false}" == "true" ]]; then
+        echo "[DEBUG] $*" >&2
+    fi
+}
+
+log_warn() {
+    echo "[WARN] $*" >&2
+}
+
+create_cache_dir() {
+    if [[ ! -d "$CACHE_DIR" ]]; then
+        mkdir -p "$CACHE_DIR" 2>/dev/null || {
+            log_warn "Cannot create cache directory: $CACHE_DIR"
+            return 1
+        }
+        chmod 700 "$CACHE_DIR"
+        log_debug "Created cache directory: $CACHE_DIR"
+    fi
+    return 0
+}
+
+# Update last run timestamp (ONLY writes, no output)
+update_last_run() {
+    if create_cache_dir; then
+        local iso_timestamp human_timestamp epoch_timestamp date_part time_part
+        iso_timestamp="$(date -Iseconds)"
+        human_timestamp="$(date '+%Y-%m-%d %H:%M:%S %Z')"
+        epoch_timestamp="$(date +%s)"
+        date_part="$(date '+%Y-%m-%d')"
+        time_part="$(date '+%H:%M:%S')"
+
+        jq -n \
+            --arg timestamp "$iso_timestamp" \
+            --arg timestamp_human "$human_timestamp" \
+            --arg epoch "$epoch_timestamp" \
+            --arg date "$date_part" \
+            --arg time "$time_part" \
+            --arg user "{{ ansible_user | default('system') }}" \
+            --arg playbook "{{ facts_playbook_name }}" \
+            --arg playbook_dir "{{ playbook_dir | default('unknown') }}" \
+            --arg ansible_version "{{ ansible_version.full }}" \
+            '{
+                timestamp: $timestamp,
+                timestamp_human: $timestamp_human,
+                epoch: ($epoch | tonumber),
+                date: $date,
+                time: $time,
+                user: $user,
+                playbook: $playbook,
+                playbook_dir: $playbook_dir,
+                ansible_version: $ansible_version
+            }' > "$LAST_RUN_FILE" 2>/dev/null || {
+            log_warn "Cannot write last run file: $LAST_RUN_FILE"
+            return 1
+        }
+        chmod 600 "$LAST_RUN_FILE" 2>/dev/null || true
+        log_debug "Updated last run timestamp: $(date -Iseconds)"
+        return 0
+    fi
+    return 1
+}
+
+# Main execution - ONLY update, no output
+main() {
+    update_last_run
+    # Ensure we exit with 0 on success
+    return 0
+}
+
+# Error handling
+trap 'echo "[ERROR] Update last run failed" >&2; exit 1' ERR
+
+main "$@"

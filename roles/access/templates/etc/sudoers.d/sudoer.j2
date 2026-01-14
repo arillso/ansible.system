@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+# Sudoers configuration: {{ _access_sudoer_item.name }}
+
+{% if _access_sudoer_item.user is defined %}
+# User: {{ _access_sudoer_item.user }}
+{{ _access_sudoer_item.user }} {{ _access_sudoer_item.hosts | default('ALL') }}={{ _access_sudoer_item.runas | default('ALL') }}{% if _access_sudoer_item.nopasswd | default(false) %} NOPASSWD:{% endif %}{% if _access_sudoer_item.setenv | default(false) %} SETENV:{% endif %} {{ _access_sudoer_item.commands | default('ALL') }}
+{% elif _access_sudoer_item.group is defined %}
+# Group: {{ _access_sudoer_item.group }}
+%{{ _access_sudoer_item.group }} {{ _access_sudoer_item.hosts | default('ALL') }}={{ _access_sudoer_item.runas | default('ALL') }}{% if _access_sudoer_item.nopasswd | default(false) %} NOPASSWD:{% endif %}{% if _access_sudoer_item.setenv | default(false) %} SETENV:{% endif %} {{ _access_sudoer_item.commands | default('ALL') }}
+{% endif %}

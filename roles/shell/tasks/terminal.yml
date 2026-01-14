@@ -1,0 +1,28 @@
+---
+# Terminal configuration - Colors, completion, environment
+
+- name: "Configure terminal colors"
+  ansible.builtin.template:
+      src: etc/profile.d/terminal_colors.sh.j2
+      dest: /etc/profile.d/terminal_colors.sh
+      mode: "0644"
+      owner: root
+      group: root
+  become: true
+  when: shell_terminal_colors_enabled
+  tags:
+      - terminal
+      - colors
+
+- name: "Configure bash completion"
+  ansible.builtin.template:
+      src: etc/profile.d/bash_completion.sh.j2
+      dest: /etc/profile.d/bash_completion.sh
+      mode: "0644"
+      owner: root
+      group: root
+  become: true
+  when: shell_terminal_completion_enabled
+  tags:
+      - terminal
+      - completion

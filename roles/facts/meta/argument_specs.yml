@@ -1,0 +1,288 @@
+---
+# Argument specifications for Facts role - Enterprise-grade validation
+# Only documents variables that are actually used in the role implementation
+
+argument_specs:
+    main:
+        short_description: "Collect system facts and metadata with K3s integration"
+        description: |
+            Enterprise-grade facts collection role that gathers system information,
+            cloud metadata, and provides K3s cluster state detection.
+
+        options:
+            # Core role identification
+            facts_role_name:
+                type: str
+                default: "facts"
+                description: "Internal role identifier for facts collection"
+
+            facts_collection_name:
+                type: str
+                default: "arillso.system.facts"
+                description: "Full collection name for metadata tracking"
+
+            facts_version:
+                type: str
+                description: "Auto-detected collection version"
+
+            # Node classification
+            facts_node_type:
+                type: str
+                default: "generic"
+                choices: ["generic", "controller", "agent", "gateway", "worker"]
+                description: "Node type classification used in facts output"
+
+            # System metadata
+            facts_system_owner:
+                type: str
+                default: "ops-team"
+                description: "Team or individual responsible for system maintenance"
+
+            facts_system_tags:
+                type: list
+                elements: str
+                default: ["managed", "facts"]
+                description: "List of tags for system classification and metadata"
+
+            facts_playbook_name:
+                type: str
+                default: "facts"
+                description: "Name of playbook executing the role for audit trail"
+
+            # Service configuration
+            facts_ssh_service_names:
+                type: dict
+                description: "SSH service names by OS family for handler operations"
+
+            # Feature flags for facts collection
+            facts_enable_cloud_metadata:
+                type: bool
+                default: true
+                description: "Enable cloud provider metadata collection"
+
+            facts_enable_security_updates:
+                type: bool
+                default: true
+                description: "Enable security update information collection"
+
+            facts_enable_static_cache:
+                type: bool
+                default: true
+                description: "Enable caching for static system information"
+
+            # Universal facts configuration (harmonized across all scripts)
+            facts_enable_container_detection:
+                type: bool
+                default: true
+                description: "Enable container runtime detection and facts collection"
+
+            facts_cache_enabled:
+                type: bool
+                default: true
+                description: "Universal cache enablement for all facts scripts"
+
+            facts_cache_dir:
+                type: str
+                default: "/var/cache/ansible-facts"
+                description: "Universal cache directory for all facts scripts"
+
+            facts_cache_default_ttl:
+                type: int
+                default: 300
+                description: "Default cache TTL in seconds (5 minutes)"
+
+            facts_timeout_default:
+                type: int
+                default: 5
+                description: "Default timeout in seconds for all operations"
+
+            facts_timeout_api:
+                type: int
+                default: 10
+                description: "Timeout in seconds for API calls"
+
+            facts_max_retries:
+                type: int
+                default: 1
+                description: "Maximum number of retries for network operations"
+
+            # Script-specific cache TTL configuration
+            facts_cache_ttl_cloud:
+                type: int
+                default: 3600
+                description: "Cache TTL for cloud metadata (1 hour)"
+
+            facts_cache_ttl_container:
+                type: int
+                default: 300
+                description: "Cache TTL for container facts (5 minutes)"
+
+            facts_cache_ttl_security:
+                type: int
+                default: 300
+                description: "Cache TTL for security facts (5 minutes)"
+
+            facts_cache_ttl_system:
+                type: int
+                default: 86400
+                description: "Cache TTL for system facts (24 hours)"
+
+            facts_cache_ttl_network:
+                type: int
+                default: 1800
+                description: "Cache TTL for network facts (30 minutes)"
+
+            # Cloud metadata configuration
+            facts_cloud_metadata_base_url:
+                type: str
+                default: "http://169.254.169.254"
+                description: "Base URL for cloud metadata services"
+
+            facts_cloud_providers_enabled:
+                type: list
+                elements: str
+                default: ["aws", "digitalocean", "hetzner", "gcp", "generic"]
+                description: "List of cloud providers to detect and support"
+
+            # Security facts configuration
+            facts_security_check_method:
+                type: str
+                default: "auto"
+                choices: ["auto", "apt", "yum", "dnf", "disabled"]
+                description: "Method for checking security updates"
+
+            facts_security_command_timeout:
+                type: int
+                default: 15
+                description: "Extended timeout for package manager security operations"
+
+            # System facts configuration
+            facts_system_collect_hardware:
+                type: bool
+                default: true
+                description: "Collect hardware information in system facts"
+
+            facts_system_collect_network:
+                type: bool
+                default: true
+                description: "Collect network information in system facts"
+
+            facts_system_collect_storage:
+                type: bool
+                default: true
+                description: "Collect storage information in system facts"
+
+            facts_system_collect_performance:
+                type: bool
+                default: true
+                description: "Collect performance metrics in system facts"
+
+            facts_system_collect_virtualization:
+                type: bool
+                default: true
+                description: "Collect virtualization information in system facts"
+
+            # Network facts configuration
+            facts_network_collect_interfaces:
+                type: bool
+                default: true
+                description: "Collect network interface information"
+
+            facts_network_collect_routes:
+                type: bool
+                default: true
+                description: "Collect network routing information"
+
+            facts_network_collect_dns:
+                type: bool
+                default: true
+                description: "Collect DNS configuration information"
+
+            facts_network_collect_firewall:
+                type: bool
+                default: true
+                description: "Collect firewall configuration information"
+
+            # Debug and logging configuration
+            facts_debug_enabled:
+                type: bool
+                default: false
+                description: "Enable debug logging for facts collection"
+
+            facts_logging_level:
+                type: str
+                default: "info"
+                choices: ["debug", "info", "warn", "error"]
+                description: "Logging level for facts scripts"
+
+            facts_error_on_failure:
+                type: bool
+                default: false
+                description: "Abort execution on script failures vs. continue"
+
+            # Performance and reliability configuration
+            facts_concurrent_execution:
+                type: bool
+                default: false
+                description: "Enable parallel execution of facts scripts"
+
+            facts_script_execution_timeout:
+                type: int
+                default: 30
+                description: "Maximum execution time per facts script in seconds"
+
+            facts_cache_compression_enabled:
+                type: bool
+                default: false
+                description: "Enable compression for cache files (requires gzip)"
+
+            facts_cache_cleanup_enabled:
+                type: bool
+                default: true
+                description: "Enable automatic cleanup of old cache files"
+
+            facts_cache_cleanup_age_days:
+                type: int
+                default: 7
+                description: "Age threshold in days for cache file cleanup"
+
+            # Container-specific configuration
+            facts_container_detect_docker:
+                type: bool
+                default: true
+                description: "Enable Docker runtime detection"
+
+            facts_container_detect_podman:
+                type: bool
+                default: true
+                description: "Enable Podman runtime detection"
+
+            facts_container_detect_kubernetes:
+                type: bool
+                default: true
+                description: "Enable Kubernetes (K3s/K8s/MicroK8s) runtime detection"
+
+            facts_container_detect_containerd:
+                type: bool
+                default: true
+                description: "Enable containerd runtime detection"
+
+            facts_container_collect_inventory:
+                type: bool
+                default: true
+                description: "Collect container inventory information"
+
+            facts_container_collect_health:
+                type: bool
+                default: true
+                description: "Collect container runtime health metrics"
+
+            facts_container_collect_volumes:
+                type: bool
+                default: true
+                description: "Collect container volume information"
+
+            facts_container_collect_networks:
+                type: bool
+                default: true
+                description: "Collect container network information"

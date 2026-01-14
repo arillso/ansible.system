@@ -1,0 +1,21 @@
+---
+- name: Access restart sshd
+  ansible.builtin.systemd:
+      name: "{{ _access_ssh_service_name }}"
+      state: restarted
+  when: access_ssh_restart_on_change | default(true)
+  listen: "Access restart sshd"
+
+- name: Access reload sshd
+  ansible.builtin.systemd:
+      name: "{{ _access_ssh_service_name }}"
+      state: reloaded
+  listen: "Access reload sshd"
+
+- name: Access restart services
+  ansible.builtin.systemd:
+      name: "{{ item }}"
+      state: restarted
+  loop: "{{ access_services_to_restart }}"
+  when: access_services_to_restart | length > 0
+  listen: "Access restart services"

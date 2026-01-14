@@ -1,0 +1,20 @@
+# {{ ansible_managed }}
+# APT Sources Configuration
+
+{% if packages_apt_mirror_enabled %}
+# Main repository
+deb {{ packages_apt_mirror_uri }} {{ packages_apt_mirror_distribution }} {{ packages_apt_mirror_components | join(' ') }}
+deb-src {{ packages_apt_mirror_uri }} {{ packages_apt_mirror_distribution }} {{ packages_apt_mirror_components | join(' ') }}
+
+# Updates repository
+deb {{ packages_apt_mirror_uri }} {{ packages_apt_mirror_distribution }}-updates {{ packages_apt_mirror_components | join(' ') }}
+deb-src {{ packages_apt_mirror_uri }} {{ packages_apt_mirror_distribution }}-updates {{ packages_apt_mirror_components | join(' ') }}
+
+# Security repository
+deb {{ packages_apt_mirror_uri }} {{ packages_apt_mirror_distribution }}-security {{ packages_apt_mirror_components | join(' ') }}
+deb-src {{ packages_apt_mirror_uri }} {{ packages_apt_mirror_distribution }}-security {{ packages_apt_mirror_components | join(' ') }}
+
+# Backports repository
+deb {{ packages_apt_mirror_uri }} {{ packages_apt_mirror_distribution }}-backports {{ packages_apt_mirror_components | join(' ') }}
+deb-src {{ packages_apt_mirror_uri }} {{ packages_apt_mirror_distribution }}-backports {{ packages_apt_mirror_components | join(' ') }}
+{% endif %}

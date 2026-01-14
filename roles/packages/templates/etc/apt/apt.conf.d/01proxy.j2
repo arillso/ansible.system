@@ -1,0 +1,18 @@
+// {{ ansible_managed }}
+// APT Proxy Configuration
+
+{% if packages_apt_proxy_http %}
+Acquire::http::Proxy "{{ packages_apt_proxy_http }}";
+{% endif %}
+
+{% if packages_apt_proxy_https %}
+Acquire::https::Proxy "{{ packages_apt_proxy_https }}";
+{% endif %}
+
+{% if packages_apt_proxy_ftp %}
+Acquire::ftp::Proxy "{{ packages_apt_proxy_ftp }}";
+{% endif %}
+
+{% if packages_apt_proxy_socks %}
+Acquire::socks::Proxy "{{ packages_apt_proxy_socks }}";
+{% endif %}

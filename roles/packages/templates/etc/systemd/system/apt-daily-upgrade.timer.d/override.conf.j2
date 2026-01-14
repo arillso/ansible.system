@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+# Unattended-Upgrades Timer Override
+
+[Timer]
+# When to run (systemd calendar expression)
+OnCalendar={{ packages_unattended_upgrades_timer_on_calendar }}
+
+# Random delay before execution (reduces load spikes)
+RandomizedDelaySec={{ packages_unattended_upgrades_timer_randomized_delay }}
+
+# Run missed timer on boot if system was down
+Persistent={{ packages_unattended_upgrades_timer_persistent | lower }}

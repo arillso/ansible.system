@@ -1,0 +1,23 @@
+# {{ ansible_managed }}
+# APT Preferences for Version Pinning
+# This file controls which package versions can be automatically upgraded
+# Format: Pin package to major.minor version, block newer major versions
+
+{% for package, version in packages_unattended_upgrades_version_pins.items() %}
+# Pin {{ package }} to version {{ version }}.*
+Package: {{ package }}
+Pin: version {{ version }}.*
+Pin-Priority: 990
+
+# Block newer major versions of {{ package }}
+Package: {{ package }}
+Pin: version >> {{ version }}
+Pin-Priority: -1
+
+{% endfor %}
+
+# Explanation:
+# - Pin-Priority 990: Prefer this version
+# - Pin-Priority -1: Never install this version
+# - version {{ version }}.*: Allow minor/patch updates within major version
+# - version >> {{ version }}: Block versions greater than pinned major version

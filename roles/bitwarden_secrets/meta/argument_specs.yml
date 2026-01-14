@@ -1,0 +1,25 @@
+---
+argument_specs:
+    main:
+        short_description: "Bitwarden Secrets Manager CLI installation"
+        description:
+            - "Installs the Bitwarden Secrets Manager CLI (bws) for secret management"
+            - "Supports version management and multi-architecture"
+        options:
+            bitwarden_secrets_version:
+                description: "Version of bws CLI to install"
+                type: str
+                default: "1.0.0"
+            bitwarden_secrets_install_path:
+                description: "Installation path for bws binary"
+                type: str
+                default: "/usr/local/bin"
+            bitwarden_secrets_state:
+                description: "Installation state"
+                type: str
+                default: present
+                choices: [present, absent, latest]
+            bitwarden_secrets_force_install:
+                description: "Force reinstall even if version matches"
+                type: bool
+                default: false

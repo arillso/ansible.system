@@ -1,4 +1,4 @@
 {
-  "exclude-paths": [".ansible/*"],
-  "exclude-queries": ["555ab8f9-2001-455e-a077-f2d0f41e2fb9"]
+    "exclude-paths": [".ansible/*"],
+    "exclude-queries": ["555ab8f9-2001-455e-a077-f2d0f41e2fb9"]
 }

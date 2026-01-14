@@ -1,6 +1,0 @@
----
-- name: Run arillso Apt Package
-  ansible.builtin.include_role:
-    name: arillso.system.apt_packages
-  vars:
-    apt_packages_list: "{{ logrotate_packages }}"

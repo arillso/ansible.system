@@ -1,0 +1,212 @@
+---
+name: Continuous Integration
+
+on:
+    push:
+        branches: [main, master]
+    pull_request:
+        branches: [main, master]
+
+concurrency:
+    group: ${{ github.ref }}-${{ github.workflow }}
+    cancel-in-progress: true
+
+jobs:
+    # Ansible-specific linting
+    ansible-lint:
+        name: Ansible Lint
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+                  cache: "pip"
+
+            - name: Install ansible-lint
+              run: pip install ansible-lint ansible-core
+
+            - name: Run ansible-lint
+              run: ansible-lint --force-color
+
+    # YAML linting
+    yaml-lint:
+        name: YAML Lint
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+            - name: Install yamllint
+              run: pip install yamllint
+
+            - name: Run yamllint
+              run: yamllint .
+
+    # Python linting and formatting
+    python-lint:
+        name: Python Lint
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+                  cache: "pip"
+
+            - name: Install linting tools
+              run: |
+                  pip install ruff pylint black isort
+                  pip install ansible-core  # For filter plugin imports
+
+            - name: Run ruff
+              run: ruff check plugins/ --output-format=github
+              continue-on-error: true
+
+            - name: Run black (check only)
+              run: black --check --diff plugins/
+              continue-on-error: true
+
+            - name: Run isort (check only)
+              run: isort --check-only --diff plugins/
+              continue-on-error: true
+
+            - name: Run pylint
+              run: pylint plugins/**/*.py
+              continue-on-error: true
+
+    # Markdown linting
+    markdown-lint:
+        name: Markdown Lint
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Run markdownlint
+              uses: DavidAnson/markdownlint-cli2-action@v18
+              with:
+                  globs: "**/*.md"
+              continue-on-error: true
+
+    # Security scanning
+    security-scan:
+        name: Security Scan
+        runs-on: ubuntu-latest
+        permissions:
+            security-events: write
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Run Trivy vulnerability scanner
+              uses: aquasecurity/trivy-action@master
+              with:
+                  scan-type: "fs"
+                  scan-ref: "."
+                  format: "sarif"
+                  output: "trivy-results.sarif"
+              continue-on-error: true
+
+            - name: Upload Trivy results to GitHub Security
+              uses: github/codeql-action/upload-sarif@v3
+              with:
+                  sarif_file: "trivy-results.sarif"
+              if: always()
+              continue-on-error: true
+
+    # Collection sanity tests
+    sanity-test:
+        name: Sanity Tests
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                include:
+                    - ansible-version: "stable-2.16"
+                      python-version: "3.11"
+                    - ansible-version: "stable-2.17"
+                      python-version: "3.11"
+                    - ansible-version: "devel"
+                      python-version: "3.12"
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+              with:
+                  path: ansible_collections/arillso/system
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "${{ matrix.python-version }}"
+
+            - name: Install Ansible
+              run: pip install https://github.com/ansible/ansible/archive/${{ matrix.ansible-version }}.tar.gz --disable-pip-version-check
+
+            - name: Install collection dependencies
+              run: pip install -r requirements.txt
+              working-directory: ansible_collections/arillso/system
+
+            - name: Run sanity tests
+              run: ansible-test sanity --docker --color --python ${{ matrix.python-version }}
+              working-directory: ansible_collections/arillso/system
+
+    # Collection integration tests (if you have them)
+    integration-test:
+        name: Integration Tests
+        runs-on: ubuntu-latest
+        if: false # Enable when integration tests are available
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+              with:
+                  path: ansible_collections/arillso/system
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+            - name: Install Ansible
+              run: pip install ansible-core
+
+            - name: Run integration tests
+              run: ansible-test integration --docker --color
+              working-directory: ansible_collections/arillso/system
+
+    # Build and validate collection
+    build:
+        name: Build Collection
+        runs-on: ubuntu-latest
+        needs: [ansible-lint, yaml-lint, python-lint, sanity-test]
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+            - name: Install Ansible
+              run: pip install ansible-core
+
+            - name: Build collection
+              run: ansible-galaxy collection build
+
+            - name: Upload collection artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: collection
+                  path: "*.tar.gz"
+                  retention-days: 7

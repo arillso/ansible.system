@@ -1,6 +1,0 @@
----
-- name: Run arillso dnf Package
-  ansible.builtin.include_role:
-    name: arillso.system.dnf_packages
-  vars:
-    dnf_packages_list: "{{ packages_list }}"

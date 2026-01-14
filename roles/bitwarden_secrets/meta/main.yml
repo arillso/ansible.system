@@ -1,0 +1,30 @@
+---
+galaxy_info:
+    description: Role for installing Bitwarden Secrets Manager CLI (bws)
+    author: "arillso (@arillso)"
+    license: MIT
+    min_ansible_version: "2.15"
+    platforms:
+        - name: Debian
+          versions:
+              - bullseye
+              - bookworm
+        - name: Ubuntu
+          versions:
+              - focal
+              - jammy
+              - noble
+        - name: EL
+          versions:
+              - "8"
+              - "9"
+
+    galaxy_tags:
+        - system
+        - security
+        - secrets
+        - bitwarden
+        - bws
+        - tools
+
+dependencies: []

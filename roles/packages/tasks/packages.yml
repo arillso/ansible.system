@@ -1,0 +1,10 @@
+---
+- name: Process packages in correct order
+  ansible.builtin.include_tasks: "{{ _pkg_outer_item }}"
+  loop:
+      - unhold.yml
+      - remove.yml
+      - install.yml
+      - hold.yml
+  loop_control:
+      loop_var: _pkg_outer_item

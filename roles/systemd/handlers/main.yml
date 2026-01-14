@@ -1,0 +1,12 @@
+---
+- name: Systemd daemon-reload
+  ansible.builtin.systemd:
+      daemon_reload: true
+  listen: "Systemd daemon-reload"
+
+- name: Systemd restart journald
+  ansible.builtin.systemd:
+      name: systemd-journald
+      state: restarted
+  when: systemd_journald_restart_on_change | default(true)
+  listen: "Systemd restart journald"

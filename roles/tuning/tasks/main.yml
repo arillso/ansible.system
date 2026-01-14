@@ -1,0 +1,199 @@
+# File: roles/system_tuning/tasks/main.yml
+---
+- name: Cache update via packages role
+  ansible.builtin.include_role:
+      name: arillso.system.packages
+      tasks_from: cache
+  vars:
+      packages_update_cache: true
+      packages_cache_valid_time: 3600
+
+- name: Install tuning packages via packages role
+  ansible.builtin.include_role:
+      name: arillso.system.packages
+      tasks_from: packages
+  vars:
+      packages_list: "{{ tuning_packages_list | map('combine', {'state': 'present'}) | list }}"
+  loop_control:
+      loop_var: _tuning_outer_item
+  when: tuning_packages_list is defined and tuning_packages_list | length > 0
+
+- name: Gather system information for auto-detection
+  ansible.builtin.include_tasks: system_detection.yml
+  when: tuning_validate_settings | default(true)
+
+- name: Create sysctl configuration directory
+  ansible.builtin.file:
+      path: /etc/sysctl.d
+      state: directory
+      mode: "0755"
+      owner: root
+      group: root
+  become: true
+
+- name: Configure sysctl parameters
+  ansible.posix.sysctl:
+      name: "{{ item.key }}"
+      value: "{{ item.value }}"
+      state: present
+      reload: true
+      sysctl_file: "{{ tuning_sysctl_file }}"
+  become: true
+  loop: "{{ tuning_sysctl_config | dict2items }}"
+  notify: Reload sysctl
+  register: sysctl_result
+  failed_when:
+      - sysctl_result.failed
+      - not (item.key in tuning_optional_sysctl_params | default([]))
+
+- name: Configure kernel parameters in GRUB
+  when: tuning_grub_cmdline_linux_append is defined
+  block:
+      - name: Read current GRUB configuration
+        ansible.builtin.slurp:
+            src: /etc/default/grub
+        register: grub_config
+
+      - name: Parse current GRUB_CMDLINE_LINUX
+        ansible.builtin.set_fact:
+            current_grub_cmdline: >-
+                {%- set match = grub_config.content | b64decode |
+                    regex_search('GRUB_CMDLINE_LINUX="([^"]+)"', '\\1') -%}
+                {{ match[0] if match else '' }}
+
+      - name: Update GRUB_CMDLINE_LINUX with new parameters
+        ansible.builtin.lineinfile:
+            path: /etc/default/grub
+            regexp: "^GRUB_CMDLINE_LINUX="
+            line: 'GRUB_CMDLINE_LINUX="{{ current_grub_cmdline }} {{ tuning_grub_cmdline_linux_append }}"'
+            backup: true
+        become: true
+        notify: Update grub
+        when:
+            - tuning_grub_cmdline_linux_append is defined
+            - tuning_grub_cmdline_linux_append not in current_grub_cmdline
+
+- name: Configure swap settings
+  block:
+      - name: Set swappiness
+        ansible.posix.sysctl:
+            name: vm.swappiness
+            value: "{{ tuning_swap_swappiness }}"
+            state: present
+            reload: true
+            sysctl_file: "{{ tuning_sysctl_file }}"
+        become: true
+        when: tuning_swap_swappiness is defined
+
+      - name: Configure swap file if needed
+        ansible.builtin.include_tasks: swap.yml
+        when: tuning_swap_file_enabled | default(false)
+
+- name: Configure I/O scheduler
+  ansible.builtin.include_tasks: io_scheduler.yml
+  when: detected_storage_devices is defined and detected_storage_devices | length > 0
+
+- name: Configure CPU governor
+  ansible.builtin.include_tasks: cpu_governor.yml
+  when:
+      - detected_cpu_info is defined
+      - detected_cpu_info.cpufreq_supported | default(false)
+
+- name: Configure transparent huge pages
+  block:
+      - name: Validate transparent huge pages setting
+        ansible.builtin.fail:
+            msg: "Invalid transparent_hugepages setting: {{ tuning_transparent_hugepages }}"
+        when: tuning_transparent_hugepages not in ['always', 'madvise', 'never']
+
+      - name: Set transparent huge pages immediately
+        ansible.builtin.copy:
+            content: "{{ tuning_transparent_hugepages }}"
+            dest: /sys/kernel/mm/transparent_hugepage/enabled
+            mode: "0644"
+        become: true
+        register: thp_result
+        failed_when: false
+        when: tuning_transparent_hugepages is defined
+
+      - name: Create systemd service for transparent huge pages
+        ansible.builtin.template:
+            src: etc/systemd/system/disable-thp.service.j2
+            dest: /etc/systemd/system/disable-thp.service
+            mode: "0644"
+            owner: root
+            group: root
+        become: true
+        notify:
+            - reload systemd
+            - enable disable-thp service
+        when:
+            - tuning_transparent_hugepages is defined
+            - thp_result is not failed
+
+- name: Configure network tuning
+  ansible.builtin.include_tasks: network.yml
+  when: tuning_network_tuning_enabled | default(false)
+
+- name: Configure security limits
+  community.general.pam_limits:
+      domain: "{{ item.domain }}"
+      limit_type: "{{ item.type }}"
+      limit_item: "{{ item.item }}"
+      value: "{{ item.value }}"
+  become: true
+  loop: "{{ tuning_security_limits }}"
+  when: tuning_security_limits is defined and tuning_security_limits | length > 0
+
+- name: Apply tuned profile
+  when:
+      - tuning_tuned_profile is defined
+      - not ansible_check_mode
+  block:
+      - name: Start and enable tuned service via systemd role
+        ansible.builtin.include_role:
+            name: arillso.system.systemd
+            tasks_from: service
+        vars:
+            systemd_services:
+                - name: tuned
+                  state: started
+                  enabled: true
+
+      - name: Get available tuned profiles
+        ansible.builtin.command: tuned-adm list
+        register: available_tuned_profiles
+        changed_when: false
+
+      - name: Validate tuned profile
+        ansible.builtin.fail:
+            msg: >-
+                Tuned profile '{{ tuning_tuned_profile }}' is not available.
+                Available profiles: {{ available_tuned_profiles.stdout }}
+        when: tuning_tuned_profile not in available_tuned_profiles.stdout
+
+      - name: Get current tuned profile
+        ansible.builtin.command: tuned-adm active
+        register: current_tuned_profile
+        changed_when: false
+
+      - name: Set tuned profile
+        ansible.builtin.command: tuned-adm profile {{ tuning_tuned_profile }}
+        become: true
+        when:
+            - tuning_tuned_profile is defined
+            - tuning_tuned_profile not in current_tuned_profile.stdout
+        changed_when: true
+        register: tuned_result
+        failed_when: tuned_result.rc != 0
+
+- name: Display configuration summary
+  ansible.builtin.debug:
+      msg:
+          - "System tuning configuration applied:"
+          - "  - CPU Governor: {{ final_cpu_governor | default('unchanged') }}"
+          - "  - I/O Scheduler: {{ final_io_scheduler | default('unchanged') }}"
+          - "  - Transparent Huge Pages: {{ tuning_transparent_hugepages | default('unchanged') }}"
+          - "  - Tuned Profile: {{ tuning_tuned_profile | default('unchanged') }}"
+          - "  - Network Tuning: {{ 'enabled' if tuning_network_tuning_enabled else 'disabled' }}"
+  when: not ansible_check_mode

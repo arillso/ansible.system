@@ -1,0 +1,25 @@
+---
+- name: Install packages from unified list
+  ansible.builtin.apt:
+      name: "{{ _pkg_package_item.name }}"
+      state: >-
+          {{ _pkg_package_item.state
+             if _pkg_package_item.state in ['present', 'latest', 'build-dep']
+             else 'present' }}
+      update_cache: false
+      install_recommends: "{{ _pkg_package_item.install_recommends | default(true) }}"
+      allow_unauthenticated: "{{ _pkg_package_item.allow_unauthenticated | default(false) }}"
+      force: "{{ _pkg_package_item.force | default(false) }}"
+      default_release: "{{ _pkg_package_item.default_release | default(omit) }}"
+      only_upgrade: "{{ _pkg_package_item.only_upgrade | default(false) }}"
+      cache_valid_time: "{{ _pkg_package_item.cache_valid_time | default(omit) }}"
+  become: true
+  loop: "{{ packages_list }}"
+  loop_control:
+      loop_var: _pkg_package_item
+  when: _pkg_package_item.state | default('present') in ['present', 'latest', 'build-dep']
+  register: _packages_unified_installed
+  retries: "{{ packages_retry_count }}"
+  delay: "{{ packages_retry_delay }}"
+  until: _packages_unified_installed is succeeded
+  notify: "packages restart services"

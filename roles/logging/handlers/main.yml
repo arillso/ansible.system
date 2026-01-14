@@ -1,0 +1,13 @@
+---
+- name: Logging restart rsyslog
+  ansible.builtin.systemd:
+      name: rsyslog
+      state: restarted
+  when: logging_rsyslog_restart_on_change | default(true)
+  listen: "Logging restart rsyslog"
+
+- name: Logging reload rsyslog
+  ansible.builtin.systemd:
+      name: rsyslog
+      state: reloaded
+  listen: "Logging reload rsyslog"

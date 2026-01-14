@@ -1,0 +1,71 @@
+---
+# Main tasks for thermal management role
+
+- name: Install thermal management packages
+  ansible.builtin.package:
+      name: "{{ thermal_packages }}"
+      state: present
+  become: true
+  when: thermal_enabled
+
+- name: Detect hardware sensors
+  ansible.builtin.command:
+      cmd: sensors-detect --auto
+  become: true
+  when:
+      - thermal_enabled
+      - thermal_run_sensors_detect
+  register: sensors_detect_result
+  changed_when: false
+  failed_when: false
+
+- name: Load coretemp kernel module
+  community.general.modprobe:
+      name: coretemp
+      state: present
+  become: true
+  when: thermal_enabled
+
+- name: Ensure coretemp module loads on boot
+  ansible.builtin.lineinfile:
+      path: /etc/modules
+      line: "coretemp"
+      create: true
+      mode: "0644"
+  become: true
+  when: thermal_enabled
+
+- name: Create thermald configuration directory
+  ansible.builtin.file:
+      path: /etc/thermald
+      state: directory
+      mode: "0755"
+      owner: root
+      group: root
+  become: true
+  when: thermal_enabled
+
+- name: Deploy thermald configuration
+  ansible.builtin.template:
+      src: thermal-conf.xml.j2
+      dest: /etc/thermald/thermal-conf.xml
+      mode: "0644"
+      owner: root
+      group: root
+  become: true
+  when: thermal_enabled
+  notify: Restart thermald
+
+- name: Manage thermal services via systemd role
+  ansible.builtin.include_role:
+      name: arillso.system.systemd
+      tasks_from: service
+  vars:
+      systemd_services:
+          - name: thermald
+            enabled: true
+            state: started
+          - name: fancontrol
+            enabled: false
+            state: stopped
+  when: thermal_enabled

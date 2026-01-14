@@ -1,0 +1,18 @@
+# {{ ansible_managed }}
+# Systemd unit file: {{ _systemd_unit_item.name }}
+
+{% for section, options in _systemd_unit_item.unit.items() %}
+[{{ section }}]
+{% if options is mapping %}
+{% for key, value in options.items() %}
+{% if value is string or value is number %}
+{{ key }}={{ value }}
+{% elif value is sequence and value is not string %}
+{% for item in value %}
+{{ key }}={{ item }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% endfor %}

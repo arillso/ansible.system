@@ -1,0 +1,87 @@
+---
+# Entry Point Controls
+logging_logrotate_enabled: true
+logging_rsyslog_enabled: true
+
+# Logrotate Configuration
+logging_logrotate_entries: []
+# Example:
+# logging_logrotate_entries:
+#   - name: myapp
+#     path: /var/log/myapp/*.log
+#     options:
+#       - daily
+#       - rotate 14
+#       - compress
+#       - delaycompress
+#       - notifempty
+#       - create 0640 www-data adm
+#       - sharedscripts
+#     postrotate: |
+#       systemctl reload myapp.service > /dev/null 2>&1 || true
+#     prerotate: |
+#       if [ -d /var/log/myapp ]; then
+#           echo "Rotating logs"
+#       fi
+
+logging_logrotate_weekly: true
+logging_logrotate_rotate: 4
+logging_logrotate_create: true
+logging_logrotate_dateext: true
+logging_logrotate_compress: true
+logging_logrotate_delaycompress: false
+logging_logrotate_notifempty: true
+logging_logrotate_su: ""
+logging_logrotate_include_dir: /etc/logrotate.d
+logging_logrotate_extra_options: []
+logging_logrotate_packages:
+    - logrotate
+
+# Rsyslog Configuration
+logging_rsyslog_entries: []
+# Example:
+# logging_rsyslog_entries:
+#   - name: 50-myapp
+#     priority: 50
+#     content: |
+#       # MyApp logging
+#       if $programname == 'myapp' then /var/log/myapp/myapp.log
+#       & stop
+
+logging_rsyslog_preserve_fqdn: false
+logging_rsyslog_work_directory: /var/lib/rsyslog
+logging_rsyslog_include_config: /etc/rsyslog.d/*.conf
+logging_rsyslog_main_queue_size: 10000
+logging_rsyslog_main_queue_type: LinkedList
+logging_rsyslog_main_queue_worker_threads: 2
+logging_rsyslog_file_owner: root
+logging_rsyslog_file_group: adm
+logging_rsyslog_file_create_mode: "0640"
+logging_rsyslog_dir_create_mode: "0755"
+logging_rsyslog_traditional_log_format: false
+logging_rsyslog_klog_permit_non_kernel_facility: false
+logging_rsyslog_remote_servers: []
+# Example:
+# logging_rsyslog_remote_servers:
+#   - host: logserver.example.com
+#     port: 514
+#     protocol: tcp
+
+logging_rsyslog_modules:
+    - imuxsock
+    - imklog
+logging_rsyslog_service_state: started
+logging_rsyslog_service_enabled: true
+logging_rsyslog_restart_on_change: true
+logging_rsyslog_packages:
+    - rsyslog
+
+# Retry Configuration
+logging_retry_count: 3
+logging_retry_delay: 5
+
+# Validation and Safety
+logging_backup_configs: true
+
+# Debug Configuration
+logging_debug_mode: false

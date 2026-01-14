@@ -1,0 +1,23 @@
+{{ "#!/usr/sbin/nft -f" }}
+# {{ ansible_managed }}
+# Generated from hierarchical YAML structure
+# Host: {{ inventory_hostname }}
+# Groups: {{ group_names | join(', ') }}
+
+flush ruleset
+
+{% for firewall_table in _firewall | default([]) %}
+table {{ firewall_table.table.family }} {{ firewall_table.table.name }} {
+{% for chain in firewall_table.table.chains %}
+    chain {{ chain.name }} {
+        type {{ chain.type }} hook {{ chain.hook }} priority {{ chain.priority }}; policy {{ chain.policy }};
+
+{% for rule in chain.rules %}
+        # {{ rule.comment | default('Rule') }}
+        {{ rule | arillso.system.to_nftables_rule }}
+{% endfor %}
+    }
+{% endfor %}
+}
+
+{% endfor %}

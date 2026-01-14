@@ -1,0 +1,48 @@
+---
+argument_specs:
+    main:
+        short_description: "Network management with multi-entry-point support"
+        description:
+            - "Manages network configuration including DNS and netplan"
+            - "Supports systemd-resolved and traditional resolv.conf"
+        options:
+            network_resolv_enabled:
+                description: "Enable DNS configuration"
+                type: bool
+                default: true
+            network_netplan_enabled:
+                description: "Enable netplan configuration"
+                type: bool
+                default: false
+            network_dns_nameservers:
+                description: "List of DNS nameservers"
+                type: list
+                elements: str
+                default: []
+            network_use_systemd_resolved:
+                description: "Use systemd-resolved instead of /etc/resolv.conf"
+                type: bool
+                default: true
+
+    dns:
+        short_description: "DNS configuration entry point"
+        description:
+            - "Entry point for configuring DNS resolution"
+            - "Supports systemd-resolved and traditional resolv.conf"
+        options:
+            network_dns_nameservers:
+                description: "List of DNS nameservers"
+                type: list
+                elements: str
+                required: true
+
+    netplan:
+        short_description: "Netplan configuration entry point"
+        description:
+            - "Entry point for configuring network interfaces via netplan"
+            - "Ubuntu/Debian with netplan only"
+        options:
+            network_netplan_config:
+                description: "Netplan configuration dictionary"
+                type: dict
+                required: true

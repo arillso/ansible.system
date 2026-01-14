@@ -1,0 +1,14 @@
+---
+# Internal variables for network role
+
+# Common DNS servers
+_network_common_dns_servers:
+    google:
+        - 8.8.8.8
+        - 8.8.4.4
+    cloudflare:
+        - 1.1.1.1
+        - 1.0.0.1
+    quad9:
+        - 9.9.9.9
+        - 149.112.112.112

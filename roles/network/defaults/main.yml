@@ -1,0 +1,83 @@
+---
+# Entry Point Controls
+network_resolv_enabled: true
+network_netplan_enabled: false
+
+# DNS Configuration
+network_dns_nameservers: []
+# Example:
+# network_dns_nameservers:
+#   - 8.8.8.8
+#   - 8.8.4.4
+#   - 1.1.1.1
+
+network_dns_search: []
+# Example:
+# network_dns_search:
+#   - example.com
+#   - local.example.com
+
+network_dns_domain: ""
+network_dns_options: []
+# Example:
+# network_dns_options:
+#   - timeout:2
+#   - attempts:3
+#   - rotate
+#   - ndots:1
+
+# Systemd-resolved configuration
+network_use_systemd_resolved: true
+network_resolved_dns: []
+network_resolved_fallback_dns:
+    - 8.8.8.8
+    - 8.8.4.4
+network_resolved_domains: []
+network_resolved_llmnr: "yes"
+network_resolved_multicast_dns: "yes"
+network_resolved_dnssec: "allow-downgrade"
+network_resolved_dns_over_tls: "no"
+network_resolved_cache: "yes"
+network_resolved_dnsstublistener: "yes"
+
+# Netplan Configuration
+network_netplan_config: {}
+# Example:
+# network_netplan_config:
+#   network:
+#     version: 2
+#     renderer: networkd
+#     ethernets:
+#       eth0:
+#         dhcp4: true
+#         dhcp6: false
+#       eth1:
+#         addresses:
+#           - 192.168.1.10/24
+#         routes:
+#           - to: default
+#             via: 192.168.1.1
+#         nameservers:
+#           addresses:
+#             - 8.8.8.8
+#             - 8.8.4.4
+
+network_netplan_filename: 01-netcfg.yaml
+network_netplan_apply: false
+network_netplan_renderer: networkd
+
+# Service Management
+network_restart_services: true
+network_systemd_resolved_restart: true
+network_systemd_networkd_restart: false
+
+# Retry Configuration
+network_retry_count: 3
+network_retry_delay: 5
+
+# Validation and Safety
+network_backup_configs: true
+network_validate_netplan: true
+
+# Debug Configuration
+network_debug_mode: false

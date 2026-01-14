@@ -1,0 +1,25 @@
+---
+# Simplified handlers for nftables firewall role
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+      daemon_reload: true
+
+- name: Restart nftables
+  ansible.builtin.systemd:
+      name: nftables
+      state: restarted
+      daemon_reload: true
+
+- name: Start nftables
+  ansible.builtin.systemd:
+      name: nftables
+      state: started
+      enabled: true
+      daemon_reload: true
+
+- name: Stop nftables
+  ansible.builtin.systemd:
+      name: nftables
+      state: stopped
+      enabled: false

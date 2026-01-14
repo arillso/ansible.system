@@ -1,0 +1,76 @@
+---
+# File: roles/system_tuning/tasks/system_detection.yml
+# Simple auto-detect system capabilities
+
+- name: Gather additional hardware facts
+  ansible.builtin.setup:
+      gather_subset:
+          - hardware
+          - network
+      filter:
+          - ansible_processor*
+          - ansible_devices
+          - ansible_interfaces
+
+- name: Detect CPU information using facts
+  ansible.builtin.set_fact:
+      detected_cpu_vendor: >-
+          {%- if 'Intel' in ansible_processor[1] -%}
+          intel{%- elif 'AMD' in ansible_processor[1] -%}
+          amd{%- else -%}
+          unknown{%- endif -%}
+
+- name: Check if CPU frequency scaling is supported
+  ansible.builtin.stat:
+      path: /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors
+  register: cpufreq_check
+
+- name: Set detected CPU info
+  ansible.builtin.set_fact:
+      detected_cpu_info:
+          vendor: "{{ detected_cpu_vendor }}"
+          model: "{{ ansible_processor[1] }}"
+          cpufreq_supported: "{{ cpufreq_check.stat.exists }}"
+
+- name: Detect storage devices using facts
+  ansible.builtin.set_fact:
+      detected_storage_devices: >-
+          {{
+            ansible_devices
+            | dict2items
+            | selectattr('value.type', 'defined')
+            | selectattr('value.type', 'equalto', 'disk')
+            | selectattr('value.removable', 'defined')
+            | selectattr('value.removable', 'equalto', '0')
+            | list
+          }}
+
+- name: Detect network interfaces using facts
+  ansible.builtin.set_fact:
+      detected_network_interfaces: >-
+          {{
+            ansible_interfaces
+            | difference(['lo'])
+            | reject('match', '^(docker|br-|veth|virbr).*')
+            | reject('contains', '@')
+            | list
+          }}
+
+- name: Set optimal settings
+  ansible.builtin.set_fact:
+      # CPU Governor: nur setzen wenn CPUfreq unterstützt wird
+      final_cpu_governor: >-
+          {%- if not detected_cpu_info.cpufreq_supported -%}
+          none{%- elif tuning_cpu_governor_override -%}
+          {{ tuning_cpu_governor_override }}{%- elif detected_cpu_info.vendor == 'intel' -%}
+          powersave{%- else -%}
+          ondemand{%- endif -%}
+
+      # Storage: einfache Regeln
+      optimized_storage_devices: >-
+          {%- set devices = [] -%}
+          {%- for device in detected_storage_devices -%}
+          {%- set scheduler = 'none' if 'nvme' in device.key else 'mq-deadline' -%}
+          {%- set _ = devices.append({'name': device.key, 'scheduler': scheduler}) -%}
+          {%- endfor -%}
+          {{ devices }}

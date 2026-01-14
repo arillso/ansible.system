@@ -1,0 +1,56 @@
+---
+- name: Deploy systemd unit files (raw content)
+  ansible.builtin.copy:
+      content: "{{ _systemd_unit_item.content }}"
+      dest: "{{ systemd_unit_path }}/{{ _systemd_unit_item.name }}"
+      owner: "{{ systemd_unit_owner }}"
+      group: "{{ systemd_unit_group }}"
+      mode: "{{ systemd_unit_mode }}"
+      backup: "{{ systemd_backup_units }}"
+  become: true
+  loop: "{{ systemd_units }}"
+  loop_control:
+      loop_var: _systemd_unit_item
+      label: "{{ _systemd_unit_item.name }}"
+  when:
+      - _systemd_unit_item.state | default('present') == 'present'
+      - _systemd_unit_item.content is defined
+  notify: "Systemd daemon-reload"
+  retries: "{{ systemd_retry_count }}"
+  delay: "{{ systemd_retry_delay }}"
+  register: _systemd_unit_copy_result
+  until: _systemd_unit_copy_result is succeeded
+
+- name: Deploy systemd unit files (structured)
+  ansible.builtin.template:
+      src: etc/systemd/system/unit.j2
+      dest: "{{ systemd_unit_path }}/{{ _systemd_unit_item.name }}"
+      owner: "{{ systemd_unit_owner }}"
+      group: "{{ systemd_unit_group }}"
+      mode: "{{ systemd_unit_mode }}"
+      backup: "{{ systemd_backup_units }}"
+  become: true
+  loop: "{{ systemd_units }}"
+  loop_control:
+      loop_var: _systemd_unit_item
+      label: "{{ _systemd_unit_item.name }}"
+  when:
+      - _systemd_unit_item.state | default('present') == 'present'
+      - _systemd_unit_item.unit is defined
+  notify: "Systemd daemon-reload"
+  retries: "{{ systemd_retry_count }}"
+  delay: "{{ systemd_retry_delay }}"
+  register: _systemd_unit_template_result
+  until: _systemd_unit_template_result is succeeded
+
+- name: Remove systemd unit files
+  ansible.builtin.file:
+      path: "{{ systemd_unit_path }}/{{ _systemd_unit_item.name }}"
+      state: absent
+  become: true
+  loop: "{{ systemd_units }}"
+  loop_control:
+      loop_var: _systemd_unit_item
+      label: "{{ _systemd_unit_item.name }}"
+  when: _systemd_unit_item.state | default('present') == 'absent'
+  notify: "Systemd daemon-reload"

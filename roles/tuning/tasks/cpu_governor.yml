@@ -1,0 +1,107 @@
+---
+# File: roles/system_tuning/tasks/cpu_governor.yml
+# Configure CPU frequency governor with proper validation
+
+- name: Install CPU frequency utilities
+  ansible.builtin.package:
+      name: "{{ 'cpufrequtils' if ansible_os_family == 'Debian' else 'kernel-tools' }}"
+      state: present
+  become: true
+
+- name: Create CPU frequency configuration
+  block:
+      - name: Create cpufreq configuration (Debian/Ubuntu)
+        ansible.builtin.template:
+            src: etc/default/cpufrequtils.j2
+            dest: /etc/default/cpufrequtils
+            mode: "0644"
+            owner: root
+            group: root
+            backup: true
+        become: true
+        notify: Restart cpufrequtils
+        when: ansible_os_family == "Debian"
+
+      - name: Create cpupower configuration (RedHat/CentOS)
+        ansible.builtin.template:
+            src: etc/sysconfig/cpupower.j2
+            dest: /etc/sysconfig/cpupower
+            mode: "0644"
+            owner: root
+            group: root
+            backup: true
+        become: true
+        notify: Restart cpupower
+        when: ansible_os_family in ["RedHat", "Suse"]
+
+- name: Apply CPU governor immediately
+  block:
+      - name: Get list of CPU cores
+        ansible.builtin.find:
+            paths: /sys/devices/system/cpu
+            patterns: "cpu[0-9]*"
+            file_type: directory
+        register: cpu_cores
+
+      - name: Check current CPU governor
+        ansible.builtin.slurp:
+            src: "{{ item.path }}/cpufreq/scaling_governor"
+        register: current_governor
+        failed_when: false
+        loop: "{{ cpu_cores.files }}"
+        when: cpu_cores.files is defined
+
+      - name: Set CPU governor immediately
+        ansible.builtin.copy:
+            content: "{{ final_cpu_governor }}"
+            dest: "{{ item.item.path }}/cpufreq/scaling_governor"
+            mode: "0644"
+        become: true
+        register: governor_result
+        failed_when: false
+        changed_when: governor_result.rc is defined and governor_result.rc == 0
+        when:
+            - not item.failed
+            - (item.content | b64decode | trim) != final_cpu_governor
+        loop: "{{ current_governor.results }}"
+
+      - name: Report CPU governor configuration status
+        ansible.builtin.debug:
+            msg: >-
+                CPU {{ item.item.path | basename }}:
+                {% if item.failed -%}
+                Could not access governor settings{%- else -%}
+                Current governor: {{ item.content | b64decode | trim }}{%- endif %}
+        loop: "{{ current_governor.results | default([]) }}"
+        when: current_governor.results is defined and current_governor.results | length > 0
+
+- name: Verify CPU governor configuration
+  block:
+      - name: Read final CPU governor settings
+        ansible.builtin.slurp:
+            src: "{{ item.path }}/cpufreq/scaling_governor"
+        register: final_governor
+        failed_when: false
+        loop: "{{ cpu_cores.files }}"
+        when: cpu_cores.files is defined
+
+      - name: Validate CPU governor was applied
+        ansible.builtin.assert:
+            that:
+                - not item.failed
+                - (item.content | b64decode | trim) == final_cpu_governor
+            fail_msg: "Failed to set CPU governor {{ final_cpu_governor }} for {{ item.item.path | basename }}"
+            success_msg: "CPU governor {{ final_cpu_governor }} successfully applied to {{ item.item.path | basename }}"
+        loop: "{{ final_governor.results }}"
+        when:
+            - not ansible_check_mode
+            - final_governor.results is defined
+
+- name: Enable CPU frequency service
+  ansible.builtin.systemd:
+      name: "{{ _service_commands[ansible_os_family]['cpufreq'] }}"
+      enabled: true
+      state: started
+  become: true
+  failed_when: false
+  when: ansible_os_family in _service_commands

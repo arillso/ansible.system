@@ -1,0 +1,58 @@
+---
+- name: "Create shell cache and working directories"
+  ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      mode: "0755"
+      owner: root
+      group: root
+  become: true
+  loop:
+      - "{{ shell_status_cache_dir }}"
+      - /usr/local/bin
+      - /etc/profile.d
+  tags:
+      - shell
+      - directories
+
+- name: "Install shell utility packages"
+  ansible.builtin.package:
+      name: "{{ _shell_required_packages[ansible_facts['os_family']] | default(_shell_required_packages['default']) }}"
+      state: present
+  become: true
+  when: shell_motd_style == 'figlet'
+  failed_when: false
+  register: _shell_package_install
+  tags:
+      - shell
+      - packages
+
+# Include modular components
+- name: "Configure MOTD system"
+  ansible.builtin.include_tasks: motd.yml
+  when: shell_motd_enabled
+  tags:
+      - shell
+      - motd
+
+- name: "Configure SSH banners"
+  ansible.builtin.include_tasks: ssh_banner.yml
+  when: shell_ssh_banner_enabled
+  tags:
+      - shell
+      - ssh
+      - banner
+
+- name: "Configure shell environment"
+  ansible.builtin.include_tasks: shell.yml
+  when: shell_enabled
+  tags:
+      - shell
+      - environment
+
+- name: "Configure terminal settings"
+  ansible.builtin.include_tasks: terminal.yml
+  when: shell_terminal_colors_enabled or shell_terminal_completion_enabled
+  tags:
+      - shell
+      - terminal

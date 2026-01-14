@@ -1,0 +1,27 @@
+---
+galaxy_info:
+    author: System Administrator
+    description: Comprehensive system tuning for performance optimization using native Ansible modules
+    company: "arillso"
+    license: MIT
+    min_ansible_version: "2.9"
+    platforms:
+        - name: Ubuntu
+          versions:
+              - focal
+              - jammy
+        - name: Debian
+          versions:
+              - buster
+              - bullseye
+        - name: EL
+          versions:
+              - all
+    galaxy_tags:
+        - system
+        - performance
+        - tuning
+        - optimization
+        - kernel
+
+dependencies: []

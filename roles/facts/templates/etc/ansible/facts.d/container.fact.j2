@@ -1,0 +1,363 @@
+{{ "#!/bin/bash" }}
+# Container Runtime Facts Collection Script
+# Enterprise-grade multi-runtime container platform detection for Ansible Facts
+# Supports: Docker, Podman, Kubernetes (K3s, K8s), containerd, CRI-O
+# Features: Intelligent caching, auto-detection, health monitoring
+
+set -euo pipefail
+
+# Universal configuration variables from Ansible (harmonized across all facts scripts)
+CACHE_ENABLED="{{ facts_cache_enabled | default(true) }}"
+CACHE_TTL="{{ facts_cache_ttl_container | default(facts_cache_default_ttl) | default(300) }}"
+CACHE_DIR="{{ facts_cache_dir | default('/var/cache/ansible-facts') }}"
+HEALTH_TIMEOUT="{{ facts_timeout_default | default(5) }}"
+API_TIMEOUT="{{ facts_timeout_api | default(10) }}"
+MAX_RETRIES="{{ facts_max_retries | default(1) }}"
+DEBUG_ENABLED="{{ facts_debug_enabled | default(false) }}"
+
+# Detection flags (container-specific)
+DETECT_DOCKER="{{ facts_container_detect_docker | default(true) }}"
+DETECT_PODMAN="{{ facts_container_detect_podman | default(true) }}"
+DETECT_KUBERNETES="{{ facts_container_detect_kubernetes | default(true) }}"
+DETECT_CONTAINERD="{{ facts_container_detect_containerd | default(true) }}"
+
+# Cache file paths (standardized)
+CACHE_FILE="${CACHE_DIR}/container-facts.json"
+
+# Logging functions (harmonized with universal debug configuration)
+log_debug() {
+    [[ "${DEBUG_ENABLED}" == "true" ]] && echo "[DEBUG] $*" >&2
+}
+
+log_error() {
+    echo "[ERROR] $*" >&2
+}
+
+# Safe command execution with retry logic (harmonized with other facts scripts)
+safe_exec_with_retry() {
+    local cmd="$1"
+    local default_value="${2:-unknown}"
+    local timeout_seconds="${3:-$HEALTH_TIMEOUT}"
+    local retries="${4:-$MAX_RETRIES}"
+
+    for ((i=0; i<=retries; i++)); do
+        local result
+        if result=$(timeout "${timeout_seconds}" bash -c "${cmd}" 2>/dev/null); then
+            echo "${result}"
+            log_debug "Command successful on attempt $((i+1)): ${cmd}"
+            return 0
+        fi
+
+        if [[ $i -lt $retries ]]; then
+            log_debug "Command failed, retrying ($((i+1))/${retries}): ${cmd}"
+            sleep 0.5
+        fi
+    done
+
+    log_debug "Command failed after $((retries+1)) attempts: ${cmd}"
+    echo "${default_value}"
+    return 1
+}
+
+# Runtime detection results
+declare -A RUNTIMES_DETECTED
+declare -A RUNTIME_VERSIONS
+declare -A RUNTIME_HEALTH
+declare -A RUNTIME_SERVICES
+
+# Cache management functions
+setup_cache() {
+    if [[ "${CACHE_ENABLED}" == "true" ]]; then
+        mkdir -p "${CACHE_DIR}"
+        chmod 755 "${CACHE_DIR}"
+    fi
+}
+
+is_cache_valid() {
+    if [[ "${CACHE_ENABLED}" != "true" ]] || [[ ! -f "${CACHE_FILE}" ]]; then
+        return 1
+    fi
+
+    local cache_age current_time
+    cache_age=$(stat -c %Y "${CACHE_FILE}" 2>/dev/null || echo 0)
+    current_time=$(date +%s)
+
+    if (( current_time - cache_age < CACHE_TTL )); then
+        return 0
+    else
+        return 1
+    fi
+}
+
+get_cached_data() {
+    if is_cache_valid; then
+        cat "${CACHE_FILE}"
+        return 0
+    fi
+    return 1
+}
+
+cache_data() {
+    if [[ "${CACHE_ENABLED}" == "true" ]]; then
+        echo "$1" > "${CACHE_FILE}.tmp"
+        mv "${CACHE_FILE}.tmp" "${CACHE_FILE}"
+        chmod 644 "${CACHE_FILE}"
+    fi
+}
+
+# Runtime detection functions
+detect_docker() {
+    if [[ "${DETECT_DOCKER}" != "true" ]]; then
+        return
+    fi
+
+    if command -v docker >/dev/null 2>&1; then
+        RUNTIMES_DETECTED["docker"]=true
+        RUNTIME_VERSIONS["docker"]=$(safe_exec_with_retry "docker --version | cut -d' ' -f3 | tr -d ','" "unknown" "${API_TIMEOUT}")
+
+        if systemctl is-active docker.service >/dev/null 2>&1; then
+            RUNTIME_SERVICES["docker"]="active"
+            RUNTIME_HEALTH["docker"]=$(safe_exec_with_retry "docker info >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
+        else
+            RUNTIME_SERVICES["docker"]="inactive"
+            RUNTIME_HEALTH["docker"]="unavailable"
+        fi
+    else
+        RUNTIMES_DETECTED["docker"]=false
+    fi
+}
+
+detect_podman() {
+    if [[ "${DETECT_PODMAN}" != "true" ]]; then
+        return
+    fi
+
+    if command -v podman >/dev/null 2>&1; then
+        RUNTIMES_DETECTED["podman"]=true
+        RUNTIME_VERSIONS["podman"]=$(safe_exec_with_retry "podman --version | cut -d' ' -f3" "unknown" "${API_TIMEOUT}")
+
+        if systemctl is-active podman.service >/dev/null 2>&1 || pgrep -f "podman" >/dev/null 2>&1; then
+            RUNTIME_SERVICES["podman"]="active"
+            RUNTIME_HEALTH["podman"]=$(safe_exec_with_retry "podman info >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
+        else
+            RUNTIME_SERVICES["podman"]="inactive"
+            RUNTIME_HEALTH["podman"]="unavailable"
+        fi
+    else
+        RUNTIMES_DETECTED["podman"]=false
+    fi
+}
+
+detect_kubernetes() {
+    if [[ "${DETECT_KUBERNETES}" != "true" ]]; then
+        return
+    fi
+
+    local k8s_variant="none"
+    local k8s_version="unknown"
+    local k8s_service="inactive"
+    local k8s_health="unavailable"
+
+    # Check for K3s
+    if command -v k3s >/dev/null 2>&1; then
+        k8s_variant="k3s"
+        k8s_version=$(safe_exec_with_retry "k3s --version | head -n1 | cut -d' ' -f3" "unknown" "${API_TIMEOUT}")
+        if systemctl is-active k3s.service >/dev/null 2>&1; then
+            k8s_service="active"
+            k8s_health=$(safe_exec_with_retry "k3s kubectl get nodes >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
+        fi
+    # Check for standard Kubernetes
+    elif command -v kubelet >/dev/null 2>&1; then
+        k8s_variant="kubernetes"
+        k8s_version=$(safe_exec_with_retry "kubelet --version | cut -d' ' -f2" "unknown" "${API_TIMEOUT}")
+        if systemctl is-active kubelet.service >/dev/null 2>&1; then
+            k8s_service="active"
+            k8s_health=$(safe_exec_with_retry "kubectl get nodes >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
+        fi
+    # Check for MicroK8s
+    elif command -v microk8s >/dev/null 2>&1; then
+        k8s_variant="microk8s"
+        k8s_version=$(safe_exec_with_retry "microk8s version | grep -o 'v[0-9]*\.[0-9]*\.[0-9]*' | head -n1" "unknown" "${API_TIMEOUT}")
+        k8s_service=$(safe_exec_with_retry "microk8s status --wait-ready --timeout 5 >/dev/null 2>&1 && echo 'active' || echo 'inactive'" "inactive" "${HEALTH_TIMEOUT}")
+        k8s_health=$(safe_exec_with_retry "microk8s kubectl get nodes >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
+    fi
+
+    if [[ "${k8s_variant}" != "none" ]]; then
+        RUNTIMES_DETECTED["kubernetes"]=true
+        RUNTIME_VERSIONS["kubernetes"]="${k8s_variant}:${k8s_version}"
+        RUNTIME_SERVICES["kubernetes"]="${k8s_service}"
+        RUNTIME_HEALTH["kubernetes"]="${k8s_health}"
+    else
+        RUNTIMES_DETECTED["kubernetes"]=false
+    fi
+}
+
+detect_containerd() {
+    if [[ "${DETECT_CONTAINERD}" != "true" ]]; then
+        return
+    fi
+
+    if command -v containerd >/dev/null 2>&1 || [[ -f "/usr/bin/containerd" ]]; then
+        RUNTIMES_DETECTED["containerd"]=true
+        RUNTIME_VERSIONS["containerd"]=$(safe_exec_with_retry "containerd --version | cut -d' ' -f3" "unknown" "${API_TIMEOUT}")
+
+        if systemctl is-active containerd.service >/dev/null 2>&1; then
+            RUNTIME_SERVICES["containerd"]="active"
+            RUNTIME_HEALTH["containerd"]=$(safe_exec_with_retry "ctr version >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
+        else
+            RUNTIME_SERVICES["containerd"]="inactive"
+            RUNTIME_HEALTH["containerd"]="unavailable"
+        fi
+    else
+        RUNTIMES_DETECTED["containerd"]=false
+    fi
+}
+
+# Generate comprehensive JSON output using jq (harmonized with other facts scripts)
+generate_facts_json() {
+    local start_time end_time scan_duration
+    start_time=$(date +%s%3N)
+
+    # Build runtime detection results
+    local docker_detected=${RUNTIMES_DETECTED["docker"]:-false}
+    local podman_detected=${RUNTIMES_DETECTED["podman"]:-false}
+    local kubernetes_detected=${RUNTIMES_DETECTED["kubernetes"]:-false}
+    local containerd_detected=${RUNTIMES_DETECTED["containerd"]:-false}
+
+    # Build version information
+    local docker_version=${RUNTIME_VERSIONS["docker"]:-"none"}
+    local podman_version=${RUNTIME_VERSIONS["podman"]:-"none"}
+    local kubernetes_version=${RUNTIME_VERSIONS["kubernetes"]:-"none"}
+    local containerd_version=${RUNTIME_VERSIONS["containerd"]:-"none"}
+
+    # Build service status
+    local docker_service=${RUNTIME_SERVICES["docker"]:-"unavailable"}
+    local podman_service=${RUNTIME_SERVICES["podman"]:-"unavailable"}
+    local kubernetes_service=${RUNTIME_SERVICES["kubernetes"]:-"unavailable"}
+    local containerd_service=${RUNTIME_SERVICES["containerd"]:-"unavailable"}
+
+    # Build health status
+    local docker_health=${RUNTIME_HEALTH["docker"]:-"unknown"}
+    local podman_health=${RUNTIME_HEALTH["podman"]:-"unknown"}
+    local kubernetes_health=${RUNTIME_HEALTH["kubernetes"]:-"unknown"}
+    local containerd_health=${RUNTIME_HEALTH["containerd"]:-"unknown"}
+
+    end_time=$(date +%s%3N)
+    scan_duration=$((end_time - start_time))
+
+    # Generate structured JSON using jq (enterprise-grade approach)
+    jq -n \
+        --arg hostname "${HOSTNAME:-unknown}" \
+        --arg node_type "{{ facts_node_type | default('generic') }}" \
+        --arg scan_timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --arg docker_detected "${docker_detected}" \
+        --arg docker_version "${docker_version}" \
+        --arg docker_service "${docker_service}" \
+        --arg docker_health "${docker_health}" \
+        --arg podman_detected "${podman_detected}" \
+        --arg podman_version "${podman_version}" \
+        --arg podman_service "${podman_service}" \
+        --arg podman_health "${podman_health}" \
+        --arg kubernetes_detected "${kubernetes_detected}" \
+        --arg kubernetes_version "${kubernetes_version}" \
+        --arg kubernetes_service "${kubernetes_service}" \
+        --arg kubernetes_health "${kubernetes_health}" \
+        --arg containerd_detected "${containerd_detected}" \
+        --arg containerd_version "${containerd_version}" \
+        --arg containerd_service "${containerd_service}" \
+        --arg containerd_health "${containerd_health}" \
+        --arg cache_enabled "${CACHE_ENABLED}" \
+        --arg cache_ttl "${CACHE_TTL}" \
+        --arg cache_file "${CACHE_FILE}" \
+        --arg last_updated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --arg scan_duration "${scan_duration}" \
+        --arg health_timeout "${HEALTH_TIMEOUT}" \
+        --arg api_timeout "${API_TIMEOUT}" \
+        '{
+            platform: {
+                hostname: $hostname,
+                node_type: $node_type,
+                scan_timestamp: $scan_timestamp
+            },
+            runtimes: {
+                docker: {
+                    detected: ($docker_detected | test("true")),
+                    version: $docker_version,
+                    service_status: $docker_service,
+                    health_status: $docker_health
+                },
+                podman: {
+                    detected: ($podman_detected | test("true")),
+                    version: $podman_version,
+                    service_status: $podman_service,
+                    health_status: $podman_health
+                },
+                kubernetes: {
+                    detected: ($kubernetes_detected | test("true")),
+                    version: $kubernetes_version,
+                    service_status: $kubernetes_service,
+                    health_status: $kubernetes_health
+                },
+                containerd: {
+                    detected: ($containerd_detected | test("true")),
+                    version: $containerd_version,
+                    service_status: $containerd_service,
+                    health_status: $containerd_health
+                }
+            },
+            inventory: {
+                container_groups: [{{ '"' + (groups['containers'] | default([]) | join('", "')) + '"' if groups['containers'] is defined and groups['containers'] | length > 0 else '' }}],
+                k3s_servers: [{{ '"' + (groups['k3s_servers'] | default([]) | join('", "')) + '"' if groups['k3s_servers'] is defined and groups['k3s_servers'] | length > 0 else '' }}],
+                k3s_agents: [{{ '"' + (groups['k3s_agents'] | default([]) | join('", "')) + '"' if groups['k3s_agents'] is defined and groups['k3s_agents'] | length > 0 else '' }}],
+                docker_hosts: [{{ '"' + (groups['docker'] | default([]) | join('", "')) + '"' if groups['docker'] is defined and groups['docker'] | length > 0 else '' }}],
+                podman_hosts: [{{ '"' + (groups['podman'] | default([]) | join('", "')) + '"' if groups['podman'] is defined and groups['podman'] | length > 0 else '' }}]
+            },
+            cache: {
+                enabled: ($cache_enabled | test("true")),
+                ttl_seconds: ($cache_ttl | tonumber),
+                cache_file: $cache_file,
+                last_updated: $last_updated
+            },
+            performance: {
+                scan_duration_ms: ($scan_duration | tonumber),
+                cache_hit: false,
+                timeouts: {
+                    health_check: ($health_timeout | tonumber),
+                    api_calls: ($api_timeout | tonumber)
+                }
+            }
+        }'
+}
+
+# Main execution logic
+main() {
+    local json_result
+
+    # Setup cache directory
+    setup_cache
+
+    # Try to use cached data first
+    if json_result=$(get_cached_data); then
+        # Update cache hit indicator
+        echo "${json_result}" | jq '.performance.cache_hit = true' 2>/dev/null || echo "${json_result}"
+        return 0
+    fi
+
+    # Perform fresh detection
+    detect_docker
+    detect_podman
+    detect_kubernetes
+    detect_containerd
+
+    # Generate fresh JSON
+    json_result=$(generate_facts_json)
+
+    # Cache the results
+    cache_data "${json_result}"
+
+    # Output results
+    echo "${json_result}"
+}
+
+# Execute main function
+main

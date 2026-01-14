@@ -1,0 +1,135 @@
+---
+argument_specs:
+    main:
+        short_description: "Systemd management with multi-entry-point support"
+        description:
+            - "Manages systemd services, unit files and journald configuration"
+            - "Supports granular control via entry points"
+        options:
+            # Entry Point Controls
+            systemd_service_enabled:
+                description: "Enable service management entry point"
+                type: bool
+                default: true
+            systemd_unit_enabled:
+                description: "Enable unit file management entry point"
+                type: bool
+                default: true
+            systemd_journald_enabled:
+                description: "Enable journald configuration entry point"
+                type: bool
+                default: true
+
+            # Service Management
+            systemd_services:
+                description: "List of systemd services to manage"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    name:
+                        description: "Service name"
+                        type: str
+                        required: true
+                    state:
+                        description: "Service state"
+                        type: str
+                        choices: [started, stopped, restarted, reloaded]
+                    enabled:
+                        description: "Enable service on boot"
+                        type: bool
+                    masked:
+                        description: "Mask service"
+                        type: bool
+                    daemon_reload:
+                        description: "Reload systemd daemon"
+                        type: bool
+
+            # Unit File Management
+            systemd_units:
+                description: "List of systemd unit files to manage"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    name:
+                        description: "Unit file name"
+                        type: str
+                        required: true
+                    state:
+                        description: "Unit state"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+                    content:
+                        description: "Unit file content (raw text)"
+                        type: str
+                    unit:
+                        description: "Unit file content (structured dict)"
+                        type: dict
+
+            # Journald Configuration
+            systemd_journald_storage:
+                description: "Journal storage mode"
+                type: str
+                default: auto
+                choices: [auto, volatile, persistent, none]
+            systemd_journald_compress:
+                description: "Compress journal data"
+                type: bool
+                default: true
+            systemd_journald_system_max_use:
+                description: "Maximum disk space for system journal"
+                type: str
+                default: 1G
+            systemd_journald_max_retention_sec:
+                description: "Maximum retention time for journal entries"
+                type: str
+                default: 1month
+            systemd_journald_forward_to_syslog:
+                description: "Forward journal to syslog"
+                type: bool
+                default: true
+
+    service:
+        short_description: "Service management entry point"
+        description:
+            - "Entry point for managing systemd services"
+            - "Control service state and boot configuration"
+        options:
+            systemd_services:
+                description: "List of services to manage"
+                type: list
+                elements: dict
+                required: true
+
+    unit:
+        short_description: "Unit file management entry point"
+        description:
+            - "Entry point for managing systemd unit files"
+            - "Deploy and remove unit files"
+        options:
+            systemd_units:
+                description: "List of unit files to manage"
+                type: list
+                elements: dict
+                required: true
+
+    journald:
+        short_description: "Journald configuration entry point"
+        description:
+            - "Entry point for configuring systemd-journald"
+            - "Manage journal storage, retention and forwarding"
+        options:
+            systemd_journald_storage:
+                description: "Journal storage mode"
+                type: str
+                default: auto
+            systemd_journald_system_max_use:
+                description: "Maximum disk space"
+                type: str
+                default: 1G
+            systemd_journald_max_retention_sec:
+                description: "Maximum retention time"
+                type: str
+                default: 1month

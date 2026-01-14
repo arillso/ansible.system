@@ -1,0 +1,123 @@
+---
+- name: Create ansible automation directory
+  ansible.builtin.file:
+      path: "{{ ansible_checkout_dir }}"
+      state: directory
+      mode: "0750"
+      owner: root
+      group: root
+  become: true
+
+- name: Create Ansible configuration directory
+  ansible.builtin.file:
+      path: /etc/ansible
+      state: directory
+      mode: "0755"
+      owner: root
+      group: root
+  become: true
+
+- name: Deploy Ansible environment file
+  ansible.builtin.template:
+      src: etc/ansible/ansible.env.j2
+      dest: /etc/ansible/ansible.env
+      mode: "0600"
+      owner: root
+      group: root
+  become: true
+
+- name: Build ExecStart command for pull mode
+  ansible.builtin.set_fact:
+      ansible_role_exec_start_pull: >-
+          {% if ansible_install_method == 'pipx' -%}
+          {{ ansible_pipx_bin }}/ansible-pull{%- else -%}
+          /usr/bin/ansible-pull{%- endif %}
+          --url {{ ansible_repo }}
+          --checkout {{ ansible_branch }}
+          --directory {{ ansible_checkout_dir }}/repo
+          --inventory {{ ansible_checkout_dir }}/repo/{{ ansible_inventory }}
+          --limit {{ ansible_host_limit }}
+          --accept-host-key
+          --extra-vars "ansible_connection=local"
+          {% if ansible_extra_args -%}
+          {{ ansible_extra_args }}{%- endif %}
+          {{ ansible_playbook }}
+  when: ansible_mode == 'pull'
+
+- name: Build ExecStart command for playbook mode
+  ansible.builtin.set_fact:
+      ansible_role_exec_start_playbook: >-
+          {% if ansible_install_method == 'pipx' -%}
+          {{ ansible_pipx_bin }}/ansible-playbook{%- else -%}
+          /usr/bin/ansible-playbook{%- endif %}
+          --inventory {{ ansible_checkout_dir }}/repo/{{ ansible_inventory }}
+          --limit {{ ansible_host_limit }}
+          --extra-vars "ansible_connection=local"
+          {% if ansible_extra_args -%}
+          {{ ansible_extra_args }}{%- endif %}
+          {{ ansible_checkout_dir }}/repo/{{ ansible_playbook }}
+  when: ansible_mode == 'playbook'
+
+- name: Build environment variables for systemd
+  ansible.builtin.set_fact:
+      ansible_role_env_list: >-
+          {{ ansible_environment | dict2items |
+             map('community.general.dict_kv', 'key', 'value') |
+             map('join', '=') | list }}
+  when: ansible_environment | length > 0
+
+- name: Deploy ansible systemd units via systemd role
+  ansible.builtin.include_role:
+      name: arillso.system.systemd
+      tasks_from: unit
+  vars:
+      systemd_units:
+          - name: "{{ ansible_service_name }}.service"
+            state: present
+            unit:
+                Unit:
+                    Description: >-
+                        {{ 'Ansible Pull Automation' if ansible_mode == 'pull'
+                           else 'Ansible Playbook Automation' }}
+                    After: network-online.target
+                    Wants: network-online.target
+                Service:
+                    Type: oneshot
+                    EnvironmentFile: "-/etc/ansible/ansible.env"
+                    ExecStartPre: >-
+                        {{ omit if ansible_mode == 'pull'
+                           else '/usr/bin/git -C ' + ansible_checkout_dir +
+                                '/repo pull origin ' + ansible_branch }}
+                    ExecStart: >-
+                        {{ ansible_role_exec_start_pull if ansible_mode == 'pull'
+                           else ansible_role_exec_start_playbook }}
+                    WorkingDirectory: >-
+                        {{ ansible_checkout_dir if ansible_mode == 'pull'
+                           else ansible_checkout_dir + '/repo' }}
+                    Environment: "{{ ansible_role_env_list | default(omit) }}"
+                Install:
+                    WantedBy: multi-user.target
+
+          - name: "{{ ansible_service_name }}.timer"
+            state: present
+            unit:
+                Unit:
+                    Description: Ansible Automation Timer
+                    Requires: "{{ ansible_service_name }}.service"
+                Timer:
+                    OnCalendar: "{{ ansible_schedule }}"
+                    RandomizedDelaySec: "{{ ansible_random_delay }}"
+                    Persistent: "true"
+                Install:
+                    WantedBy: timers.target
+
+- name: Enable and start timer via systemd role
+  ansible.builtin.include_role:
+      name: arillso.system.systemd
+      tasks_from: service
+  vars:
+      systemd_services:
+          - name: "{{ ansible_service_name }}.timer"
+            enabled: "{{ ansible_service_enabled }}"
+            state: "{{ ansible_timer_state }}"
+            daemon_reload: true

@@ -1,0 +1,88 @@
+// {{ ansible_managed }}
+// Unattended-Upgrade configuration
+
+// Automatically upgrade packages from these origins
+Unattended-Upgrade::Allowed-Origins {
+{% for origin in packages_unattended_upgrades_origins %}
+    "{{ origin }}";
+{% endfor %}
+};
+
+// List of packages to not update (blacklist)
+Unattended-Upgrade::Package-Blacklist {
+{% for package in packages_unattended_upgrades_package_blacklist %}
+    "{{ package }}";
+{% endfor %}
+};
+
+// Packages that are allowed to upgrade to new major versions (whitelist)
+// This overrides version pins for specific packages
+{% if packages_unattended_upgrades_allow_upgrades | length > 0 %}
+Unattended-Upgrade::Allow-Upgrades {
+{% for package in packages_unattended_upgrades_allow_upgrades %}
+    "{{ package }}";
+{% endfor %}
+};
+{% endif %}
+
+// Automatically reboot *WITHOUT CONFIRMATION* if required
+Unattended-Upgrade::Automatic-Reboot "{{ packages_unattended_upgrades_auto_reboot | lower }}";
+
+// Automatically reboot even if users are logged in
+Unattended-Upgrade::Automatic-Reboot-WithUsers "{{ packages_unattended_upgrades_auto_reboot_with_users | lower }}";
+
+// If automatic reboot is enabled and needed, reboot at this time
+Unattended-Upgrade::Automatic-Reboot-Time "{{ packages_unattended_upgrades_auto_reboot_time }}";
+
+// Remove unused automatically installed kernel-related packages
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "{{ packages_unattended_upgrades_remove_unused_kernel_packages | lower }}";
+
+// Do automatic removal of newly unused dependencies after upgrade
+Unattended-Upgrade::Remove-New-Unused-Dependencies "{{ packages_unattended_upgrades_remove_new_unused_dependencies | lower }}";
+
+// Do automatic removal of unused packages after upgrade
+Unattended-Upgrade::Remove-Unused-Dependencies "{{ packages_unattended_upgrades_remove_unused_dependencies | lower }}";
+
+{% if packages_unattended_upgrades_mail_enabled %}
+// Send email to this address for problems or packages upgrades
+Unattended-Upgrade::Mail "{{ packages_unattended_upgrades_mail_to }}";
+
+// Only send mail on errors
+Unattended-Upgrade::MailReport "{{ 'only-on-error' if packages_unattended_upgrades_mail_on_error_only else 'on-change' }}";
+{% endif %}
+
+// Download and install upgrades only on shutdown
+Unattended-Upgrade::InstallOnShutdown "{{ packages_unattended_upgrades_install_on_shutdown | lower }}";
+
+{% if packages_unattended_upgrades_download_limit > 0 %}
+// Limit the download bandwidth used by apt in KB/s
+Acquire::http::Dl-Limit "{{ packages_unattended_upgrades_download_limit }}";
+{% endif %}
+
+// Enable logging to syslog
+Unattended-Upgrade::SyslogEnable "{{ packages_unattended_upgrades_syslog_enable | lower }}";
+Unattended-Upgrade::SyslogFacility "{{ packages_unattended_upgrades_syslog_facility }}";
+
+// Verbose logging
+Unattended-Upgrade::Verbose "{{ packages_unattended_upgrades_verbose | lower }}";
+Unattended-Upgrade::Debug "{{ packages_unattended_upgrades_debug | lower }}";
+
+// Split the upgrade into the smallest possible chunks
+Unattended-Upgrade::MinimalSteps "{{ packages_unattended_upgrades_minimal_steps | lower }}";
+
+// Install all updates in one run to avoid problems with dpkg state
+Dpkg::Options {
+    "--force-confdef";
+    "--force-confold";
+};
+
+// Fix interrupted dpkg state
+DPkg::Pre-Install-Pkgs {"/usr/sbin/dpkg-preconfigure --apt || true";};
+
+{% if packages_unattended_upgrades_random_sleep > 0 %}
+// Random sleep time before running (in seconds)
+APT::Periodic::RandomSleep "{{ packages_unattended_upgrades_random_sleep }}";
+{% endif %}
+
+// Skip updates on metered connections
+Unattended-Upgrade::Skip-Updates-On-Metered-Connections "{{ packages_unattended_upgrades_skip_updates_on_metered | lower }}";

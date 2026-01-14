@@ -1,0 +1,59 @@
+---
+argument_specs:
+    main:
+        short_description: "Python package management with pip"
+        description:
+            - "Manages Python packages via pip"
+            - "Supports virtualenv and system-wide installation"
+        options:
+            python_pip_enabled:
+                description: "Enable pip package management"
+                type: bool
+                default: true
+            python_packages:
+                description: "List of Python packages to manage"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    name:
+                        description: "Package name"
+                        type: str
+                        required: true
+                    version:
+                        description: "Package version"
+                        type: str
+                    state:
+                        description: "Package state"
+                        type: str
+                        default: present
+                        choices: [present, latest, absent]
+                    virtualenv:
+                        description: "Virtualenv path"
+                        type: str
+            python_install_packages:
+                description: "Install Python system packages"
+                type: bool
+                default: true
+
+    pip:
+        short_description: "Pip package management entry point"
+        description:
+            - "Entry point for managing Python packages"
+        options:
+            python_packages:
+                description: "List of packages to manage"
+                type: list
+                elements: dict
+                required: true
+
+    requirements:
+        short_description: "Requirements file entry point"
+        description:
+            - "Entry point for installing from requirements.txt"
+        options:
+            python_requirements_files:
+                description: "List of requirements files"
+                type: list
+                elements: dict
+                required: true

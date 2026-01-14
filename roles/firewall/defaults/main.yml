@@ -1,0 +1,39 @@
+---
+firewall:
+    - table:
+          name: filter
+          family: inet
+          chains:
+              - name: input
+                type: filter
+                hook: input
+                priority: 0
+                policy: drop
+                rules:
+                    - comment: "Accept traffic on the loopback interface"
+                      iifname: "lo"
+                      action: accept
+                    - comment: "Accept established and related connections"
+                      ct_state: ["established", "related"]
+                      action: accept
+                    - comment: "Accept SSH traffic"
+                      tcp_dport: 22
+                      action: accept
+              - name: forward
+                type: filter
+                hook: forward
+                priority: 0
+                policy: drop
+                rules:
+                    - comment: "Accept established and related connections"
+                      ct_state: ["established", "related"]
+                      action: accept
+              - name: output
+                type: filter
+                hook: output
+                priority: 0
+                policy: accept
+                rules: []
+firewall_global: []
+firewall_group: []
+firewall_host: []

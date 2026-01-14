@@ -1,0 +1,14 @@
+---
+- name: Network restart resolved
+  ansible.builtin.systemd:
+      name: systemd-resolved
+      state: restarted
+  when: network_systemd_resolved_restart | default(true)
+  listen: "Network restart resolved"
+
+- name: Network restart networkd
+  ansible.builtin.systemd:
+      name: systemd-networkd
+      state: restarted
+  when: network_systemd_networkd_restart | default(false)
+  listen: "Network restart networkd"

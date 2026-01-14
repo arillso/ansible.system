@@ -1,0 +1,109 @@
+# File: roles/system_tuning/handlers/main.yml
+---
+- name: Reload sysctl
+  ansible.builtin.command: sysctl --system
+  register: sysctl_reload_result
+  changed_when: true
+  failed_when: sysctl_reload_result.rc != 0
+
+- name: Update grub
+  ansible.builtin.command: "{{ _grub_update_commands[ansible_os_family] }}"
+  register: grub_update_result
+  changed_when: true
+  failed_when: grub_update_result.rc != 0
+  when: ansible_os_family in _grub_update_commands
+
+- name: Reload udev
+  ansible.builtin.systemd:
+      name: systemd-udevd
+      state: reloaded
+  register: udev_reload_result
+  failed_when: false
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+      daemon_reload: true
+  register: systemd_reload_result
+  failed_when: systemd_reload_result.failed
+
+- name: Enable network tuning service
+  ansible.builtin.systemd:
+      name: network-tuning
+      enabled: true
+      state: started
+      daemon_reload: true
+  register: network_service_result
+  failed_when: false
+
+- name: Enable disable-thp service
+  ansible.builtin.systemd:
+      name: disable-thp
+      enabled: true
+      state: started
+      daemon_reload: true
+  register: thp_service_result
+  failed_when: false
+
+- name: Restart cpufrequtils
+  ansible.builtin.systemd:
+      name: cpufrequtils
+      state: restarted
+  register: cpufreq_restart_result
+  failed_when: false
+  when: ansible_os_family == "Debian"
+
+- name: Restart cpupower
+  ansible.builtin.systemd:
+      name: cpupower
+      state: restarted
+  register: cpupower_restart_result
+  failed_when: false
+  when: ansible_os_family in ["RedHat", "Suse"]
+
+- name: Validate grub update
+  when: grub_update_result is defined and grub_update_result.rc == 0
+  block:
+      - name: Check if GRUB was updated successfully
+        ansible.builtin.stat:
+            path: "{{ '/boot/grub/grub.cfg' if ansible_os_family == 'Debian' else '/boot/grub2/grub.cfg' }}"
+        register: grub_config_stat
+
+      - name: Verify GRUB configuration timestamp
+        ansible.builtin.debug:
+            msg: "GRUB configuration updated at {{ grub_config_stat.stat.mtime }}"
+        when: grub_config_stat.stat.exists
+
+      - name: Warn about GRUB update failure
+        ansible.builtin.debug:
+            msg: "WARNING: GRUB configuration file not found. Manual verification required."
+        when: not grub_config_stat.stat.exists
+
+- name: Validate service states
+  block:
+      - name: Check network tuning service status
+        ansible.builtin.systemd:
+            name: network-tuning
+        register: network_service_status
+        failed_when: false
+
+      - name: Check disable-thp service status
+        ansible.builtin.systemd:
+            name: disable-thp
+        register: thp_service_status
+        failed_when: false
+
+      - name: Report service status
+        ansible.builtin.debug:
+            msg:
+                - "Service status summary:"
+                - >-
+                    - Network tuning: {{ 'Active'
+                      if network_service_status.status.ActiveState == 'active'
+                      else 'Inactive' }}
+                - >-
+                    - Disable THP: {{ 'Active'
+                      if thp_service_status.status.ActiveState == 'active'
+                      else 'Inactive' }}
+        when:
+            - network_service_status is defined
+            - thp_service_status is defined

@@ -1,0 +1,16 @@
+---
+# SSH connection settings
+ready_ssh_port: 22
+ready_ssh_delay: 10
+ready_ssh_timeout: 300
+
+# Cloud-init wait settings
+ready_check_retries: 60
+ready_check_delay: 2
+
+# Rescue behavior
+ready_rescue_pause: 30
+
+# Fact gathering after system is ready
+ready_gather_facts: true
+ready_gather_subset: []

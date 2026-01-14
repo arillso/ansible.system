@@ -1,0 +1,65 @@
+---
+# Internal variables for Facts role - Enterprise-grade implementation
+# These variables should not be overridden by users
+
+# Package requirements by OS family - explicit mappings
+_facts_required_packages:
+    Debian:
+        - curl
+        - jq
+        - bc
+    RedHat:
+        - curl
+        - jq
+        - bc
+    Suse:
+        - curl
+        - jq
+        - bc
+    Alpine:
+        - curl
+        - jq
+        - bc
+    default:
+        - curl
+        - jq
+        - bc
+
+# Facts collection scripts to install
+_facts_collection_scripts:
+    - system.fact
+    - cloud.fact
+    - run.fact
+    - last.fact
+    - security.fact
+    - container.fact
+
+# MOTD scripts for Debian-based systems
+_facts_motd_scripts:
+    - 00-header
+    - 05-warnings
+    - 10-sysinfo
+    - 90-footer
+
+# Unwanted default MOTD scripts to remove
+_facts_unwanted_motd_scripts:
+    - /etc/update-motd.d/10-help-text
+    - /etc/update-motd.d/50-motd-news
+    - /etc/update-motd.d/80-esm
+    - /etc/update-motd.d/95-hwe-eol
+
+# Performance thresholds - static values for consistency
+_facts_performance_thresholds:
+    memory_warning: 75
+    memory_critical: 90
+    disk_warning: 80
+    disk_critical: 90
+    load_warning_multiplier: 0.8
+    load_critical_multiplier: 1.2
+
+# Resource limits for background processing
+_facts_resource_limits:
+    max_log_lines: 1000
+    max_process_count: 5000
+    collection_timeout: 30
+    cache_cleanup_days: 7

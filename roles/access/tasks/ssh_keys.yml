@@ -1,0 +1,17 @@
+---
+- name: Manage SSH authorized keys
+  ansible.posix.authorized_key:
+      user: "{{ _access_ssh_key_item.user }}"
+      key: "{{ _access_ssh_key_item.key }}"
+      key_options: "{{ _access_ssh_key_item.key_options | default(omit) }}"
+      state: "{{ _access_ssh_key_item.state | default('present') }}"
+      exclusive: "{{ _access_ssh_key_item.exclusive | default(false) }}"
+  become: true
+  loop: "{{ access_ssh_keys }}"
+  loop_control:
+      loop_var: _access_ssh_key_item
+      label: "{{ _access_ssh_key_item.user }}"
+  retries: "{{ access_retry_count }}"
+  delay: "{{ access_retry_delay }}"
+  register: _access_ssh_keys_result
+  until: _access_ssh_keys_result is succeeded

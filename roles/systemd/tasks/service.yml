@@ -1,0 +1,17 @@
+---
+- name: Manage systemd services
+  ansible.builtin.systemd:
+      name: "{{ _systemd_service_item.name }}"
+      state: "{{ _systemd_service_item.state | default(omit) }}"
+      enabled: "{{ _systemd_service_item.enabled | default(omit) }}"
+      masked: "{{ _systemd_service_item.masked | default(omit) }}"
+      daemon_reload: "{{ _systemd_service_item.daemon_reload | default(false) }}"
+  become: true
+  loop: "{{ systemd_services }}"
+  loop_control:
+      loop_var: _systemd_service_item
+      label: "{{ _systemd_service_item.name }}"
+  retries: "{{ systemd_retry_count }}"
+  delay: "{{ systemd_retry_delay }}"
+  register: _systemd_service_result
+  until: _systemd_service_result is succeeded

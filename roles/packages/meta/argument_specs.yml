@@ -1,49 +1,726 @@
 ---
 argument_specs:
-  main:
-    short_description: "Package management for Linux systems"
-    description:
-      - This role manages package installations, upgrades, and removals on Linux systems.
-      - It provides options for specifying package names, versions, and desired states.
-    options:
-      packages_list:
-        description: "A list of packages to be managed."
-        type: "list"
-        elements: "dict"
+    main:
+        short_description: "Package management with multi-entry-point support"
+        description:
+            - "Manages APT packages including installation, removal, and configuration"
+            - "Supports repositories, keys, and advanced APT configuration"
+            - "Uses unified package list approach"
         options:
-          name:
-            description: "The name of the package."
-            type: "str"
-            required: true
-          version:
-            description: "Specific version of the package to be installed. Use 'latest' for the most recent version."
-            type: "str"
-            required: false
-          state:
-            description: "Desired state of the package: 'present', 'latest', or 'absent'."
-            type: "str"
-            required: false
-          install_recommends:
-            description: "Whether to install recommended packages. Default is true."
-            type: "bool"
-            required: false
-          allow_downgrade:
-            description: "Allow downgrading the package if necessary. Default is false."
-            type: "bool"
-            required: false
-          purge:
-            description: "Purge configurations on package removal. Default is false."
-            type: "bool"
-            required: false
-          force_apt_get:
-            description: "Force usage of apt-get instead of aptitude. Default is false."
-            type: "bool"
-            required: false
-          lock_timeout:
-            description: "Timeout for the apt lockfile. Default is 30 seconds."
-            type: "int"
-            required: false
-          ignore_checksums:
-            description: "Ignore checksums during installation. Default is false."
-            type: "bool"
-            required: false
+            # Entry Point Controls
+            packages_repositories_enabled:
+                description: "Enable repository management entry point"
+                type: bool
+                default: true
+            packages_keys_enabled:
+                description: "Enable key management entry point"
+                type: bool
+                default: true
+            packages_cache_enabled:
+                description: "Enable cache management entry point"
+                type: bool
+                default: true
+            packages_upgrade_enabled:
+                description: "Enable package upgrade entry point"
+                type: bool
+                default: false
+            packages_clean_enabled:
+                description: "Enable cleanup entry point"
+                type: bool
+                default: false
+            packages_unattended_upgrades_enabled:
+                description: "Enable unattended-upgrades entry point"
+                type: bool
+                default: false
+
+            # Cache Configuration
+            packages_update_cache:
+                description: "Update APT cache before operations"
+                type: bool
+                default: true
+            packages_cache_valid_time:
+                description: "Cache validity time in seconds"
+                type: int
+                default: 3600
+            packages_force_cache_update:
+                description: "Force cache update regardless of age"
+                type: bool
+                default: false
+
+            # Package Management
+            packages_upgrade:
+                description: "Upgrade packages (false, yes, safe, full, dist)"
+                type: str
+                default: false
+                choices: [false, "yes", "safe", "full", "dist"]
+            packages_autoremove:
+                description: "Remove unused packages"
+                type: bool
+                default: false
+            packages_autoclean:
+                description: "Clean package cache"
+                type: bool
+                default: false
+
+            # Unified Package List
+            packages_list:
+                description: "Unified list of packages with their desired states"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    name:
+                        description: "Package name"
+                        type: str
+                        required: true
+                    state:
+                        description: "Package state"
+                        type: str
+                        default: "present"
+                        choices:
+                            [
+                                "present",
+                                "latest",
+                                "absent",
+                                "build-dep",
+                                "hold",
+                                "unhold",
+                            ]
+                    install_recommends:
+                        description: "Install recommended packages"
+                        type: bool
+                        default: true
+                    purge:
+                        description: "Purge package configuration (for absent state)"
+                        type: bool
+                        default: false
+                    force:
+                        description: "Force package operation"
+                        type: bool
+                        default: false
+
+            # Repository Management
+            packages_repositories:
+                description: "List of APT repositories to add"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    repo:
+                        description: "Repository specification"
+                        type: str
+                        required: true
+                    state:
+                        description: "Repository state"
+                        type: str
+                        default: "present"
+                        choices: ["present", "absent"]
+                    filename:
+                        description: "Custom filename for repository"
+                        type: str
+
+            # Key Management
+            packages_keys:
+                description: "List of APT signing keys to add"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    url:
+                        description: "URL to key file"
+                        type: str
+                    keyserver:
+                        description: "Keyserver to use"
+                        type: str
+                    id:
+                        description: "Key ID for keyserver"
+                        type: str
+                    data:
+                        description: "Key data directly"
+                        type: str
+                    keyring:
+                        description: "Path to keyring file for modern GPG key management"
+                        type: str
+                    name:
+                        description: "Name for the key (used for default keyring filename)"
+                        type: str
+                    state:
+                        description: "Key state"
+                        type: str
+                        default: "present"
+                        choices: ["present", "absent"]
+
+            # APT Configuration
+            packages_apt_conf:
+                description: "List of APT configuration files (includes proxy settings)"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    name:
+                        description: "Configuration name"
+                        type: str
+                        required: true
+                    priority:
+                        description: "Configuration file priority (00-99)"
+                        type: str
+                        default: "90"
+                    settings:
+                        description: "List of APT configuration settings"
+                        type: list
+                        elements: dict
+                        required: true
+                        options:
+                            key:
+                                description: "APT configuration key"
+                                type: str
+                                required: true
+                            value:
+                                description: "APT configuration value"
+                                type: str
+                                required: true
+
+            # Service Management
+            packages_services_to_restart:
+                description: "List of services to restart after package changes"
+                type: list
+                elements: str
+                default: []
+
+            # Retry Configuration
+            packages_retry_count:
+                description: "Number of retries for failed operations"
+                type: int
+                default: 3
+            packages_retry_delay:
+                description: "Delay between retries in seconds"
+                type: int
+                default: 10
+
+    repositories:
+        short_description: "Repository management entry point"
+        description:
+            - "Entry point for managing APT repositories and keys"
+            - "Handles repository addition and GPG key management"
+        options:
+            packages_repositories:
+                description: "List of APT repositories to add"
+                type: list
+                elements: dict
+                required: true
+            packages_keys:
+                description: "List of APT signing keys to add"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    url:
+                        description: "URL to key file"
+                        type: str
+                    keyserver:
+                        description: "Keyserver to use"
+                        type: str
+                    id:
+                        description: "Key ID for keyserver"
+                        type: str
+                    data:
+                        description: "Key data directly"
+                        type: str
+                    keyring:
+                        description: "Path to keyring file for modern GPG key management"
+                        type: str
+                    name:
+                        description: "Name for the key (used for default keyring filename)"
+                        type: str
+                    state:
+                        description: "Key state"
+                        type: str
+                        default: "present"
+                        choices: ["present", "absent"]
+
+    upgrade:
+        short_description: "Upgrade packages entry point"
+        description:
+            - "Entry point for upgrading system packages"
+            - "Supports different upgrade strategies"
+        options:
+            packages_upgrade:
+                description: "Type of upgrade to perform"
+                type: str
+                required: true
+                choices: ["yes", "safe", "full", "dist"]
+
+    cache:
+        short_description: "Package cache management entry point"
+        description:
+            - "Entry point for updating APT package cache"
+            - "Used as dependency by other roles"
+        options:
+            packages_update_cache:
+                description: "Update APT cache"
+                type: bool
+                default: true
+            packages_cache_valid_time:
+                description: "Cache validity time in seconds"
+                type: int
+                default: 3600
+            packages_force_cache_update:
+                description: "Force cache update regardless of age"
+                type: bool
+                default: false
+
+    clean:
+        short_description: "Package cleanup and configuration entry point"
+        description:
+            - "Entry point for cleaning package cache and configuring APT"
+            - "Handles autoclean, autoremove, and APT configuration files"
+        options:
+            packages_autoclean:
+                description: "Clean package cache"
+                type: bool
+                default: false
+            packages_autoremove:
+                description: "Remove unused packages"
+                type: bool
+                default: false
+            packages_apt_conf:
+                description: "List of APT configuration files to create"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    name:
+                        description: "Configuration name"
+                        type: str
+                        required: true
+                    priority:
+                        description: "Configuration file priority (00-99)"
+                        type: str
+                        default: "90"
+                    settings:
+                        description: "List of APT configuration settings"
+                        type: list
+                        elements: dict
+                        required: true
+                        options:
+                            key:
+                                description: "APT configuration key"
+                                type: str
+                                required: true
+                            value:
+                                description: "APT configuration value"
+                                type: str
+                                required: true
+
+    keys:
+        short_description: "APT key management entry point"
+        description:
+            - "Entry point for managing APT signing keys"
+            - "Supports keys from URLs, keyservers, or direct data"
+        options:
+            packages_keys:
+                description: "List of APT signing keys to manage"
+                type: list
+                elements: dict
+                required: true
+                options:
+                    url:
+                        description: "URL to key file"
+                        type: str
+                    keyserver:
+                        description: "Keyserver to use"
+                        type: str
+                    id:
+                        description: "Key ID for keyserver"
+                        type: str
+                    data:
+                        description: "Key data directly"
+                        type: str
+                    keyring:
+                        description: "Path to keyring file for modern GPG key management"
+                        type: str
+                    name:
+                        description: "Name for the key (used for default keyring filename)"
+                        type: str
+                    state:
+                        description: "Key state"
+                        type: str
+                        default: "present"
+                        choices: ["present", "absent"]
+                    dearmor:
+                        description: "Convert ASCII-armored key to binary format using gpg --dearmor"
+                        type: bool
+                        default: false
+
+    packages:
+        short_description: "Package processing entry point"
+        description:
+            - "Entry point for processing packages from unified list"
+            - "Handles package installation, removal, hold/unhold operations"
+            - "Executes package operations in correct order: unhold → remove → install → hold"
+        options:
+            packages_list:
+                description: "Unified list of packages with their desired states"
+                type: list
+                elements: dict
+                required: true
+                options:
+                    name:
+                        description: "Package name"
+                        type: str
+                        required: true
+                    state:
+                        description: "Package state"
+                        type: str
+                        default: "present"
+                        choices:
+                            [
+                                "present",
+                                "latest",
+                                "absent",
+                                "build-dep",
+                                "hold",
+                                "unhold",
+                            ]
+                    install_recommends:
+                        description: "Install recommended packages"
+                        type: bool
+                        default: true
+                    purge:
+                        description: "Purge package configuration (for absent state)"
+                        type: bool
+                        default: false
+                    force:
+                        description: "Force package operation"
+                        type: bool
+                        default: false
+                    allow_unauthenticated:
+                        description: "Allow unauthenticated packages"
+                        type: bool
+                        default: false
+                    default_release:
+                        description: "Default release to install from"
+                        type: str
+                    only_upgrade:
+                        description: "Only upgrade, do not install"
+                        type: bool
+                        default: false
+                    cache_valid_time:
+                        description: "Cache validity time in seconds"
+                        type: int
+                    autoremove:
+                        description: "Remove unused packages (for absent state)"
+                        type: bool
+                        default: false
+                    autoclean:
+                        description: "Clean package cache (for absent state)"
+                        type: bool
+                        default: false
+            packages_retry_count:
+                description: "Number of retries for failed operations"
+                type: int
+                default: 3
+            packages_retry_delay:
+                description: "Delay between retries in seconds"
+                type: int
+                default: 10
+            packages_services_to_restart:
+                description: "List of services to restart after package changes"
+                type: list
+                elements: str
+                default: []
+
+    install:
+        short_description: "Package installation entry point"
+        description:
+            - "Entry point for installing packages from unified list"
+            - "Handles only installation operations (present, latest, build-dep states)"
+        options:
+            packages_list:
+                description: "List of packages to install"
+                type: list
+                elements: dict
+                required: true
+                options:
+                    name:
+                        description: "Package name"
+                        type: str
+                        required: true
+                    state:
+                        description: "Package state"
+                        type: str
+                        default: "present"
+                        choices: ["present", "latest", "build-dep"]
+                    install_recommends:
+                        description: "Install recommended packages"
+                        type: bool
+                        default: true
+                    force:
+                        description: "Force package operation"
+                        type: bool
+                        default: false
+            packages_retry_count:
+                description: "Number of retries for failed operations"
+                type: int
+                default: 3
+            packages_retry_delay:
+                description: "Delay between retries in seconds"
+                type: int
+                default: 10
+
+    remove:
+        short_description: "Package removal entry point"
+        description:
+            - "Entry point for removing packages from unified list"
+            - "Handles only removal operations (absent state)"
+        options:
+            packages_list:
+                description: "List of packages to remove"
+                type: list
+                elements: dict
+                required: true
+                options:
+                    name:
+                        description: "Package name"
+                        type: str
+                        required: true
+                    state:
+                        description: "Package state (must be absent)"
+                        type: str
+                        default: "absent"
+                        choices: ["absent"]
+                    purge:
+                        description: "Purge package configuration"
+                        type: bool
+                        default: false
+                    autoremove:
+                        description: "Remove unused packages"
+                        type: bool
+                        default: false
+                    force:
+                        description: "Force package operation"
+                        type: bool
+                        default: false
+            packages_retry_count:
+                description: "Number of retries for failed operations"
+                type: int
+                default: 3
+            packages_retry_delay:
+                description: "Delay between retries in seconds"
+                type: int
+                default: 10
+
+    hold:
+        short_description: "Package hold entry point"
+        description:
+            - "Entry point for holding packages from unified list"
+            - "Prevents packages from being upgraded"
+        options:
+            packages_list:
+                description: "List of packages to hold"
+                type: list
+                elements: dict
+                required: true
+                options:
+                    name:
+                        description: "Package name"
+                        type: str
+                        required: true
+                    state:
+                        description: "Package state (must be hold)"
+                        type: str
+                        default: "hold"
+                        choices: ["hold"]
+
+    unhold:
+        short_description: "Package unhold entry point"
+        description:
+            - "Entry point for unholding packages from unified list"
+            - "Allows previously held packages to be upgraded"
+        options:
+            packages_list:
+                description: "List of packages to unhold"
+                type: list
+                elements: dict
+                required: true
+                options:
+                    name:
+                        description: "Package name"
+                        type: str
+                        required: true
+                    state:
+                        description: "Package state (must be unhold)"
+                        type: str
+                        default: "unhold"
+                        choices: ["unhold"]
+
+    apt_config:
+        short_description: "APT configuration entry point"
+        description:
+            - "Entry point for managing APT configuration files"
+            - "Creates custom APT configuration files in /etc/apt/apt.conf.d/"
+        options:
+            packages_apt_conf:
+                description: "List of APT configuration files to create"
+                type: list
+                elements: dict
+                required: true
+                options:
+                    name:
+                        description: "Configuration name"
+                        type: str
+                        required: true
+                    priority:
+                        description: "Configuration file priority (00-99)"
+                        type: str
+                        default: "90"
+                    settings:
+                        description: "List of APT configuration settings"
+                        type: list
+                        elements: dict
+                        required: true
+                        options:
+                            key:
+                                description: "APT configuration key"
+                                type: str
+                                required: true
+                            value:
+                                description: "APT configuration value"
+                                type: str
+                                required: true
+
+            # Unattended Upgrades Configuration
+            packages_unattended_upgrades_install:
+                description: "Install unattended-upgrades package"
+                type: bool
+                default: true
+            packages_unattended_upgrades_auto_update:
+                description: "Automatically update package lists"
+                type: bool
+                default: true
+            packages_unattended_upgrades_auto_upgrade:
+                description: "Automatically install security upgrades"
+                type: bool
+                default: true
+            packages_unattended_upgrades_auto_clean:
+                description: "Days interval for autoclean (0 = disabled)"
+                type: int
+                default: 7
+            packages_unattended_upgrades_auto_reboot:
+                description: "Automatically reboot if required"
+                type: bool
+                default: false
+            packages_unattended_upgrades_auto_reboot_time:
+                description: "Time for automatic reboot (HH:MM)"
+                type: str
+                default: "03:00"
+            packages_unattended_upgrades_auto_reboot_with_users:
+                description: "Reboot even if users are logged in"
+                type: bool
+                default: false
+            packages_unattended_upgrades_origins:
+                description: "List of upgrade origins to allow"
+                type: list
+                elements: str
+                default:
+                    - "${distro_id}:${distro_codename}-security"
+                    - "${distro_id}ESMApps:${distro_codename}-apps-security"
+                    - "${distro_id}ESM:${distro_codename}-infra-security"
+            packages_unattended_upgrades_package_blacklist:
+                description: "Packages to never auto-update (supports wildcards)"
+                type: list
+                elements: str
+                default: []
+            packages_unattended_upgrades_version_pins:
+                description: "Pin packages to major versions (block major upgrades, allow minor)"
+                type: dict
+                default: {}
+            packages_unattended_upgrades_allow_upgrades:
+                description: "Packages allowed to upgrade to new major versions (overrides pins)"
+                type: list
+                elements: str
+                default: []
+            packages_unattended_upgrades_mail_enabled:
+                description: "Enable email notifications"
+                type: bool
+                default: false
+            packages_unattended_upgrades_mail_to:
+                description: "Email address for notifications"
+                type: str
+                default: "root"
+            packages_unattended_upgrades_mail_on_error_only:
+                description: "Only send email on errors"
+                type: bool
+                default: true
+            packages_unattended_upgrades_download_only:
+                description: "Only download packages, don't install"
+                type: bool
+                default: false
+            packages_unattended_upgrades_install_on_shutdown:
+                description: "Install upgrades on shutdown instead of background"
+                type: bool
+                default: false
+            packages_unattended_upgrades_remove_unused_dependencies:
+                description: "Automatically remove unused dependencies"
+                type: bool
+                default: true
+            packages_unattended_upgrades_remove_unused_kernel_packages:
+                description: "Automatically remove old kernel packages"
+                type: bool
+                default: true
+            packages_unattended_upgrades_remove_new_unused_dependencies:
+                description: "Remove dependencies that become unused after upgrade"
+                type: bool
+                default: true
+            packages_unattended_upgrades_download_limit:
+                description: "Download bandwidth limit in KB/s (0 = unlimited)"
+                type: int
+                default: 0
+            packages_unattended_upgrades_random_sleep:
+                description: "Random sleep time before running (seconds)"
+                type: int
+                default: 0
+            packages_unattended_upgrades_verbose:
+                description: "Enable verbose logging"
+                type: bool
+                default: false
+            packages_unattended_upgrades_debug:
+                description: "Enable debug logging"
+                type: bool
+                default: false
+            packages_unattended_upgrades_syslog_enable:
+                description: "Enable syslog logging"
+                type: bool
+                default: true
+            packages_unattended_upgrades_syslog_facility:
+                description: "Syslog facility to use"
+                type: str
+                default: "daemon"
+            packages_unattended_upgrades_minimal_steps:
+                description: "Split upgrades into smallest possible chunks"
+                type: bool
+                default: true
+            packages_unattended_upgrades_fix_interrupted_dpkg:
+                description: "Fix interrupted dpkg state"
+                type: bool
+                default: true
+            packages_unattended_upgrades_skip_updates_on_metered:
+                description: "Skip updates on metered connections"
+                type: bool
+                default: true
+            packages_unattended_upgrades_timer_enabled:
+                description: "Enable custom timer configuration"
+                type: bool
+                default: true
+            packages_unattended_upgrades_timer_on_calendar:
+                description: "Systemd OnCalendar timer expression (e.g., 'daily', '02:00', '*-*-* 04:00:00')"
+                type: str
+                default: "daily"
+            packages_unattended_upgrades_timer_randomized_delay:
+                description: "Random delay before execution (e.g., '30m', '1h', '3600s')"
+                type: str
+                default: "30m"
+            packages_unattended_upgrades_timer_persistent:
+                description: "Run missed timers on boot if system was offline"
+                type: bool
+                default: true

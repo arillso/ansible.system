@@ -1,0 +1,30 @@
+---
+- name: Deploy journald configuration
+  ansible.builtin.template:
+      src: etc/systemd/journald.conf.j2
+      dest: /etc/systemd/journald.conf
+      owner: root
+      group: root
+      mode: "0644"
+      backup: "{{ systemd_backup_units }}"
+  become: true
+  notify: "Systemd restart journald"
+  retries: "{{ systemd_retry_count }}"
+  delay: "{{ systemd_retry_delay }}"
+  register: _systemd_journald_config_result
+  until: _systemd_journald_config_result is succeeded
+
+- name: Manage systemd-journald service
+  ansible.builtin.systemd:
+      name: systemd-journald
+      enabled: "{{ systemd_journald_service_enabled }}"
+      state: "{{ systemd_journald_service_state }}"
+  become: true
+  when: systemd_journald_service_state != 'restarted'
+
+- name: Restart systemd-journald if requested
+  ansible.builtin.systemd:
+      name: systemd-journald
+      state: restarted
+  become: true
+  when: systemd_journald_service_state == 'restarted'

@@ -1,0 +1,220 @@
+{{ "#!/bin/bash" }}
+# Security updates fact collector with short cache (5 minutes)
+# Critical security information should be frequently updated
+# Enterprise-grade implementation with platform-specific queries
+
+set -euo pipefail
+
+# Universal configuration variables from Ansible (harmonized across all facts scripts)
+readonly SCRIPT_NAME="$(basename "${0}")"
+readonly CACHE_DIR="{{ facts_cache_dir | default('/var/cache/ansible-facts') }}"
+readonly CACHE_FILE="${CACHE_DIR}/security.json"
+readonly CACHE_TTL="{{ facts_cache_ttl_security | default(facts_cache_default_ttl) | default(300) }}"  # 5 minutes cache TTL for security updates
+readonly SECURITY_TIMEOUT="{{ facts_security_command_timeout | default(facts_timeout_default) | default(15) }}"
+readonly DEBUG_ENABLED="{{ facts_debug_enabled | default(false) }}"
+
+# Logging functions (harmonized with universal debug configuration)
+log_debug() {
+    [[ "${DEBUG_ENABLED}" == "true" ]] && echo "[DEBUG] $*" >&2
+}
+
+log_warn() {
+    echo "[WARN] $*" >&2
+}
+
+log_error() {
+    echo "[ERROR] $*" >&2
+}
+
+# Cache management functions
+is_cache_valid() {
+    local cache_file="$1"
+    local ttl="$2"
+
+    if [[ ! -f "$cache_file" ]]; then
+        log_debug "Cache file does not exist: $cache_file"
+        return 1
+    fi
+
+    local cache_age
+    cache_age=$(($(date +%s) - $(stat -c %Y "$cache_file" 2>/dev/null || echo 0)))
+
+    if [[ $cache_age -gt $ttl ]]; then
+        log_debug "Cache expired: age=$cache_age, ttl=$ttl"
+        return 1
+    fi
+
+    log_debug "Cache valid: age=$cache_age, ttl=$ttl"
+    return 0
+}
+
+create_cache_dir() {
+    if [[ ! -d "$CACHE_DIR" ]]; then
+        mkdir -p "$CACHE_DIR" 2>/dev/null || {
+            log_warn "Cannot create cache directory: $CACHE_DIR"
+            return 1
+        }
+        chmod 700 "$CACHE_DIR"
+        log_debug "Created cache directory: $CACHE_DIR"
+    fi
+    return 0
+}
+
+read_cache() {
+    local cache_file="$1"
+
+    if [[ -f "$cache_file" && -r "$cache_file" ]]; then
+        if jq -e . "$cache_file" >/dev/null 2>&1; then
+            # Return cached data with original timestamps, only mark cache as used
+            jq '.meta.cache_used = true' "$cache_file"
+            return 0
+        else
+            log_warn "Cache file corrupted, removing: $cache_file"
+            rm -f "$cache_file"
+        fi
+    fi
+    return 1
+}
+
+write_cache() {
+    local cache_file="$1"
+    local data="$2"
+
+    if create_cache_dir; then
+        echo "$data" > "$cache_file" 2>/dev/null || {
+            log_warn "Cannot write cache file: $cache_file"
+            return 1
+        }
+        chmod 600 "$cache_file"
+        log_debug "Cached security facts to: $cache_file"
+        return 0
+    fi
+    return 1
+}
+
+# Safe command execution with timeout
+safe_exec() {
+    local cmd="$1"
+    local default_value="${2:-0}"
+    local timeout_seconds="${3:-10}"
+
+    if timeout "${timeout_seconds}" bash -c "${cmd}" 2>/dev/null; then
+        return 0
+    else
+        echo "${default_value}"
+        return 1
+    fi
+}
+
+# Get security updates count by platform
+get_security_updates() {
+    local security_updates=0
+
+{% if ansible_os_family == "Debian" %}
+    if command -v apt >/dev/null 2>&1; then
+        # Debian/Ubuntu: Check for security updates
+        security_updates=$(safe_exec "apt list --upgradable 2>/dev/null | grep -c 'security\|security-updates'" "0" "${SECURITY_TIMEOUT}")
+        log_debug "Debian security updates found: $security_updates"
+    fi
+{% elif ansible_os_family == "RedHat" %}
+    if command -v yum >/dev/null 2>&1; then
+        # RHEL/CentOS with yum
+        security_updates=$(safe_exec "yum check-update --security -q 2>/dev/null | grep -v '^$' | wc -l" "0" "${SECURITY_TIMEOUT}")
+        log_debug "RHEL/yum security updates found: $security_updates"
+    elif command -v dnf >/dev/null 2>&1; then
+        # RHEL/CentOS with dnf
+        security_updates=$(safe_exec "dnf check-update --security -q 2>/dev/null | grep -v '^$' | wc -l" "0" "${SECURITY_TIMEOUT}")
+        log_debug "RHEL/dnf security updates found: $security_updates"
+    fi
+{% else %}
+    log_debug "Unsupported OS family for security updates check"
+    security_updates=0
+{% endif %}
+
+    # Ensure we return a valid number
+    if ! [[ "$security_updates" =~ ^[0-9]+$ ]]; then
+        security_updates=0
+    fi
+
+    echo "$security_updates"
+}
+
+# Collect security facts
+collect_security_facts() {
+    local security_updates
+    local iso_timestamp human_timestamp epoch_timestamp
+
+    # Get security updates count
+    security_updates=$(get_security_updates)
+
+    # Generate timestamps in multiple formats
+    iso_timestamp=$(date -Iseconds)
+    human_timestamp=$(date '+%Y-%m-%d %H:%M:%S %Z')
+    epoch_timestamp=$(date +%s)
+
+    # Generate structured output
+    jq -n \
+        --arg security_updates "$security_updates" \
+        --arg iso_timestamp "$iso_timestamp" \
+        --arg human_timestamp "$human_timestamp" \
+        --arg epoch_timestamp "$epoch_timestamp" \
+        --arg check_method "{{ ansible_os_family }}" \
+        '{
+            security_updates_available: ($security_updates | tonumber),
+            meta: {
+                collection_timestamp: $iso_timestamp,
+                collection_timestamp_human: $human_timestamp,
+                collection_timestamp_epoch: ($epoch_timestamp | tonumber),
+                cache_used: false,
+                script_type: "security_updates",
+                check_method: $check_method,
+                ttl_seconds: 300,
+                managed_by: "ansible"
+            }
+        }'
+}
+
+# Main execution with short caching logic
+main() {
+    # Check if security updates checking is disabled
+    if [[ "${facts_enable_security_updates:-true}" != "true" ]]; then
+        jq -n '{
+            security_updates_available: 0,
+            meta: {
+                collection_timestamp: "'"$(date -Iseconds)"'",
+                collection_timestamp_human: "'"$(date '+%Y-%m-%d %H:%M:%S %Z')"'",
+                collection_timestamp_epoch: '$(date +%s)',
+                cache_used: false,
+                script_type: "security_updates",
+                check_method: "disabled",
+                ttl_seconds: 300,
+                managed_by: "ansible"
+            }
+        }'
+        return 0
+    fi
+
+    # Try to use cached data first (short TTL)
+    if is_cache_valid "$CACHE_FILE" "$CACHE_TTL"; then
+        if read_cache "$CACHE_FILE"; then
+            return 0
+        fi
+    fi
+
+    # Cache miss or invalid - collect fresh security data
+    local security_facts
+    security_facts=$(collect_security_facts)
+
+    # Update cache with fresh data
+    write_cache "$CACHE_FILE" "$security_facts" || log_error "Cache write failed, but continuing with output"
+
+    # Always output the collected security facts
+    echo "$security_facts"
+    return 0
+}
+
+# Error handling wrapper
+trap 'log_error "Script failed at line $LINENO"' ERR
+
+# Execute main function
+main "$@"

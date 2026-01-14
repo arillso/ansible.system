@@ -1,0 +1,112 @@
+---
+access_users_enabled: true
+access_groups_enabled: true
+access_sudoers_enabled: true
+access_ssh_server_enabled: true
+access_ssh_keys_enabled: true
+
+access_users: []
+# Example:
+# access_users:
+#   - name: deploy
+#     comment: "Deployment User"
+#     uid: 2000
+#     group: deploy
+#     groups: [sudo, docker]
+#     shell: /bin/bash
+#     home: /home/deploy
+#     create_home: true
+#     state: present
+#     system: false
+#     password: ""  # Encrypted password hash
+#     update_password: on_create
+#     ssh_keys: []
+#     # SSH keys for this user:
+#     #   - key: "ssh-rsa AAAA..."
+#     #     state: present
+#     remove: false  # Remove user if state=absent
+
+# User defaults
+access_user_shell_default: /bin/bash
+access_user_create_home_default: true
+access_user_update_password_default: on_create
+
+access_groups: []
+# Example:
+# access_groups:
+#   - name: docker
+#     gid: 999
+#     state: present
+#     system: false
+
+access_sudoers: []
+# Example:
+# access_sudoers:
+#   - name: deploy
+#     user: deploy  # OR group: deploy
+#     commands: ALL
+#     hosts: ALL
+#     runas: ALL
+#     nopasswd: true
+#     setenv: false
+#     state: present
+
+# Sudoers file settings
+access_sudoers_file_owner: root
+access_sudoers_file_group: root
+access_sudoers_file_mode: "0440"
+access_sudoers_validate: true
+
+access_ssh_port: 22
+access_ssh_listen_addresses: []
+access_ssh_permit_root_login: "prohibit-password"
+access_ssh_pubkey_authentication: true
+access_ssh_password_authentication: false
+access_ssh_challenge_response_authentication: false
+access_ssh_gssapi_authentication: false
+access_ssh_kerberos_authentication: false
+access_ssh_permit_empty_passwords: false
+access_ssh_permit_user_environment: false
+access_ssh_max_auth_tries: 3
+access_ssh_max_sessions: 10
+access_ssh_max_startups: "10:30:60"
+access_ssh_login_grace_time: 60
+access_ssh_x11_forwarding: false
+access_ssh_tcp_forwarding: true
+access_ssh_agent_forwarding: false
+access_ssh_gateway_ports: false
+access_ssh_permit_tunnel: false
+access_ssh_log_level: INFO
+access_ssh_syslog_facility: AUTH
+access_ssh_client_alive_interval: 300
+access_ssh_client_alive_count_max: 3
+access_ssh_tcp_keep_alive: true
+access_ssh_compression: false
+access_ssh_allow_users: []
+access_ssh_allow_groups: []
+access_ssh_deny_users: []
+access_ssh_deny_groups: []
+access_ssh_subsystem_sftp: /usr/lib/openssh/sftp-server
+access_ssh_config_extra: {}
+# Example:
+# access_ssh_config_extra:
+#   HostKeyAlgorithms: "ssh-ed25519,rsa-sha2-512,rsa-sha2-256"
+#   Ciphers: "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com"
+
+# SSH service management
+access_ssh_service_enabled: true
+access_ssh_service_state: started
+access_ssh_restart_on_change: true
+
+access_ssh_keys: []
+
+access_services_to_restart: []
+
+access_retry_count: 3
+access_retry_delay: 5
+
+access_validate_sudoers: true
+access_validate_ssh_config: true
+access_backup_configs: true
+
+access_debug_mode: false

@@ -1,0 +1,59 @@
+# {{ ansible_managed }}
+# Rsyslog configuration
+
+# Modules
+{% for module in logging_rsyslog_modules %}
+module(load="{{ module }}")
+{% endfor %}
+
+# Global directives
+global(
+    workDirectory="{{ logging_rsyslog_work_directory }}"
+{% if logging_rsyslog_preserve_fqdn %}
+    preserveFQDN="on"
+{% endif %}
+)
+
+# Main queue settings
+main_queue(
+    queue.size="{{ logging_rsyslog_main_queue_size }}"
+    queue.type="{{ logging_rsyslog_main_queue_type }}"
+    queue.workerThreads="{{ logging_rsyslog_main_queue_worker_threads }}"
+)
+
+# File ownership and permissions
+$FileOwner {{ logging_rsyslog_file_owner }}
+$FileGroup {{ logging_rsyslog_file_group }}
+$FileCreateMode {{ logging_rsyslog_file_create_mode }}
+$DirCreateMode {{ logging_rsyslog_dir_create_mode }}
+$Umask 0022
+
+{% if not logging_rsyslog_traditional_log_format %}
+# Use default timestamp format
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
+{% endif %}
+
+{% if not logging_rsyslog_klog_permit_non_kernel_facility %}
+# Filter non-kernel messages from kernel log
+$KLogPermitNonKernelFacility off
+{% endif %}
+
+# Remote logging
+{% for server in logging_rsyslog_remote_servers %}
+{% if server.protocol == 'tcp' %}
+*.* @@{{ server.host }}:{{ server.port }}
+{% else %}
+*.* @{{ server.host }}:{{ server.port }}
+{% endif %}
+{% endfor %}
+
+# Include additional configurations
+$IncludeConfig {{ logging_rsyslog_include_config }}
+
+# Standard log files
+auth,authpriv.*                 /var/log/auth.log
+*.*;auth,authpriv.none          -/var/log/syslog
+kern.*                          -/var/log/kern.log
+mail.*                          -/var/log/mail.log
+mail.err                        /var/log/mail.err
+*.emerg                         :omusrmsg:*

@@ -1,0 +1,27 @@
+---
+# Facts role handlers
+- name: Refresh facts
+  ansible.builtin.setup:
+      gather_subset:
+          - all
+  tags:
+      - facts
+
+- name: "Restart ssh service"
+  ansible.builtin.systemd_service:
+      name: "{{ _ssh_service_name }}"
+      state: restarted
+  vars:
+      _ssh_service_name: >-
+          {{ facts_ssh_service_names[ansible_facts['os_family']] |
+             default(facts_ssh_service_names['default']) }}
+  when:
+      - ansible_facts['service_mgr'] == 'systemd'
+  listen: "Restart ssh service"
+
+- name: Update motd
+  ansible.builtin.command: update-motd
+  when: ansible_os_family == "Debian"
+  changed_when: false
+  tags:
+      - motd

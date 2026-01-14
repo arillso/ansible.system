@@ -1,0 +1,107 @@
+---
+argument_specs:
+    main:
+        short_description: "Manage thermal and sensor monitoring on Linux systems"
+        description:
+            - "Installs and configures thermal management tools including thermald, lm-sensors, and fancontrol"
+            - "Manages temperature thresholds and thermal zones for CPU and ACPI"
+            - "Configures thermal preferences for performance, quiet, or balanced operation"
+            - "Arillso"
+        options:
+            thermal_enabled:
+                description: "Enable or disable thermal management configuration"
+                type: "bool"
+                required: false
+                default: true
+
+            thermal_packages:
+                description: "List of thermal management packages to install"
+                type: "list"
+                elements: "str"
+                required: false
+                default:
+                    - lm-sensors
+                    - fancontrol
+                    - thermald
+
+            thermal_platform_name:
+                description: "Platform name for thermal configuration (auto-detected if not set)"
+                type: "str"
+                required: false
+                default: "{{ ansible_product_name | default('Generic') }}"
+
+            thermal_preference:
+                description: "Thermal management preference mode"
+                type: "str"
+                required: false
+                default: "QUIET"
+                choices:
+                    - "QUIET"
+                    - "PERFORMANCE"
+                    - "BALANCED"
+
+            thermal_acpitz_passive_temp:
+                description: "ACPI thermal zone passive cooling threshold in millidegrees Celsius (e.g., 70000 = 70°C)"
+                type: "int"
+                required: false
+                default: 70000
+
+            thermal_acpitz_active_temp:
+                description: "ACPI thermal zone active cooling threshold in millidegrees Celsius (e.g., 80000 = 80°C)"
+                type: "int"
+                required: false
+                default: 80000
+
+            thermal_cpu_passive_temp:
+                description: "CPU package passive cooling threshold in millidegrees Celsius (e.g., 75000 = 75°C)"
+                type: "int"
+                required: false
+                default: 75000
+
+            thermal_cpu_active_temp:
+                description: "CPU package active cooling threshold in millidegrees Celsius (e.g., 85000 = 85°C)"
+                type: "int"
+                required: false
+                default: 85000
+
+            thermal_passive_sampling_period:
+                description: "ACPI passive sampling period in seconds"
+                type: "int"
+                required: false
+                default: 12
+
+            thermal_active_sampling_period:
+                description: "ACPI active sampling period in seconds"
+                type: "int"
+                required: false
+                default: 8
+
+            thermal_cpu_passive_sampling_period:
+                description: "CPU passive sampling period in seconds"
+                type: "int"
+                required: false
+                default: 10
+
+            thermal_cpu_active_sampling_period:
+                description: "CPU active sampling period in seconds"
+                type: "int"
+                required: false
+                default: 6
+
+            thermal_enable_acpitz:
+                description: "Enable ACPI thermal zone monitoring"
+                type: "bool"
+                required: false
+                default: true
+
+            thermal_enable_cpu_temp:
+                description: "Enable CPU temperature monitoring"
+                type: "bool"
+                required: false
+                default: true
+
+            thermal_run_sensors_detect:
+                description: "Run sensors-detect automatically to detect hardware sensors"
+                type: "bool"
+                required: false
+                default: false

@@ -1,26 +1,202 @@
 ---
-packages_list: []
-# Example configurations for package installation:
-# - name: 'vim'                       # Package name
-#   version: '8.0'                    # Specify version
-#   install_recommends: false         # Whether to install recommended packages
-#   allow_downgrade: false            # Allow package downgrades
-#   purge: false                      # Remove package with its configuration
-#   force_apt_get: false              # Force using apt-get over other methods
-#   lock_timeout: 30                  # Lock timeout in seconds
-#   state: 'present'                  # Desired state of the package
+# Entry Point Controls
+packages_repositories_enabled: true
+packages_keys_enabled: true
+packages_cache_enabled: true
+packages_upgrade_enabled: false
+packages_clean_enabled: false
+packages_unattended_upgrades_enabled: false
 
-# Additional examples with different package states and options:
-# - name: nginx
-#   state: latest                     # Install the latest version
-# - name: httpd
-#   state: present                    # Ensure the package is installed
-# - name: python3
-#   state: absent                     # Ensure the package is not installed
-# - name: git
-#   version: latest                   # Install the latest version of git
-# - name: vlc
-#   state: present                    # Ensure vlc is installed
-# - name: 7zip
-#   state: latest                     # Install the latest version of 7zip
-#   ignore_checksums: true            # Ignore checksums during installation
+# Cache configuration
+packages_update_cache: true
+packages_cache_valid_time: 3600
+packages_cache_update_retries: 3
+packages_cache_update_delay: 10
+packages_force_cache_update: false
+
+# Package management
+packages_upgrade: false
+packages_autoremove: false
+packages_autoclean: false
+packages_list: []
+packages_repositories: []
+packages_keys: []
+packages_gpg_keyservers:
+    - keyserver.ubuntu.com
+    - keys.openpgp.org
+    - pgp.mit.edu
+
+# APT Configuration Management
+packages_apt_conf: []
+# Example:
+# packages_apt_conf:
+#   - name: custom
+#     priority: 99
+#     config:
+#       - key: "APT::Install-Recommends"
+#         value: "false"
+
+# APT Proxy Configuration
+packages_apt_proxy_enabled: false
+packages_apt_proxy_http: ""
+packages_apt_proxy_https: ""
+packages_apt_proxy_ftp: ""
+packages_apt_proxy_socks: ""
+
+# APT Mirror/Sources Configuration
+packages_apt_mirror_enabled: false
+packages_apt_mirror_uri: ""
+packages_apt_mirror_distribution: "{{ ansible_distribution_release }}"
+packages_apt_mirror_components:
+    - main
+    - restricted
+    - universe
+    - multiverse
+
+# APT Behavior Configuration
+packages_apt_install_recommends: true
+packages_apt_install_suggests: false
+packages_apt_fix_broken: true
+packages_apt_fix_missing: true
+packages_apt_force_confold: true
+packages_apt_force_confnew: false
+packages_apt_force_confdef: true
+packages_apt_force_confask: false
+
+# APT Acquire Configuration
+packages_apt_acquire_retries: 3
+packages_apt_acquire_timeout: 120
+packages_apt_acquire_http_timeout: 120
+packages_apt_acquire_http_pipeline_depth: 10
+packages_apt_acquire_queue_mode: "host"
+packages_apt_acquire_check_valid_until: true
+packages_apt_acquire_allow_insecure: false
+packages_apt_acquire_allow_weak: false
+packages_apt_acquire_allow_downgrade_to_insecure: false
+
+# APT Periodic Configuration
+packages_apt_periodic_enabled: false
+packages_apt_periodic_update: 1
+packages_apt_periodic_download: 0
+packages_apt_periodic_autoclean: 7
+packages_apt_periodic_verbose: 0
+
+# APT Update Configuration
+packages_apt_update_error_mode: "any"
+packages_apt_update_allow_releaseinfo_change: true
+packages_apt_update_allow_releaseinfo_change_origin: true
+packages_apt_update_allow_releaseinfo_change_label: true
+packages_apt_update_allow_releaseinfo_change_codename: false
+packages_apt_update_allow_releaseinfo_change_suite: false
+packages_apt_update_allow_releaseinfo_change_version: true
+
+# APT Cache Configuration
+packages_apt_cache_limit: 0
+packages_apt_cache_archives: "/var/cache/apt/archives"
+packages_apt_cache_srcpkgcache: "/var/cache/apt/srcpkgcache.bin"
+packages_apt_cache_pkgcache: "/var/cache/apt/pkgcache.bin"
+
+# APT Lists Configuration
+packages_apt_lists_dir: "/var/lib/apt/lists"
+packages_apt_clean_lists: false
+
+# APT Authentication
+packages_apt_get_assume_yes: true
+packages_apt_get_allow_unauthenticated: false
+
+# APT Language/Translation
+packages_apt_acquire_languages: "none"
+packages_apt_acquire_translation: []
+
+# APT Pinning
+packages_apt_preferences: []
+# Example:
+# packages_apt_preferences:
+#   - package: "*"
+#     pin: "release o=Ubuntu"
+#     priority: 500
+#   - package: "nginx"
+#     pin: "version 1.24.*"
+#     priority: 990
+
+# Service management
+packages_services_to_restart: []
+
+# Retry configuration
+packages_retry_count: 3
+packages_retry_delay: 10
+
+# Logging
+packages_log_level: "info"
+
+# Unattended Upgrades Configuration
+packages_unattended_upgrades_install: true
+packages_unattended_upgrades_auto_update: true
+packages_unattended_upgrades_auto_upgrade: true
+packages_unattended_upgrades_auto_clean: 7
+packages_unattended_upgrades_auto_reboot: false
+packages_unattended_upgrades_auto_reboot_time: "03:00"
+packages_unattended_upgrades_auto_reboot_with_users: false
+
+# Systemd timer configuration
+packages_unattended_upgrades_timer_enabled: true
+packages_unattended_upgrades_timer_on_calendar: "daily"
+packages_unattended_upgrades_timer_randomized_delay: "30m"
+packages_unattended_upgrades_timer_persistent: true
+
+# Update origins
+packages_unattended_upgrades_origins:
+    - "${distro_id}:${distro_codename}-security"
+    - "${distro_id}ESMApps:${distro_codename}-apps-security"
+    - "${distro_id}ESM:${distro_codename}-infra-security"
+
+# Package blacklist
+packages_unattended_upgrades_package_blacklist: []
+# Example:
+# packages_unattended_upgrades_package_blacklist:
+#   - nginx
+#   - postgresql-*
+#   - mysql-server
+
+# Version pinning
+packages_unattended_upgrades_version_pins: {}
+# Example:
+# packages_unattended_upgrades_version_pins:
+#   docker-ce: "24"
+#   postgresql: "15"
+#   nginx: "1.24"
+#   python3: "3.11"
+
+# Allow upgrades
+packages_unattended_upgrades_allow_upgrades: []
+# Example:
+# packages_unattended_upgrades_allow_upgrades:
+#   - docker-ce
+#   - nodejs
+
+# Email notifications
+packages_unattended_upgrades_mail_enabled: false
+packages_unattended_upgrades_mail_to: "root"
+packages_unattended_upgrades_mail_on_error_only: true
+
+# Download and install behavior
+packages_unattended_upgrades_download_only: false
+packages_unattended_upgrades_install_on_shutdown: false
+packages_unattended_upgrades_remove_unused_dependencies: true
+packages_unattended_upgrades_remove_unused_kernel_packages: true
+packages_unattended_upgrades_remove_new_unused_dependencies: true
+
+# Bandwidth and timing
+packages_unattended_upgrades_download_limit: 0
+packages_unattended_upgrades_random_sleep: 0
+
+# Logging and debugging
+packages_unattended_upgrades_verbose: false
+packages_unattended_upgrades_debug: false
+packages_unattended_upgrades_syslog_enable: true
+packages_unattended_upgrades_syslog_facility: "daemon"
+
+# Advanced options
+packages_unattended_upgrades_minimal_steps: true
+packages_unattended_upgrades_fix_interrupted_dpkg: true
+packages_unattended_upgrades_skip_updates_on_metered: true

@@ -1,0 +1,70 @@
+---
+- name: Install required system packages
+  ansible.builtin.package:
+      name: "{{ ansible_required_packages }}"
+      state: present
+  become: true
+  retries: "{{ ansible_retry_count }}"
+  delay: "{{ ansible_retry_delay }}"
+  register: ansible_role_packages
+  until: ansible_role_packages is succeeded
+
+- name: Install via pipx
+  when: ansible_install_method == "pipx"
+  block:
+      - name: Install pipx package
+        ansible.builtin.package:
+            name: "{{ ansible_pipx_packages }}"
+            state: present
+        become: true
+        retries: "{{ ansible_retry_count }}"
+        delay: "{{ ansible_retry_delay }}"
+        register: ansible_role_pipx_pkg
+        until: ansible_role_pipx_pkg is succeeded
+
+      - name: Remove system ansible package if requested
+        ansible.builtin.package:
+            name: ansible
+            state: absent
+        become: true
+        when: ansible_remove_system_package | default(true)
+
+      - name: Install ansible via pipx
+        community.general.pipx:
+            name: "ansible{{ ('==' + ansible_package_version) if ansible_package_version else '' }}"
+            state: install
+            install_deps: true
+            pipx_home: "{{ ansible_pipx_home }}"
+            global_bin_dir: "{{ ansible_pipx_bin }}"
+        become: true
+
+      - name: Build inject package list
+        ansible.builtin.set_fact:
+            ansible_role_inject_packages: >-
+                {{
+                  (ansible_pipx_inject_packages | default([])) +
+                  (['opentelemetry-exporter-otlp'] if ansible_otel_enabled else [])
+                }}
+
+      - name: Inject additional Python packages into ansible
+        community.general.pipx:
+            name: ansible
+            state: inject
+            inject_packages: "{{ ansible_role_inject_packages }}"
+            pipx_home: "{{ ansible_pipx_home }}"
+            global_bin_dir: "{{ ansible_pipx_bin }}"
+        become: true
+        when: ansible_role_inject_packages | length > 0
+
+- name: Install via system package manager
+  when: ansible_install_method == "package"
+  block:
+      - name: Install ansible system package
+        ansible.builtin.package:
+            name: ansible
+            state: present
+        become: true
+        retries: "{{ ansible_retry_count }}"
+        delay: "{{ ansible_retry_delay }}"
+        register: ansible_role_system_install
+        until: ansible_role_system_install is succeeded

@@ -5,24 +5,24 @@ version: 0.0.0
 readme: README.md
 
 authors:
-  - Simon Baerlocher (@sbaerlocher) <s.baerlocher@sbaerlocher.ch>
-  - arillso (@arillso) <hello@arillso.io>
+    - Simon Baerlocher (@sbaerlocher) <s.baerlocher@sbaerlocher.ch>
+    - arillso (@arillso) <hello@arillso.io>
 
 description: "This is an Ansible collection that configures system"
 
 license:
-  - MIT
+    - MIT
 
 tags:
-  - system
-  - apt
-  - systemd
-  - linux
-  - windows
+    - system
+    - apt
+    - systemd
+    - linux
+    - windows
 
 dependencies:
-  devsec.hardening: ">=8.0.0"
-  ansible.posix: ">=1.4.0"
+    devsec.hardening: ">=8.0.0"
+    ansible.posix: ">=1.4.0"
 
 repository: https://github.com/arillso/ansible.system
 

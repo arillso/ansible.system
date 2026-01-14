@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 """
@@ -10,7 +9,6 @@ with support for Python versions before and after 3.11.
 
 from __future__ import absolute_import, division, print_function
 
-import json
 import sys
 from datetime import datetime
 
@@ -20,73 +18,70 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping
 
 # Importing libraries for reading and writing TOML
+TOMLLIB_IMPORT_ERROR = None
+TOMLW_IMPORT_ERROR = None
+
 if sys.version_info >= (3, 11):
     import tomllib
 else:
     try:
         import tomli as tomllib
     except ImportError as exc:
-        raise AnsibleFilterError(
-            'The Python library "tomli" is required for reading TOML.'
-        ) from exc
+        tomllib = None
+        TOMLLIB_IMPORT_ERROR = 'The Python library "tomli" is required for reading TOML.'
 
 try:
     import tomli_w as tomlw
-except ImportError as exc:
+except ImportError:
     try:
         # pylint: disable=import-self
         import toml as tomlw
-    except ImportError:
-        raise AnsibleFilterError(
-            'A Python library for writing TOML is required ("tomli-w" or "toml").'
-        ) from exc
+    except ImportError as exc:
+        tomlw = None
+        TOMLW_IMPORT_ERROR = 'A Python library for writing TOML is required ("tomli-w" or "toml").'
 
 
-def datetime_converter(o):
-    """Convert datetime objects to JSON serializable format."""
-    if isinstance(o, datetime):
-        return o.isoformat()
-    raise TypeError(f"Objekt vom Typ {type(o).__name__} ist nicht JSON serialisierbar")
-
-
-def from_toml(o):
+def from_toml(toml_string):
     """
-    Converts a TOML-formatted string into a Python object.
+    Converts a TOML-formatted string into a Python dictionary.
 
-    :param o: The string to convert.
-    :type o: str
-    :return: The Python object generated from the TOML string.
+    :param toml_string: The TOML string to parse.
+    :type toml_string: str
+    :return: The Python dictionary generated from the TOML string.
     :rtype: dict
     :raises AnsibleFilterError: If the input string is not a valid TOML string or another
         error occurs.
     """
-    if not isinstance(o, str):
+    if TOMLLIB_IMPORT_ERROR:
+        raise AnsibleFilterError(TOMLLIB_IMPORT_ERROR)
+    if not isinstance(toml_string, str):
         raise AnsibleFilterError(
-            f"from_toml requires a string, received: {type(o).__name__}"
+            f"from_toml requires a string, received: {type(toml_string).__name__}"
         )
     try:
-        python_object = tomllib.loads(o)
-        return json.dumps(python_object, default=datetime_converter)
+        return tomllib.loads(toml_string)
     except Exception as e:
         raise AnsibleFilterError(f"Error parsing TOML: {e}") from e
 
 
-def to_toml(o):
+def to_toml(data):
     """
-    Converts a Python object into a TOML-formatted string.
+    Converts a Python dictionary into a TOML-formatted string.
 
-    :param o: The Python object to convert.
-    :type o: Mapping
+    :param data: The Python dictionary to convert.
+    :type data: Mapping
     :return: A string in TOML format.
     :rtype: str
     :raises AnsibleFilterError: If the object cannot be converted or another error occurs.
     """
-    if not isinstance(o, Mapping):
+    if TOMLW_IMPORT_ERROR:
+        raise AnsibleFilterError(TOMLW_IMPORT_ERROR)
+    if not isinstance(data, Mapping):
         raise AnsibleFilterError(
-            f"to_toml requires a dict, received: {type(o).__name__}"
+            f"to_toml requires a dict, received: {type(data).__name__}"
         )
     try:
-        return to_text(tomlw.dumps(o), errors="surrogate_or_strict")
+        return to_text(tomlw.dumps(data), errors="surrogate_or_strict")
     except Exception as e:
         raise AnsibleFilterError(f"Error generating TOML: {e}") from e
 
@@ -100,10 +95,17 @@ def to_nice_toml(data):
     to produce a readable TOML representation of the input dictionary.
 
     :param data: The Python dictionary to convert.
-    :type data: dict
+    :type data: Mapping
     :return: A nicely formatted TOML string representing the input dictionary.
     :rtype: str
+    :raises AnsibleFilterError: If the object cannot be converted or another error occurs.
     """
+    if TOMLW_IMPORT_ERROR:
+        raise AnsibleFilterError(TOMLW_IMPORT_ERROR)
+    if not isinstance(data, Mapping):
+        raise AnsibleFilterError(
+            f"to_nice_toml requires a dict, received: {type(data).__name__}"
+        )
 
     def format_toml_value(value):
         """
@@ -162,18 +164,25 @@ def to_nice_toml(data):
                 toml_str += "  " * indent + f"{key} = {format_toml_value(value)}\n"
         return toml_str
 
-    return recurse(data)
+    try:
+        return recurse(data)
+    except Exception as e:
+        raise AnsibleFilterError(f"Error generating nice TOML: {e}") from e
 
 
 # pylint: disable=R0903
 class FilterModule:
     """
-    Ansible Filter Module for converting between TOML and Python objects with improved formatting.
+    Ansible Filter Module for converting between TOML and Python objects.
 
     Provides three filters:
-    - from_toml: Converts TOML strings to Python objects.
-    - to_toml: Converts Python objects to TOML strings.
-    - to_nice_toml: Converts Python objects to nicely formatted TOML strings.
+    - from_toml: Converts TOML strings to Python dictionaries.
+    - to_toml: Converts Python dictionaries to TOML strings.
+    - to_nice_toml: Converts Python dictionaries to nicely formatted TOML strings.
+
+    Requirements:
+    - Python 3.11+ (uses built-in tomllib) OR tomli package for reading TOML
+    - tomli-w package (or toml as fallback) for writing TOML
     """
 
     def filters(self):
@@ -184,7 +193,7 @@ class FilterModule:
         :rtype: dict
         """
         return {
+            "from_toml": from_toml,
             "to_toml": to_toml,
             "to_nice_toml": to_nice_toml,
-            "from_toml": from_toml,
         }

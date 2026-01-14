@@ -1,5 +1,0 @@
----
-- name: Ensure systemd unit type is supported
-  ansible.builtin.fail:
-    msg: "Please make sure that systemd unit type is one of: {{ systemd_unit_types_supported | join(',') }}"
-  when: systemd_unit_type not in systemd_unit_types_supported

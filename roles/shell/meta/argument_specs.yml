@@ -1,0 +1,65 @@
+---
+# Argument specifications for Shell role
+
+argument_specs:
+    main:
+        short_description: "Complete shell environment and MOTD configuration"
+        description:
+            - "Configures MOTD, SSH banners, shell environment, and terminal settings"
+            - "Provides consistent shell environment across all managed systems"
+        options:
+            shell_company_name:
+                type: str
+                default: "Hetzner Cloud K3s Platform"
+                description: "Company name displayed in MOTD and banners"
+
+            shell_company_contact:
+                type: str
+                default: "DevOps Team"
+                description: "Contact information displayed in MOTD"
+
+            shell_company_support_url:
+                type: str
+                default: "https://github.com/sbaerlocher/devops"
+                description: "Support URL displayed in MOTD footer"
+
+            shell_environment:
+                type: str
+                default: "production"
+                description: "Environment classification for MOTD display"
+
+            shell_motd_enabled:
+                type: bool
+                default: true
+                description: "Enable MOTD configuration"
+
+            shell_motd_style:
+                type: str
+                default: "standard"
+                choices: ["standard", "figlet", "minimal"]
+                description: "MOTD display style"
+
+            shell_motd_show_system_info:
+                type: bool
+                default: true
+                description: "Show system information in MOTD"
+
+            shell_motd_show_footer:
+                type: bool
+                default: true
+                description: "Show footer with contact information in MOTD"
+
+            shell_ssh_banner_enabled:
+                type: bool
+                default: true
+                description: "Enable SSH pre-login banner"
+
+            shell_enabled:
+                type: bool
+                default: true
+                description: "Enable shell environment configuration"
+
+            shell_facts_dependency:
+                type: bool
+                default: true
+                description: "Require facts role for system data"

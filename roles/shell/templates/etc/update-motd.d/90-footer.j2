@@ -1,0 +1,288 @@
+{% raw %}#!/bin/bash
+
+# Enterprise MOTD footer - Professional system administration display
+# Clean tabular format with proper alignment
+# Version: 4.0 - Enterprise design with consistent spacing
+
+set -euo pipefail
+
+# Configuration
+readonly SYSTEM_CACHE_FILE="/var/cache/ansible-facts/system.json"
+readonly RUN_CACHE_FILE="/var/cache/ansible-facts/last_run.json"
+readonly CLOUD_CACHE_FILE="/var/cache/ansible-facts/cloud.json"
+readonly CACHE_MAX_AGE=86400
+readonly DEBUG_MODE="${MOTD_DEBUG:-0}"
+
+# Enterprise color scheme - minimal, professional
+readonly RED='\033[0;31m'
+readonly BLUE='\033[0;34m'
+readonly NC='\033[0m'
+
+# Debug logging function
+debug_log() {
+    if [ "$DEBUG_MODE" = "1" ]; then
+        echo "[DEBUG] $*" >&2
+    fi
+}
+
+# Fast status retrieval from cache
+get_cached_data() {
+    local cache_file="$1"
+    debug_log "Checking cache file: $cache_file"
+
+    if [ ! -f "$cache_file" ]; then
+        debug_log "Cache file does not exist: $cache_file"
+        echo "{}"
+        return 1
+    fi
+
+    local cache_age
+    cache_age=$(($(date +%s) - $(stat -c %Y "$cache_file" 2>/dev/null || echo 0)))
+    debug_log "Cache age: $cache_age seconds (max: $CACHE_MAX_AGE)"
+
+    if [ $cache_age -gt $CACHE_MAX_AGE ]; then
+        debug_log "Cache expired"
+        echo "{}"
+        return 1
+    fi
+
+    debug_log "Returning cached data"
+    cat "$cache_file" 2>/dev/null || echo "{}"
+}
+
+# Extract value from JSON with fallback
+get_json_value() {
+    local json="$1"
+    local path="$2"
+    local default="$3"
+
+    debug_log "Extracting JSON path: $path"
+    local result
+    result=$(echo "$json" | jq -r "$path // \"$default\"" 2>/dev/null || echo "$default")
+    debug_log "JSON result for $path: $result"
+    echo "$result"
+}
+
+# Execute fact script to refresh cache
+execute_fact_script() {
+    local fact_script="$1"
+
+    if [ -x "$fact_script" ]; then
+        "$fact_script" >/dev/null 2>&1 || return 1
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Get system data with auto-refresh
+get_system_data() {
+    debug_log "Getting system data"
+    local system_json
+    system_json=$(get_cached_data "$SYSTEM_CACHE_FILE")
+
+    local collection_timestamp
+    collection_timestamp=$(get_json_value "$system_json" ".meta.collection_timestamp" "")
+    debug_log "System collection timestamp: $collection_timestamp"
+
+    if [ -z "$collection_timestamp" ]; then
+        debug_log "No valid system cache, trying to refresh"
+        if execute_fact_script "/etc/ansible/facts.d/system.fact"; then
+            debug_log "System fact script executed, re-reading cache"
+            system_json=$(get_cached_data "$SYSTEM_CACHE_FILE")
+        else
+            debug_log "Failed to refresh system cache"
+        fi
+    fi
+
+    echo "$system_json"
+}
+
+# Get run data with auto-refresh
+get_run_data() {
+    debug_log "Getting run data"
+    local run_json
+    run_json=$(get_cached_data "$RUN_CACHE_FILE")
+
+    local timestamp
+    timestamp=$(get_json_value "$run_json" ".timestamp" "")
+    debug_log "Run timestamp: $timestamp"
+
+    if [ -z "$timestamp" ]; then
+        debug_log "No valid run cache, trying to refresh"
+        if execute_fact_script "/etc/ansible/facts.d/run.fact"; then
+            debug_log "Run fact script executed, re-reading cache"
+            run_json=$(get_cached_data "$RUN_CACHE_FILE")
+        else
+            debug_log "Failed to refresh run cache"
+        fi
+    fi
+
+    echo "$run_json"
+}
+
+# Get cloud data with auto-refresh
+get_cloud_data() {
+    debug_log "Getting cloud data"
+    local cloud_json
+    cloud_json=$(get_cached_data "$CLOUD_CACHE_FILE")
+
+    local collection_timestamp
+    collection_timestamp=$(get_json_value "$cloud_json" ".meta.collection_timestamp" "")
+    debug_log "Cloud collection timestamp: $collection_timestamp"
+
+    if [ -z "$collection_timestamp" ]; then
+        debug_log "No valid cloud cache, trying to refresh"
+        if execute_fact_script "/etc/ansible/facts.d/cloud.fact"; then
+            debug_log "Cloud fact script executed, re-reading cache"
+            cloud_json=$(get_cached_data "$CLOUD_CACHE_FILE")
+        else
+            debug_log "Failed to refresh cloud cache"
+        fi
+    fi
+
+    echo "$cloud_json"
+}
+
+# Get security updates from dedicated fact with short cache
+get_security_updates_from_fact() {
+    local security_cache_file="/var/cache/ansible-facts/security.json"
+    local security_fact_script="/etc/ansible/facts.d/security.fact"
+
+    # Try to get data from fact script
+    if [ -x "$security_fact_script" ]; then
+        local security_data
+        security_data=$("$security_fact_script" 2>/dev/null || echo '{}')
+        echo "$security_data" | jq -r '.security_updates_available // "0"' 2>/dev/null || echo "0"
+    else
+        echo "0"
+    fi
+}
+
+# Get failed login count from system logs
+get_failed_logins() {
+    local failed_count=0
+
+    if command -v journalctl &>/dev/null; then
+        failed_count=$(journalctl --since="24 hours ago" --unit=ssh 2>/dev/null | \
+                      grep -c "Failed password\|Invalid user\|Connection closed.*preauth" 2>/dev/null || echo 0)
+    elif [ -f /var/log/auth.log ]; then
+        failed_count=$(grep "$(date --date='1 day ago' '+%b %d')\|$(date '+%b %d')" /var/log/auth.log 2>/dev/null | \
+                      grep -c "Failed password\|Invalid user\|Connection closed.*preauth" 2>/dev/null || echo 0)
+    fi
+
+    echo "$failed_count"
+}
+
+# Check system load status
+check_system_load() {
+    local load_1min cpu_cores
+    load_1min=$(uptime | awk -F'load average:' '{print $2}' | awk -F',' '{print $1}' | sed 's/^ *//' 2>/dev/null || echo '0.0')
+    cpu_cores=$(nproc 2>/dev/null || echo 1)
+
+    if command -v bc &>/dev/null; then
+        if [ "$(echo "$load_1min > $cpu_cores" | bc -l 2>/dev/null || echo 0)" = "1" ]; then
+            return 1  # High load
+        fi
+    fi
+
+    return 0  # Normal load
+}
+
+# Main display logic with proper alignment
+main() {
+    local system_data run_data cloud_data
+    system_data=$(get_system_data)
+    run_data=$(get_run_data)
+    cloud_data=$(get_cloud_data)
+
+    # Extract information
+    local security_updates failed_logins
+    local last_run_user last_run_playbook last_run_timestamp
+    local facts_timestamp
+
+    security_updates=$(get_security_updates_from_fact)  # From dedicated security fact (5min cache)
+    failed_logins=$(get_failed_logins)
+
+    last_run_user=$(get_json_value "$run_data" ".user" "")
+    last_run_playbook=$(get_json_value "$run_data" ".playbook" "")
+    last_run_timestamp=$(get_json_value "$run_data" ".timestamp" "")
+
+    facts_timestamp=$(get_json_value "$system_data" ".meta.collection_timestamp" "")
+
+    # Critical alerts only (enterprise standard)
+    local has_alerts=false
+
+    # Security updates alert
+    if [ "$security_updates" != "0" ] && [ "$security_updates" != "unknown" ] && [ "$security_updates" -gt 0 ] 2>/dev/null; then
+        if [ "$has_alerts" = "false" ]; then
+            echo
+            has_alerts=true
+        fi
+        printf "Security Updates  : ${RED}%s update(s) available${NC}\n" "$security_updates"
+    fi
+
+    # Failed login attempts alert
+    if [ "$failed_logins" -gt 5 ] 2>/dev/null; then
+        if [ "$has_alerts" = "false" ]; then
+            echo
+            has_alerts=true
+        fi
+        printf "Failed Logins     : ${RED}%s attempt(s) in 24h${NC}\n" "$failed_logins"
+    fi
+
+    # High system load alert
+    if ! check_system_load; then
+        if [ "$has_alerts" = "false" ]; then
+            echo
+            has_alerts=true
+        fi
+        printf "System Load       : ${RED}High - performance check required${NC}\n"
+    fi
+
+    # Management information (always shown)
+    echo
+
+    # Last deployment information
+    if [ -n "$last_run_user" ] && [ "$last_run_user" != "unknown" ] && [ -n "$last_run_timestamp" ] && [ "$last_run_timestamp" != "unknown" ] && [ "$last_run_timestamp" != "1970-01-01T00:00:00Z" ]; then
+        local formatted_run_time
+        # Use human-readable timestamp if available, otherwise use original
+        formatted_run_time=$(get_json_value "$run_data" ".timestamp_human" "$last_run_timestamp")
+
+        printf "Last Deployment   : ${BLUE}%s${NC} by ${BLUE}%s${NC}\n" "$formatted_run_time" "$last_run_user"
+        if [ -n "$last_run_playbook" ] && [ "$last_run_playbook" != "unknown" ]; then
+            printf "Playbook          : ${BLUE}%s${NC}\n" "$last_run_playbook"
+        fi
+    else
+        printf "Last Deployment   : No recent deployments\n"
+    fi
+
+    # Node and environment information
+    local provider
+    provider=$(get_json_value "$cloud_data" ".provider" "unknown")
+    printf "Provider          : ${BLUE}%s${NC}\n" "$provider"
+    printf "Node Type         : ${BLUE}{% endraw %}{{ role }}{% raw %}${NC}\n"
+    printf "Environment       : ${BLUE}{% endraw %}{{ shell_environment }}{% raw %}${NC}\n"
+
+    # Enterprise compliance footer
+    echo
+    printf "Security Contact  : {% endraw %}{{ enterprise_security_contact | default('system administrator') }}{% raw %}\n"
+    printf "Support Contact   : {% endraw %}{{ enterprise_support_contact | default('helpdesk@company.com') }}{% raw %}\n"
+    echo
+    printf "Generated         : ${BLUE}%s${NC}\n" "$(date '+%Y-%m-%d %H:%M:%S %Z')"
+    echo
+    printf "Notice: All activities are logged and monitored per corporate policy.\n"
+    printf "Unauthorized access is prohibited. Report incidents immediately.\n"
+    echo
+}
+
+# Execute with enterprise error handling
+main "$@" 2>/dev/null || {
+    echo
+    printf "System Status     : ${RED}Information unavailable${NC}\n"
+    printf "Generated         : ${BLUE}%s${NC}\n" "$(date '+%Y-%m-%d %H:%M:%S %Z')"
+    printf "Support           : {% endraw %}{{ enterprise_support_contact | default('Contact system administrator') }}{% raw %}\n"
+    echo
+    exit 1
+}
+{% endraw %}

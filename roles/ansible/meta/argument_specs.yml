@@ -1,0 +1,141 @@
+---
+argument_specs:
+    main:
+        short_description: Configure Ansible automation with systemd timer
+        description:
+            - Installs and configures Ansible for automated execution using systemd timers
+            - Supports both ansible-pull and ansible-playbook modes
+            - Handles SSH key generation for Git repository access
+            - Configures OpenTelemetry integration for observability
+        options:
+            ansible_mode:
+                description: Execution mode - 'pull' for ansible-pull or 'playbook' for ansible-playbook
+                type: str
+                default: pull
+                choices:
+                    - pull
+                    - playbook
+
+            ansible_repo:
+                description: Git repository URL (SSH or HTTPS)
+                type: str
+                required: true
+
+            ansible_branch:
+                description: Git branch to checkout
+                type: str
+                default: main
+
+            ansible_checkout_dir:
+                description: Directory where repository will be checked out
+                type: str
+                default: /var/lib/ansible-automation
+
+            ansible_playbook:
+                description: Playbook file to execute (relative to repository root)
+                type: str
+                default: site.yml
+
+            ansible_inventory:
+                description: Inventory file path (relative to repository root)
+                type: str
+                default: inventory/hosts
+
+            ansible_host_limit:
+                description: Limit execution to specific hosts
+                type: str
+                default: "{{ inventory_hostname }}"
+
+            ansible_extra_args:
+                description: Additional arguments to pass to ansible-pull or ansible-playbook
+                type: str
+                default: ""
+
+            ansible_schedule:
+                description: Systemd timer schedule (OnCalendar format)
+                type: str
+                default: "*:0/15"
+
+            ansible_random_delay:
+                description: Maximum random delay in seconds before execution
+                type: int
+                default: 300
+
+            ansible_install_method:
+                description: Installation method - 'pipx' or 'package'
+                type: str
+                default: pipx
+                choices:
+                    - pipx
+                    - package
+
+            ansible_package_version:
+                description: Specific Ansible version to install (empty for latest)
+                type: str
+                default: ""
+
+            ansible_ssh_key_enabled:
+                description: Generate SSH key for Git access
+                type: bool
+                default: true
+
+            ansible_ssh_key_path:
+                description: Path to SSH private key
+                type: str
+                default: /root/.ssh/ansible_automation
+
+            ansible_ssh_key_type:
+                description: SSH key type
+                type: str
+                default: ed25519
+
+            ansible_ssh_key_prompt:
+                description: Show prompt to add deploy key to Git repository
+                type: bool
+                default: true
+
+            ansible_pipx_inject_packages:
+                description: >-
+                    Additional Python packages to inject into ansible pipx environment
+                    (e.g., kubernetes, boto3, pywinrm)
+                type: list
+                elements: str
+                default: []
+
+            ansible_otel_enabled:
+                description: Enable OpenTelemetry integration
+                type: bool
+                default: false
+
+            ansible_otel_endpoint:
+                description: OpenTelemetry collector endpoint
+                type: str
+                default: http://localhost:4318
+
+            ansible_otel_service_name:
+                description: Service name for OpenTelemetry traces
+                type: str
+                default: ansible.infrastructure
+
+            ansible_otel_environment:
+                description: Deployment environment tag
+                type: str
+                default: production
+
+            ansible_environment:
+                description: Additional environment variables for Ansible execution
+                type: dict
+                default: {}
+
+            ansible_service_enabled:
+                description: Enable the systemd timer
+                type: bool
+                default: true
+
+            ansible_timer_state:
+                description: State of the systemd timer (started/stopped)
+                type: str
+                default: started
+                choices:
+                    - started
+                    - stopped

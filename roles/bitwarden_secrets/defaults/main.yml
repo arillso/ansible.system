@@ -1,0 +1,31 @@
+---
+# Binary Configuration
+# renovate: datasource=github-releases depName=bitwarden/sdk-sm
+bitwarden_secrets_version: "1.0.0"
+bitwarden_secrets_install_path: "/usr/local/bin"
+bitwarden_secrets_binary_name: "bws"
+
+# Architecture Detection
+bitwarden_secrets_arch: "{{ _bitwarden_secrets_arch_map[ansible_architecture] | default('x86_64-unknown-linux-gnu') }}"
+
+# Download Configuration
+bitwarden_secrets_download_url: >-
+    https://github.com/bitwarden/sdk-sm/releases/download/
+    bws-v{{ bitwarden_secrets_version }}/
+    bws-{{ bitwarden_secrets_arch }}-{{ bitwarden_secrets_version }}.zip
+bitwarden_secrets_download_timeout: 120
+
+# Installation Options
+bitwarden_secrets_state: present
+bitwarden_secrets_force_install: false
+
+# System Packages
+bitwarden_secrets_required_packages:
+    - unzip
+
+# Retry Configuration
+bitwarden_secrets_retry_count: 3
+bitwarden_secrets_retry_delay: 10
+
+# Debug Configuration
+bitwarden_secrets_debug_mode: false

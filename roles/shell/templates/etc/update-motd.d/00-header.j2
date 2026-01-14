@@ -1,0 +1,171 @@
+{{ "#!/bin/bash" }}
+{% raw %}
+# Enterprise MOTD header with company banner and security notice
+# Based on original template with enterprise enhancements
+# Version: 2.0 - Fixed banner display and added debug mode
+
+set -euo pipefail
+
+# Configuration
+readonly COMPANY_NAME="{% endraw %}{{ shell_company_name }}{% raw %}"
+readonly BANNER_STYLE="{% endraw %}{{ shell_motd_style | default('standard') }}{% raw %}"
+readonly FIGLET_FONT="{% endraw %}{{ shell_motd_font | default('standard') }}{% raw %}"
+
+# Debug mode - set to 1 to enable debug output
+readonly DEBUG_MODE="${MOTD_DEBUG:-0}"
+
+# Color definitions
+readonly BLUE='\033[0;34m'
+readonly CYAN='\033[0;36m'
+readonly WHITE='\033[1;37m'
+readonly YELLOW='\033[1;33m'
+readonly GREEN='\033[0;32m'
+readonly RED='\033[0;31m'
+readonly GRAY='\033[0;37m'
+readonly NC='\033[0m'
+
+# Debug function
+debug_log() {
+    if [ "$DEBUG_MODE" = "1" ]; then
+        echo -e "${GRAY}[DEBUG] $*${NC}" >&2
+    fi
+}
+
+# Removed logging functionality as requested
+
+# Standard banner function with colors
+display_standard_banner() {
+    local company="$1"
+    local banner_width=80
+    local company_length=${#company}
+    local padding=$(( (banner_width - company_length - 4) / 2 ))
+
+    debug_log "Creating standard banner for '$company'"
+    debug_log "Banner width: $banner_width, Company length: $company_length, Padding: $padding"
+
+    # Top border
+    echo -e "${BLUE}$(printf '=%.0s' $(seq 1 $banner_width))${NC}"
+
+    # Company name with proper padding and markers
+    printf "${WHITE}**%*s%s%*s**${NC}\n" $padding "" "$company" $padding ""
+
+    # Bottom border
+    echo -e "${BLUE}$(printf '=%.0s' $(seq 1 $banner_width))${NC}"
+}
+
+# Figlet banner function
+display_figlet_banner() {
+    local company="$1"
+    local font="$2"
+
+    debug_log "Attempting figlet banner with font '$font'"
+
+    if ! command -v figlet >/dev/null 2>&1; then
+        debug_log "Figlet not found, falling back to standard banner"
+        display_standard_banner "$company"
+        return 0
+    fi
+
+    # Try with specified font
+    if figlet -f "$font" "$company" 2>/dev/null; then
+        debug_log "Successfully used figlet with font '$font'"
+        return 0
+    fi
+
+    # Try with standard font
+    if figlet -f standard "$company" 2>/dev/null; then
+        debug_log "Successfully used figlet with standard font (fallback)"
+        return 0
+    fi
+
+    # Try without font specification
+    if figlet "$company" 2>/dev/null; then
+        debug_log "Successfully used figlet with default font (fallback)"
+        return 0
+    fi
+
+    debug_log "All figlet attempts failed, using standard banner"
+    display_standard_banner "$company"
+}
+
+# Main banner display function
+display_banner() {
+    local company="$1"
+    local style="$2"
+    local font="$3"
+
+    debug_log "Display banner called with style='$style', font='$font'"
+
+    case "$style" in
+        "figlet")
+            display_figlet_banner "$company" "$font"
+            ;;
+        "standard"|*)
+            display_standard_banner "$company"
+            ;;
+    esac
+}
+
+# Node type display with colors
+display_node_info() {
+    local node_type="{% endraw %}{{ role | default('gateway') }}{% raw %}"
+    local color="$BLUE"
+
+    debug_log "Displaying node_type: $node_type"
+
+    echo
+    echo -e "${color}Node Type: ${node_type}${NC}"
+}
+
+# Security notice display
+display_security_notice() {
+    debug_log "Displaying security notice"
+    echo -e "${YELLOW}**AUTHORIZED ACCESS ONLY - All activities are monitored**${NC}"
+}
+
+# System information for debug mode
+display_system_info() {
+    if [ "$DEBUG_MODE" = "1" ]; then
+        echo
+        echo -e "${CYAN}=== DEBUG INFO ===${NC}"
+        echo -e "${GRAY}Hostname: $(hostname)${NC}"
+        echo -e "${GRAY}Date: $(date)${NC}"
+        echo -e "${GRAY}Uptime: $(uptime -p 2>/dev/null || uptime)${NC}"
+        echo -e "${GRAY}Load: $(cat /proc/loadavg 2>/dev/null || echo 'N/A')${NC}"
+        echo -e "${CYAN}=================${NC}"
+    fi
+}
+
+# Main function
+main() {
+    debug_log "MOTD script starting..."
+    debug_log "Company: $COMPANY_NAME"
+    debug_log "Banner style: $BANNER_STYLE"
+    debug_log "Figlet font: $FIGLET_FONT"
+    debug_log "Debug mode: $DEBUG_MODE"
+
+    display_banner "$COMPANY_NAME" "$BANNER_STYLE" "$FIGLET_FONT"
+    display_node_info
+    display_security_notice
+    display_system_info
+
+    echo
+
+    debug_log "MOTD script completed successfully"
+}
+
+# Error handling fallback
+main 2>/dev/null || {
+    echo "================================================================================"
+    echo "                           Enterprise Platform"
+    echo "================================================================================"
+    echo
+    echo "Node Type: generic"
+    echo "**AUTHORIZED ACCESS ONLY**"
+    echo
+
+    if [ "$DEBUG_MODE" = "1" ]; then
+        echo "[DEBUG] Fallback mode activated due to error" >&2
+    fi
+}
+{% endraw %}

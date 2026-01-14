@@ -1,0 +1,307 @@
+---
+argument_specs:
+    main:
+        short_description: "Access management with multi-entry-point support"
+        description:
+            - "Manages system access including users, groups, sudo and SSH"
+            - "Supports granular control via entry points"
+            - "Security-focused with validation and backup options"
+        options:
+            # Entry Point Controls
+            access_users_enabled:
+                description: "Enable user management entry point"
+                type: bool
+                default: true
+            access_groups_enabled:
+                description: "Enable group management entry point"
+                type: bool
+                default: true
+            access_sudoers_enabled:
+                description: "Enable sudoers management entry point"
+                type: bool
+                default: true
+            access_ssh_server_enabled:
+                description: "Enable SSH server configuration entry point"
+                type: bool
+                default: true
+            access_ssh_keys_enabled:
+                description: "Enable SSH key management entry point"
+                type: bool
+                default: true
+
+            # User Management
+            access_users:
+                description: "List of users to manage"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    name:
+                        description: "Username"
+                        type: str
+                        required: true
+                    comment:
+                        description: "User comment (GECOS)"
+                        type: str
+                    uid:
+                        description: "User ID"
+                        type: int
+                    group:
+                        description: "Primary group"
+                        type: str
+                    groups:
+                        description: "List of supplementary groups"
+                        type: list
+                        elements: str
+                    shell:
+                        description: "User shell"
+                        type: str
+                        default: /bin/bash
+                    home:
+                        description: "Home directory"
+                        type: str
+                    create_home:
+                        description: "Create home directory"
+                        type: bool
+                        default: true
+                    state:
+                        description: "User state"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+                    system:
+                        description: "System user"
+                        type: bool
+                        default: false
+                    password:
+                        description: "Encrypted password hash"
+                        type: str
+                    update_password:
+                        description: "When to update password"
+                        type: str
+                        default: on_create
+                        choices: [always, on_create]
+                    ssh_keys:
+                        description: "SSH keys for this user"
+                        type: list
+                        elements: dict
+                    remove:
+                        description: "Remove home directory when state=absent"
+                        type: bool
+                        default: false
+
+            # Group Management
+            access_groups:
+                description: "List of groups to manage"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    name:
+                        description: "Group name"
+                        type: str
+                        required: true
+                    gid:
+                        description: "Group ID"
+                        type: int
+                    state:
+                        description: "Group state"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+                    system:
+                        description: "System group"
+                        type: bool
+                        default: false
+
+            # Sudoers Configuration
+            access_sudoers:
+                description: "List of sudoers entries"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    name:
+                        description: "Entry name (for filename)"
+                        type: str
+                        required: true
+                    user:
+                        description: "User to grant sudo access"
+                        type: str
+                    group:
+                        description: "Group to grant sudo access"
+                        type: str
+                    commands:
+                        description: "Commands allowed"
+                        type: str
+                        default: ALL
+                    hosts:
+                        description: "Hosts where rule applies"
+                        type: str
+                        default: ALL
+                    runas:
+                        description: "Users to run commands as"
+                        type: str
+                        default: ALL
+                    nopasswd:
+                        description: "Allow without password"
+                        type: bool
+                        default: false
+                    setenv:
+                        description: "Allow setting environment"
+                        type: bool
+                        default: false
+                    state:
+                        description: "Sudoers entry state"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+
+            # SSH Server Configuration
+            access_ssh_port:
+                description: "SSH port"
+                type: int
+                default: 22
+            access_ssh_permit_root_login:
+                description: "Permit root login"
+                type: str
+                default: prohibit-password
+                choices: [true, false, prohibit-password, forced-commands-only]
+            access_ssh_pubkey_authentication:
+                description: "Enable public key authentication"
+                type: bool
+                default: true
+            access_ssh_password_authentication:
+                description: "Enable password authentication"
+                type: bool
+                default: false
+            access_ssh_x11_forwarding:
+                description: "Enable X11 forwarding"
+                type: bool
+                default: false
+            access_ssh_service_enabled:
+                description: "Enable SSH service"
+                type: bool
+                default: true
+            access_ssh_service_state:
+                description: "SSH service state"
+                type: str
+                default: started
+                choices: [started, stopped, restarted, reloaded]
+
+            # SSH Key Management
+            access_ssh_keys:
+                description: "List of SSH keys to manage"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    user:
+                        description: "Username"
+                        type: str
+                        required: true
+                    key:
+                        description: "SSH public key"
+                        type: str
+                        required: true
+                    key_options:
+                        description: "SSH key options"
+                        type: str
+                    state:
+                        description: "Key state"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+                    exclusive:
+                        description: "Remove all other keys"
+                        type: bool
+                        default: false
+
+            # Validation
+            access_validate_sudoers:
+                description: "Validate sudoers files before applying"
+                type: bool
+                default: true
+            access_validate_ssh_config:
+                description: "Validate SSH config before applying"
+                type: bool
+                default: true
+            access_backup_configs:
+                description: "Backup configuration files before changes"
+                type: bool
+                default: true
+
+    users:
+        short_description: "User management entry point"
+        description:
+            - "Entry point for managing user accounts"
+            - "Handles user creation, modification and removal"
+        options:
+            access_users:
+                description: "List of users to manage"
+                type: list
+                elements: dict
+                required: true
+
+    groups:
+        short_description: "Group management entry point"
+        description:
+            - "Entry point for managing groups"
+            - "Handles group creation and removal"
+        options:
+            access_groups:
+                description: "List of groups to manage"
+                type: list
+                elements: dict
+                required: true
+
+    sudoers:
+        short_description: "Sudoers management entry point"
+        description:
+            - "Entry point for managing sudoers configuration"
+            - "Handles sudo access control"
+        options:
+            access_sudoers:
+                description: "List of sudoers entries"
+                type: list
+                elements: dict
+                required: true
+            access_validate_sudoers:
+                description: "Validate sudoers files"
+                type: bool
+                default: true
+
+    ssh:
+        short_description: "SSH server configuration entry point"
+        description:
+            - "Entry point for SSH server configuration"
+            - "Handles sshd_config and service management"
+        options:
+            access_ssh_port:
+                description: "SSH port"
+                type: int
+                default: 22
+            access_ssh_permit_root_login:
+                description: "Permit root login"
+                type: str
+                default: prohibit-password
+            access_ssh_password_authentication:
+                description: "Enable password authentication"
+                type: bool
+                default: false
+            access_ssh_service_enabled:
+                description: "Enable SSH service"
+                type: bool
+                default: true
+
+    ssh_keys:
+        short_description: "SSH key management entry point"
+        description:
+            - "Entry point for managing SSH authorized keys"
+            - "Handles SSH key deployment for users"
+        options:
+            access_ssh_keys:
+                description: "List of SSH keys to manage"
+                type: list
+                elements: dict
+                required: true

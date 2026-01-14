@@ -1,3 +1,0 @@
----
-- name: Ensure apt repositories
-  ansible.builtin.import_tasks: repositories.yml

@@ -1,0 +1,32 @@
+---
+DOCUMENTATION:
+    name: to_nftables_ports
+    author: Arillso
+    version_added: "1.0.0"
+    short_description: Convert port list to nftables port syntax
+    description:
+        - Converts port numbers, ranges, and lists into proper nftables syntax.
+        - Handles single ports, port ranges, and port sets correctly.
+    options:
+        port_value:
+            description: Port number, range, or list to format
+            type: raw
+            required: true
+
+EXAMPLES: |
+    # Single port
+    {{ 80 | arillso.system.to_nftables_ports }}
+    # Output: 80
+
+    # Port list
+    {{ [80, 443, 8080] | arillso.system.to_nftables_ports }}
+    # Output: { 80, 443, 8080 }
+
+    # Port range
+    {{ '1000-2000' | arillso.system.to_nftables_ports }}
+    # Output: 1000-2000
+
+RETURN:
+    _value:
+        description: Formatted port specification for nftables
+        type: string

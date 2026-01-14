@@ -1,0 +1,28 @@
+# {{ ansible_managed }}
+# Logrotate configuration: {{ _logging_logrotate_item.name }}
+
+{{ _logging_logrotate_item.path }} {
+{% for option in _logging_logrotate_item.options | default([]) %}
+    {{ option }}
+{% endfor %}
+{% if _logging_logrotate_item.prerotate is defined %}
+    prerotate
+{{ _logging_logrotate_item.prerotate | indent(8, first=True) }}
+    endscript
+{% endif %}
+{% if _logging_logrotate_item.postrotate is defined %}
+    postrotate
+{{ _logging_logrotate_item.postrotate | indent(8, first=True) }}
+    endscript
+{% endif %}
+{% if _logging_logrotate_item.firstaction is defined %}
+    firstaction
+{{ _logging_logrotate_item.firstaction | indent(8, first=True) }}
+    endscript
+{% endif %}
+{% if _logging_logrotate_item.lastaction is defined %}
+    lastaction
+{{ _logging_logrotate_item.lastaction | indent(8, first=True) }}
+    endscript
+{% endif %}
+}

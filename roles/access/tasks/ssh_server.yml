@@ -1,0 +1,27 @@
+---
+- name: Deploy SSH server configuration
+  ansible.builtin.template:
+      src: etc/ssh/sshd_config.j2
+      dest: /etc/ssh/sshd_config
+      owner: root
+      group: root
+      mode: "0644"
+      validate: "{{ 'sshd -t -f %s' if access_validate_ssh_config else omit }}"
+      backup: "{{ access_backup_configs }}"
+  become: true
+  notify: "Access restart sshd"
+  retries: "{{ access_retry_count }}"
+  delay: "{{ access_retry_delay }}"
+  register: _access_sshd_config_result
+  until: _access_sshd_config_result is succeeded
+
+- name: Manage SSH service via systemd role
+  ansible.builtin.include_role:
+      name: arillso.system.systemd
+      tasks_from: service
+  become: true
+  vars:
+      systemd_services:
+          - name: "{{ _access_ssh_service_name }}"
+            enabled: "{{ access_ssh_service_enabled }}"
+            state: "{{ access_ssh_service_state }}"

@@ -1,0 +1,15 @@
+---
+- name: Install Ansible
+  ansible.builtin.include_tasks: install.yml
+  when: ansible_install_enabled | default(true) | bool
+  tags: ["ansible", "install"]
+
+- name: Configure SSH for Git access
+  ansible.builtin.include_tasks: ssh.yml
+  when: ansible_ssh_key_enabled | default(true) | bool
+  tags: ["ansible", "ssh", "git"]
+
+- name: Setup systemd timer
+  ansible.builtin.include_tasks: timer.yml
+  when: ansible_timer_enabled | default(true) | bool
+  tags: ["ansible", "timer", "systemd"]

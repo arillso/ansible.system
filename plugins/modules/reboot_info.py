@@ -1,8 +1,8 @@
-#!/usr/bin/python3
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 # Copyright: (c) 2024, Arillso
-#
-# Licensed under the MIT License. See LICENSE file in the project root for full license information.
-# License available at https://opensource.org/licenses/MIT
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 """
 Ansible module for checking if the system requires a reboot.
 
@@ -10,14 +10,12 @@ This module assesses the system state to determine if a reboot is required,
 typically useful after applying package updates or system changes that necessitate a restart.
 """
 
-# pylint: disable=import-error
-import os
-
-from ansible.module_utils.basic import AnsibleModule
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: arillso.system.reboot_info
+module: reboot_info
 version_added: '0.0.2'
 short_description: Checks if the system requires a reboot.
 description:
@@ -25,6 +23,32 @@ description:
 author:
   - arillso (@arillso) <hello@arillso.io>
 """
+
+EXAMPLES = r"""
+- name: Check if system requires reboot
+  arillso.system.reboot_info:
+  register: reboot_status
+
+- name: Display reboot requirement
+  debug:
+    msg: "System reboot required: {{ reboot_status.reboot }}"
+
+- name: Reboot system if needed
+  reboot:
+  when: reboot_status.reboot
+"""
+
+RETURN = r"""
+reboot:
+    description: Whether the system requires a reboot
+    returned: always
+    type: bool
+"""
+
+# pylint: disable=import-error
+import os  # noqa: E402
+
+from ansible.module_utils.basic import AnsibleModule  # noqa: E402
 
 
 def main():

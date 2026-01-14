@@ -1,0 +1,19 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+      update_cache: true
+      cache_valid_time: 0
+  listen: "packages update cache"
+  changed_when: false
+
+- name: Restart services
+  ansible.builtin.systemd:
+      name: "{{ item }}"
+      state: restarted
+  loop: "{{ packages_services_to_restart | default([]) }}"
+  listen: "packages restart services"
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+      daemon_reload: true
+  listen: "packages daemon-reload"

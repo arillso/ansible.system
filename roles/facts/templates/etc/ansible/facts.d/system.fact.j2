@@ -1,0 +1,335 @@
+{{ "#!/bin/bash" }}
+# Custom system facts collection script for Ansible with intelligent caching
+# Collects static system information and metrics with 24h cache
+# Enterprise-grade implementation following SRP principles with native JSON generation
+# Requires: jq (guaranteed to be available)
+
+set -euo pipefail
+
+# Universal configuration variables from Ansible (harmonized across all facts scripts)
+readonly SCRIPT_NAME="$(basename "${0}")"
+readonly TIMEOUT_SECONDS="{{ facts_timeout_default | default(5) }}"
+readonly CACHE_DIR="{{ facts_cache_dir | default('/var/cache/ansible-facts') }}"
+readonly CACHE_FILE="${CACHE_DIR}/system.json"
+readonly CACHE_TTL="{{ facts_cache_ttl_system | default(86400) }}"  # 24 hours cache TTL
+readonly DEBUG_ENABLED="{{ facts_debug_enabled | default(false) }}"
+
+# Logging function for error handling
+log_error() {
+    echo "ERROR [${SCRIPT_NAME}]: $*" >&2
+}
+
+log_debug() {
+    [[ "${DEBUG_ENABLED}" == "true" ]] && echo "[DEBUG] $*" >&2
+}
+
+# Cache management functions
+is_cache_valid() {
+    local cache_file="$1"
+    local ttl="$2"
+
+    if [[ ! -f "$cache_file" ]]; then
+        log_debug "Cache file does not exist: $cache_file"
+        return 1
+    fi
+
+    local cache_age
+    cache_age=$(($(date +%s) - $(stat -c %Y "$cache_file" 2>/dev/null || echo 0)))
+
+    if [[ $cache_age -gt $ttl ]]; then
+        log_debug "Cache expired: age=$cache_age, ttl=$ttl"
+        return 1
+    fi
+
+    log_debug "Cache valid: age=$cache_age, ttl=$ttl"
+    return 0
+}
+
+create_cache_dir() {
+    if [[ ! -d "$CACHE_DIR" ]]; then
+        mkdir -p "$CACHE_DIR" 2>/dev/null || {
+            log_error "Cannot create cache directory: $CACHE_DIR"
+            return 1
+        }
+        chmod 700 "$CACHE_DIR"
+        log_debug "Created cache directory: $CACHE_DIR"
+    fi
+    return 0
+}
+
+read_cache() {
+    local cache_file="$1"
+
+    if [[ -f "$cache_file" && -r "$cache_file" ]]; then
+        if jq -e . "$cache_file" >/dev/null 2>&1; then
+            # Return cached data with original timestamps, only mark cache as used
+            jq '.meta.cache_used = true' "$cache_file"
+            return 0
+        else
+            log_error "Cache file corrupted, removing: $cache_file"
+            rm -f "$cache_file"
+        fi
+    fi
+    return 1
+}
+
+write_cache() {
+    local cache_file="$1"
+    local data="$2"
+
+    if create_cache_dir; then
+        echo "$data" > "$cache_file" 2>/dev/null || {
+            log_error "Cannot write cache file: $cache_file"
+            return 1
+        }
+        chmod 600 "$cache_file"
+        log_debug "Cached system facts to: $cache_file"
+        return 0
+    fi
+    return 1
+}
+
+# Safe command execution with timeout and error handling
+safe_exec() {
+    local cmd="$1"
+    local default_value="${2:-unknown}"
+
+    if timeout "${TIMEOUT_SECONDS}" bash -c "${cmd}" 2>/dev/null; then
+        return 0
+    else
+        echo "${default_value}"
+        return 1
+    fi
+}
+
+# Get numeric value safely
+get_numeric_value() {
+    local cmd="$1"
+    local default_value="${2:-0}"
+
+    local result
+    result=$(safe_exec "${cmd}" "${default_value}")
+
+    if [[ "${result}" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+        echo "${result}"
+    else
+        echo "${default_value}"
+    fi
+}
+
+# Collect node classification data (static)
+collect_node_classification() {
+    local node_type
+
+    node_type="{{ facts_node_type | default('generic') }}"
+
+    jq -n \
+        --arg node_type "${node_type}" \
+        '{
+            node_type: $node_type
+        }'
+}
+
+# Collect network interface information (mostly static)
+collect_network_info() {
+    local network_info network_interfaces
+
+    network_info=$(safe_exec "ip -4 addr show 2>/dev/null | grep -E 'inet [0-9]' | grep -v '127.0.0.1' | awk '{print \$2}' | cut -d'/' -f1 | tr '\\n' ',' | sed 's/,\$//'" "")
+    network_interfaces=$(get_numeric_value "ip -4 addr show 2>/dev/null | grep -E 'inet [0-9]' | grep -v '127.0.0.1' | wc -l" "0")
+
+    jq -n \
+        --arg network_addresses "${network_info}" \
+        --arg network_interfaces_count "${network_interfaces}" \
+        '{
+            network_addresses: $network_addresses,
+            network_interfaces_count: ($network_interfaces_count | tonumber)
+        }'
+}
+
+# Collect system timezone information (static)
+collect_timezone_info() {
+    local timezone
+
+    timezone=$(safe_exec "timedatectl show --property=Timezone --value" "$(cat /etc/timezone 2>/dev/null || echo 'Unknown')")
+
+    jq -n --arg timezone "${timezone}" '{timezone: $timezone}'
+}
+
+# Collect static system facts using native bash commands
+collect_system_facts() {
+    local platform architecture kernel virtualization_type python_version managed_by collection version
+
+    platform=$(safe_exec "cat /etc/os-release | grep '^PRETTY_NAME=' | cut -d'=' -f2 | tr -d '\"'" "{{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}")
+    architecture=$(safe_exec "uname -m" "{{ ansible_facts['architecture'] }}")
+    kernel=$(safe_exec "uname -r" "{{ ansible_facts['kernel'] }}")
+    virtualization_type=$(safe_exec "systemd-detect-virt" "{{ ansible_facts['virtualization_type'] | default('unknown') }}")
+    python_version=$(safe_exec "python3 --version 2>/dev/null | awk '{print \$2}'" "{{ ansible_facts['python_version'] | default('unknown') }}")
+    managed_by="ansible"
+    collection="{{ facts_collection_name }}"
+    version="{{ facts_version }}"
+
+    jq -n \
+        --arg managed_by "${managed_by}" \
+        --arg collection "${collection}" \
+        --arg version "${version}" \
+        --arg platform "${platform}" \
+        --arg architecture "${architecture}" \
+        --arg kernel "${kernel}" \
+        --arg virtualization_type "${virtualization_type}" \
+        --arg python_version "${python_version}" \
+        '{
+            managed_by: $managed_by,
+            collection: $collection,
+            version: $version,
+            platform: $platform,
+            architecture: $architecture,
+            kernel: $kernel,
+            virtualization_type: $virtualization_type,
+            python_version: $python_version
+        }'
+}
+
+# Collect cloud provider information (static)
+collect_cloud_provider_info() {
+    local hostname fqdn processor_cores memory_mb ipv4 ipv6
+
+    hostname=$(safe_exec "hostname" "{{ inventory_hostname }}")
+    fqdn=$(safe_exec "hostname -f" "{{ ansible_facts['fqdn'] }}")
+    processor_cores=$(get_numeric_value "nproc" "{{ ansible_facts['processor_cores'] | default(1) }}")
+    memory_mb=$(get_numeric_value "free -m | awk 'NR==2{print \$2}'" "{{ ansible_facts['memtotal_mb'] | default(0) }}")
+    ipv4="{{ ansible_default_ipv4.address | default('') }}"
+    ipv6="{{ ansible_default_ipv6.address | default('') }}"
+
+    # Build JSON object conditionally
+    local json_base
+    json_base=$(jq -n \
+        --arg hostname "${hostname}" \
+        --arg fqdn "${fqdn}" \
+        --arg processor_cores "${processor_cores}" \
+        --arg memory_mb "${memory_mb}" \
+        --arg ipv4 "${ipv4}" \
+        '{
+            hostname: $hostname,
+            fqdn: $fqdn,
+            processor_cores: ($processor_cores | tonumber),
+            memory_mb: ($memory_mb | tonumber),
+            ipv4: $ipv4
+        }')
+
+    # Add IPv6 only if it's not empty
+    if [[ -n "$ipv6" ]]; then
+        echo "$json_base" | jq --arg ipv6 "${ipv6}" '. + {ipv6: $ipv6}'
+    else
+        echo "$json_base"
+    fi
+}
+
+# Collect security update information (semi-static - changes weekly/monthly)
+collect_security_updates() {
+{% if ansible_os_family == "Debian" %}
+    if command -v apt &> /dev/null; then
+        local security_updates
+        security_updates=$(get_numeric_value "apt list --upgradable 2>/dev/null | grep -c security" "0")
+        jq -n --arg security_updates_available "${security_updates}" \
+            '{security_updates_available: ($security_updates_available | tonumber)}'
+    else
+        jq -n '{security_updates_available: 0}'
+    fi
+{% elif ansible_os_family == "RedHat" %}
+    if command -v yum &> /dev/null; then
+        local security_updates
+        security_updates=$(get_numeric_value "yum check-update --security 2>/dev/null | grep -c 'Needed'" "0")
+        jq -n --arg security_updates_available "${security_updates}" \
+            '{security_updates_available: ($security_updates_available | tonumber)}'
+    elif command -v dnf &> /dev/null; then
+        local security_updates
+        security_updates=$(get_numeric_value "dnf check-update --security 2>/dev/null | grep -c 'Needed'" "0")
+        jq -n --arg security_updates_available "${security_updates}" \
+            '{security_updates_available: ($security_updates_available | tonumber)}'
+    else
+        jq -n '{security_updates_available: 0}'
+    fi
+{% else %}
+    jq -n '{security_updates_available: 0}'
+{% endif %}
+}
+
+# Collect all static facts
+collect_static_facts() {
+    local node_classification network_info timezone_info security_updates system_facts cloud_provider_info
+    local iso_timestamp human_timestamp epoch_timestamp
+
+    # Collect all static fact categories
+    node_classification=$(collect_node_classification)
+    network_info=$(collect_network_info)
+    timezone_info=$(collect_timezone_info)
+    security_updates=$(collect_security_updates)
+    system_facts=$(collect_system_facts)
+    cloud_provider_info=$(collect_cloud_provider_info)
+
+    # Add collection timestamps in multiple formats
+    iso_timestamp=$(date -Iseconds)
+    human_timestamp=$(date '+%Y-%m-%d %H:%M:%S %Z')
+    epoch_timestamp=$(date +%s)
+
+    # Combine all data into final JSON structure using jq
+    jq -n \
+        --argjson node_classification "${node_classification}" \
+        --argjson network_info "${network_info}" \
+        --argjson timezone_info "${timezone_info}" \
+        --argjson security_updates "${security_updates}" \
+        --argjson system_facts "${system_facts}" \
+        --argjson cloud_provider_info "${cloud_provider_info}" \
+        --arg iso_timestamp "${iso_timestamp}" \
+        --arg human_timestamp "${human_timestamp}" \
+        --arg epoch_timestamp "${epoch_timestamp}" \
+        '
+        $node_classification +
+        $network_info +
+        $timezone_info +
+        $security_updates +
+        $cloud_provider_info +
+        ($system_facts | with_entries(select(.key | in({"platform": true, "architecture": true, "kernel": true, "virtualization_type": true, "python_version": true})))) +
+        {
+            meta: ($system_facts | with_entries(select(.key | in({"managed_by": true, "collection": true, "version": true}))) | . + {
+                collection_timestamp: $iso_timestamp,
+                collection_timestamp_human: $human_timestamp,
+                collection_timestamp_epoch: ($epoch_timestamp | tonumber),
+                cache_used: false
+            })
+        }
+        '
+}
+
+# Main execution with caching logic
+main() {
+    # Check if static facts caching is disabled
+    if [[ "${facts_enable_static_cache:-true}" != "true" ]]; then
+        collect_static_facts
+        return 0
+    fi
+
+    # Try to use cached data first
+    if is_cache_valid "$CACHE_FILE" "$CACHE_TTL"; then
+        if read_cache "$CACHE_FILE"; then
+            return 0
+        fi
+    fi
+
+    # Cache miss or invalid - collect fresh static data
+    local static_facts
+    static_facts=$(collect_static_facts)
+
+    # Update cache with fresh data
+    write_cache "$CACHE_FILE" "$static_facts" || log_error "Cache write failed, but continuing with output"
+
+    # Always output the collected static facts
+    echo "$static_facts"
+    return 0
+}
+
+# Error handling wrapper
+trap 'log_error "Script failed at line $LINENO"' ERR
+
+# Execute main function
+main "$@"

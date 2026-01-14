@@ -1,0 +1,5 @@
+# Ansible managed - do not edit manually
+# {{ item.name }} configuration
+{% for setting in item.settings %}
+{{ setting.key }} {{ setting.value }};
+{% endfor %}

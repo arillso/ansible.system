@@ -1,0 +1,149 @@
+---
+# File: roles/system_tuning/tasks/network.yml
+# Advanced network performance tuning with validation
+
+- name: Configure network sysctl parameters
+  ansible.posix.sysctl:
+      name: "{{ item.key }}"
+      value: "{{ item.value }}"
+      state: present
+      reload: true
+      sysctl_file: "{{ tuning_network_sysctl_file }}"
+  become: true
+  loop: "{{ tuning_network_sysctl_config | dict2items }}"
+  register: network_sysctl_result
+  failed_when:
+      - network_sysctl_result.failed
+      - item.key not in (tuning_optional_network_sysctl_params | default([]))
+
+- name: Configure network ring buffers
+  block:
+      - name: Validate network interfaces exist
+        ansible.builtin.stat:
+            path: "/sys/class/net/{{ item.interface }}"
+        register: interface_check
+        loop: "{{ tuning_network_ring_buffers }}"
+        when: tuning_network_ring_buffers is defined and tuning_network_ring_buffers | length > 0
+
+      - name: Filter valid interfaces
+        ansible.builtin.set_fact:
+            valid_network_buffers: "{{ valid_network_buffers | default([]) + [item.item] }}"
+        loop: "{{ interface_check.results }}"
+        when:
+            - interface_check.results is defined
+            - item.stat.exists
+
+      - name: Get current ring buffer settings
+        ansible.builtin.command: ethtool -g {{ item.interface }}
+        register: current_ring_buffers
+        changed_when: false
+        failed_when: false
+        loop: "{{ valid_network_buffers | default([]) }}"
+
+      - name: Apply network ring buffer settings immediately
+        ansible.builtin.command: >-
+            ethtool -G {{ item.item.interface }}
+            rx {{ item.item.rx_buffer }}
+            tx {{ item.item.tx_buffer }}
+        become: true
+        register: ethtool_result
+        failed_when: false
+        changed_when: ethtool_result.rc == 0
+        when:
+            - item.rc == 0
+            - (item.item.rx_buffer | string) not in item.stdout or (item.item.tx_buffer | string) not in item.stdout
+        loop: "{{ current_ring_buffers.results }}"
+
+      - name: Report ring buffer configuration status
+        ansible.builtin.debug:
+            msg: >-
+                Interface {{ item.item.interface }}:
+                {% if item.rc != 0 -%}
+                Could not read current settings{%- elif ethtool_result.results[loop.index0].changed -%}
+                Ring buffers updated (RX: {{ item.item.rx_buffer }}, TX: {{ item.item.tx_buffer }}){%- else -%}
+                Ring buffers already optimal{%- endif %}
+        loop: "{{ current_ring_buffers.results }}"
+        loop_control:
+            extended: true
+        when: current_ring_buffers.results is defined
+
+      - name: Create network tuning systemd service
+        ansible.builtin.template:
+            src: etc/systemd/system/network-tuning.service.j2
+            dest: /etc/systemd/system/network-tuning.service
+            mode: "0644"
+            owner: root
+            group: root
+        become: true
+        notify:
+            - reload systemd
+            - enable network tuning service
+        when: valid_network_buffers is defined and valid_network_buffers | length > 0
+
+- name: Configure network interface specific settings
+  block:
+      - name: Check for network offload capabilities
+        ansible.builtin.command: ethtool -k {{ item.interface }}
+        register: network_offload_features
+        changed_when: false
+        failed_when: false
+        loop: "{{ valid_network_buffers | default([]) }}"
+
+      - name: Optimize network offload features
+        ansible.builtin.command: >
+            ethtool -K {{ item.item.interface }}
+            {% if 'tcp-segmentation-offload: on' in item.stdout %}tso on{% endif %}
+            {% if 'generic-segmentation-offload: on' in item.stdout %}gso on{% endif %}
+            {% if 'generic-receive-offload: on' in item.stdout %}gro on{% endif %}
+            {% if 'rx-checksumming: on' in item.stdout %}rx on{% endif %}
+            {% if 'tx-checksumming: on' in item.stdout %}tx on{% endif %}
+        become: true
+        register: offload_result
+        failed_when: false
+        changed_when: offload_result.rc == 0
+        loop: "{{ network_offload_features.results }}"
+        when:
+            - item.rc == 0
+            - item.stdout is defined
+
+- name: Verify network configuration
+  block:
+      - name: Test network sysctl parameters
+        ansible.builtin.command: sysctl {{ item.key }}
+        register: sysctl_verify
+        changed_when: false
+        failed_when: false
+        loop: "{{ tuning_network_sysctl_config | dict2items }}"
+
+      - name: Report network sysctl verification
+        ansible.builtin.debug:
+            msg: >-
+                Network parameter {{ item.item.key }}:
+                {% if item.rc == 0 -%}
+                {%- set current_value = item.stdout.split('=')[1].strip() -%}
+                {%- if current_value == (item.item.value | string) -%}
+                ✓ Correctly set to {{ item.item.value }}{%- else -%}
+                ✗ Expected {{ item.item.value }}, got {{ current_value }}{%- endif -%}
+                {%- else -%}
+                ✗ Could not verify{%- endif %}
+        loop: "{{ sysctl_verify.results }}"
+        when: not ansible_check_mode
+
+      - name: Verify ring buffer settings
+        ansible.builtin.command: ethtool -g {{ item.interface }}
+        register: verify_ring_buffers
+        changed_when: false
+        failed_when: false
+        loop: "{{ valid_network_buffers | default([]) }}"
+
+      - name: Report ring buffer verification
+        ansible.builtin.debug:
+            msg: >-
+                Interface {{ item.item.interface }} ring buffers:
+                {% if item.rc == 0 -%}
+                ✓ Configuration applied successfully{%- else -%}
+                ✗ Could not verify ring buffer settings{%- endif %}
+        loop: "{{ verify_ring_buffers.results }}"
+        when:
+            - not ansible_check_mode
+            - verify_ring_buffers.results is defined

@@ -1,6 +1,0 @@
----
-- name: Include install tasks
-  ansible.builtin.include_tasks: "install_timezone.yml"
-
-- name: Include configure tasks
-  ansible.builtin.include_tasks: "configure_timezone.yml"

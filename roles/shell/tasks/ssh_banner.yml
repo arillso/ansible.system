@@ -1,0 +1,60 @@
+---
+# SSH banner configuration - Pre-authentication security notices
+
+- name: "Create SSH banner file"
+  ansible.builtin.template:
+      src: etc/issue.net.j2
+      dest: /etc/issue.net
+      mode: "0644"
+      owner: root
+      group: root
+  become: true
+  register: _ssh_banner_result
+  failed_when:
+      - _ssh_banner_result.failed is defined
+      - _ssh_banner_result.failed
+      - not shell_ignore_template_errors
+  tags:
+      - ssh
+      - banner
+
+- name: "Check if SSH configuration file exists"
+  ansible.builtin.stat:
+      path: /etc/ssh/sshd_config
+  register: _sshd_config_stat
+  tags:
+      - ssh
+      - config
+
+- name: "Configure SSH banner in sshd_config"
+  ansible.builtin.lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "^#?Banner"
+      line: "Banner /etc/issue.net"
+      backup: true
+      validate: "sshd -t -f %s"
+  become: true
+  when: _sshd_config_stat.stat.exists
+  register: _ssh_config_result
+  failed_when:
+      - _ssh_config_result.failed is defined
+      - _ssh_config_result.failed
+      - not shell_ignore_template_errors
+  notify: Restart ssh service
+  tags:
+      - ssh
+      - config
+
+- name: "Verify SSH configuration is valid"
+  ansible.builtin.command:
+      cmd: sshd -t
+  register: _ssh_validation_result
+  failed_when: false
+  changed_when: false
+  check_mode: false
+  when:
+      - _sshd_config_stat.stat.exists
+      - _ssh_config_result is changed
+  tags:
+      - ssh
+      - validation

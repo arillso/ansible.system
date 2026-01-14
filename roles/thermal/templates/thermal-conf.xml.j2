@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<!--
+  Thermal Configuration for {{ thermal_platform_name }}
+  Managed by Ansible - arillso.system.thermal role
+
+  Goal: {{ thermal_preference }} thermal management
+  - QUIET: Prefer CPU throttling over fan activation
+  - PERFORMANCE: Prefer fan cooling over CPU throttling
+  - BALANCED: Balance between noise and performance
+
+  Temperature thresholds:
+  - ACPI Zone: Passive={{ thermal_acpitz_passive_temp | int / 1000 }}°C, Active={{ thermal_acpitz_active_temp | int / 1000 }}°C
+  - CPU Package: Passive={{ thermal_cpu_passive_temp | int / 1000 }}°C, Active={{ thermal_cpu_active_temp | int / 1000 }}°C
+-->
+<ThermalConfiguration>
+  <Platform>
+    <Name>{{ thermal_platform_name }}</Name>
+    <ProductName>*</ProductName>
+    <Preference>{{ thermal_preference }}</Preference>
+    <ThermalZones>
+{% if thermal_enable_acpitz %}
+      <!-- ACPI Thermal Zone -->
+      <ThermalZone>
+        <Type>acpitz</Type>
+        <TripPoints>
+          <!-- Passive cooling: CPU throttling -->
+          <TripPoint>
+            <SensorType>acpitz</SensorType>
+            <Temperature>{{ thermal_acpitz_passive_temp }}</Temperature>
+            <type>passive</type>
+            <ControlType>SEQUENTIAL</ControlType>
+            <CoolingDevice>
+              <index>1</index>
+              <type>Processor</type>
+              <influence>100</influence>
+              <SamplingPeriod>{{ thermal_passive_sampling_period }}</SamplingPeriod>
+            </CoolingDevice>
+          </TripPoint>
+          <!-- Active cooling: Fan activation -->
+          <TripPoint>
+            <SensorType>acpitz</SensorType>
+            <Temperature>{{ thermal_acpitz_active_temp }}</Temperature>
+            <type>active</type>
+            <ControlType>SEQUENTIAL</ControlType>
+            <CoolingDevice>
+              <index>2</index>
+              <type>Fan</type>
+              <influence>100</influence>
+              <SamplingPeriod>{{ thermal_active_sampling_period }}</SamplingPeriod>
+            </CoolingDevice>
+          </TripPoint>
+        </TripPoints>
+      </ThermalZone>
+{% endif %}
+{% if thermal_enable_cpu_temp %}
+      <!-- CPU Package Temperature Zone -->
+      <ThermalZone>
+        <Type>x86_pkg_temp</Type>
+        <TripPoints>
+          <!-- Passive cooling: CPU throttling -->
+          <TripPoint>
+            <SensorType>x86_pkg_temp</SensorType>
+            <Temperature>{{ thermal_cpu_passive_temp }}</Temperature>
+            <type>passive</type>
+            <ControlType>SEQUENTIAL</ControlType>
+            <CoolingDevice>
+              <index>1</index>
+              <type>Processor</type>
+              <influence>100</influence>
+              <SamplingPeriod>{{ thermal_cpu_passive_sampling_period }}</SamplingPeriod>
+            </CoolingDevice>
+          </TripPoint>
+          <!-- Active cooling: Fan activation -->
+          <TripPoint>
+            <SensorType>x86_pkg_temp</SensorType>
+            <Temperature>{{ thermal_cpu_active_temp }}</Temperature>
+            <type>active</type>
+            <ControlType>SEQUENTIAL</ControlType>
+            <CoolingDevice>
+              <index>2</index>
+              <type>Fan</type>
+              <influence>100</influence>
+              <SamplingPeriod>{{ thermal_cpu_active_sampling_period }}</SamplingPeriod>
+            </CoolingDevice>
+          </TripPoint>
+        </TripPoints>
+      </ThermalZone>
+{% endif %}
+    </ThermalZones>
+  </Platform>
+</ThermalConfiguration>

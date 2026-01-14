@@ -1,0 +1,23 @@
+---
+- name: Manage Python packages via pip
+  ansible.builtin.pip:
+      name: "{{ _python_package_item.name }}"
+      version: "{{ _python_package_item.version | default(omit) }}"
+      state: "{{ _python_package_item.state | default('present') }}"
+      virtualenv: "{{ _python_package_item.virtualenv | default(omit) }}"
+      virtualenv_command: "{{ _python_package_item.virtualenv_command | default(python_virtualenv_command) }}"
+      virtualenv_site_packages: >-
+          {{ _python_package_item.virtualenv_site_packages |
+             default(python_virtualenv_site_packages) }}
+      virtualenv_python: "{{ _python_package_item.virtualenv_python | default(python_virtualenv_python) }}"
+      extra_args: "{{ _python_package_item.extra_args | default(python_pip_extra_args) | default(omit) }}"
+      executable: "{{ _python_package_item.executable | default(python_pip_executable) }}"
+  become: true
+  loop: "{{ python_packages }}"
+  loop_control:
+      loop_var: _python_package_item
+      label: "{{ _python_package_item.name }}"
+  retries: "{{ python_retry_count }}"
+  delay: "{{ python_retry_delay }}"
+  register: _python_pip_result
+  until: _python_pip_result is succeeded

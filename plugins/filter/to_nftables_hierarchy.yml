@@ -1,0 +1,50 @@
+---
+DOCUMENTATION:
+    name: to_nftables_hierarchy
+    author: Arillso
+    version_added: "1.0.0"
+    short_description: Convert hierarchical firewall configs to merged nftables structure
+    description:
+        - Converts multi-level firewall configurations to a single merged nftables structure.
+        - Priority order (highest wins) - firewall (base) → firewall_global → firewall_group → firewall_host
+        - Later configurations completely override earlier ones if they have content.
+        - Used by the C(arillso.system.firewall) role for multi-level firewall configuration.
+    options:
+        firewall_configs:
+            description:
+                - Dictionary containing firewall configuration levels
+                - Keys are 'firewall', 'firewall_global', 'firewall_group', 'firewall_host'
+                - Each value is a list of nftables table configurations
+            type: dict
+            required: true
+        debug:
+            description: Enable debug output for troubleshooting
+            type: bool
+            default: false
+    seealso:
+        - plugin: arillso.system.to_nftables_rule
+          plugin_type: filter
+          description: Convert YAML rule to nftables syntax
+        - plugin: arillso.system.to_nftables_ports
+          plugin_type: filter
+          description: Format port list for nftables syntax
+
+EXAMPLES: |
+    # Apply hierarchical override
+    - set_fact:
+        final_firewall: "{{ {
+          'firewall': firewall | default([]),
+          'firewall_global': firewall_global | default([]),
+          'firewall_group': firewall_group | default([]),
+          'firewall_host': firewall_host | default([])
+        } | arillso.system.to_nftables_hierarchy }}"
+
+    # With debug enabled
+    - set_fact:
+        final_firewall: "{{ firewall_configs | arillso.system.to_nftables_hierarchy(debug=true) }}"
+
+RETURN:
+    _value:
+        description: Merged and validated nftables configuration structure
+        type: list
+        elements: dict

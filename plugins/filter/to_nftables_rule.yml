@@ -1,0 +1,39 @@
+---
+DOCUMENTATION:
+    name: to_nftables_rule
+    author: Arillso
+    version_added: "1.0.0"
+    short_description: Convert YAML rule dict to nftables syntax string
+    description:
+        - Converts structured YAML firewall rules into nftables rule syntax.
+        - Supports interfaces, IP protocols, addresses, ports, connection tracking, ICMP, logging, and more.
+        - Provides a declarative way to define firewall rules in YAML.
+    options:
+        rule_dict:
+            description: Dictionary containing rule definition with conditions and actions
+            type: dict
+            required: true
+
+EXAMPLES: |
+    # Convert a simple rule
+    {{ {'tcp_dport': 80, 'action': 'accept'} | arillso.system.to_nftables_rule }}
+    # Output: tcp dport 80 accept
+
+    # Complex rule with multiple conditions
+    {{ {
+      'iifname': 'eth0',
+      'ip_saddr': '10.0.0.0/8',
+      'tcp_dport': [80, 443],
+      'ct_state': ['new', 'established'],
+      'action': 'accept'
+    } | arillso.system.to_nftables_rule }}
+
+    # Use in template
+    {% for rule in chain.rules %}
+      {{ rule | arillso.system.to_nftables_rule }}
+    {% endfor %}
+
+RETURN:
+    _value:
+        description: nftables rule syntax string
+        type: string

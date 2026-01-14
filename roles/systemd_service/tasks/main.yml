@@ -1,3 +1,0 @@
----
-- name: "Ensure systemd service {{ systemd_service_name }}"
-  ansible.builtin.import_tasks: systemd_service.yml

@@ -1,0 +1,31 @@
+---
+galaxy_info:
+    role_name: ready
+    author: "arillso"
+    description: "Wait for system readiness (cloud-init, SSH) before configuration"
+    company: "arillso"
+    license: "MIT"
+    min_ansible_version: "2.12"
+
+    platforms:
+        - name: Ubuntu
+          versions:
+              - focal
+              - jammy
+              - noble
+        - name: Debian
+          versions:
+              - bullseye
+              - bookworm
+
+    galaxy_tags:
+        - system
+        - ready
+        - cloudinit
+        - provisioning
+        - bootstrap
+
+dependencies: []
+
+collections:
+    - community.general

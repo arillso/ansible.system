@@ -1,0 +1,42 @@
+---
+- name: Manage system users
+  ansible.builtin.user:
+      name: "{{ _access_user_item.name }}"
+      comment: "{{ _access_user_item.comment | default(omit) }}"
+      uid: "{{ _access_user_item.uid | default(omit) }}"
+      group: "{{ _access_user_item.group | default(omit) }}"
+      groups: "{{ _access_user_item.groups | default(omit) }}"
+      append: "{{ _access_user_item.append | default(true) }}"
+      shell: "{{ _access_user_item.shell | default(access_user_shell_default) }}"
+      home: "{{ _access_user_item.home | default(omit) }}"
+      create_home: "{{ _access_user_item.create_home | default(access_user_create_home_default) }}"
+      state: "{{ _access_user_item.state | default('present') }}"
+      system: "{{ _access_user_item.system | default(false) }}"
+      password: "{{ _access_user_item.password | default(omit) }}"
+      update_password: "{{ _access_user_item.update_password | default(access_user_update_password_default) }}"
+      remove: "{{ _access_user_item.remove | default(false) }}"
+  become: true
+  loop: "{{ access_users }}"
+  loop_control:
+      loop_var: _access_user_item
+      label: "{{ _access_user_item.name }}"
+  retries: "{{ access_retry_count }}"
+  delay: "{{ access_retry_delay }}"
+  register: _access_users_result
+  until: _access_users_result is succeeded
+
+- name: Manage SSH keys for users (from user definition)
+  ansible.posix.authorized_key:
+      user: "{{ _access_user_ssh_item.0.name }}"
+      key: "{{ _access_user_ssh_item.1.key }}"
+      key_options: "{{ _access_user_ssh_item.1.key_options | default(omit) }}"
+      state: "{{ _access_user_ssh_item.1.state | default('present') }}"
+      exclusive: "{{ _access_user_ssh_item.1.exclusive | default(false) }}"
+  become: true
+  loop: "{{ access_users | subelements('ssh_keys', skip_missing=True) }}"
+  loop_control:
+      loop_var: _access_user_ssh_item
+      label: "{{ _access_user_ssh_item.0.name }}"
+  when:
+      - _access_user_ssh_item.0.state | default('present') == 'present'
+      - _access_user_ssh_item.1.key is defined

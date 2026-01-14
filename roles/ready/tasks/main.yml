@@ -1,0 +1,48 @@
+---
+# Wait for system readiness (SSH, cloud-init) with error recovery
+
+- name: System readiness check
+  block:
+      - name: Wait for SSH to become available
+        ansible.builtin.wait_for:
+            port: "{{ ready_ssh_port }}"
+            host: "{{ ansible_host }}"
+            search_regex: OpenSSH
+            delay: "{{ ready_ssh_delay }}"
+            timeout: "{{ ready_ssh_timeout }}"
+        delegate_to: localhost
+
+      - name: Test SSH connectivity
+        ansible.builtin.ping:
+        retries: 5
+        delay: "{{ ready_ssh_delay }}"
+
+      - name: Wait for cloud-init to complete
+        community.general.cloud_init_data_facts:
+            filter: status
+        register: _ready_cloud_init_status
+        until: >-
+            _ready_cloud_init_status.cloud_init_data_facts.status.v1.stage is defined
+            and not _ready_cloud_init_status.cloud_init_data_facts.status.v1.stage
+        retries: "{{ ready_check_retries }}"
+        delay: "{{ ready_check_delay }}"
+
+  rescue:
+      - name: Pause for potential restart
+        ansible.builtin.pause:
+            seconds: "{{ ready_rescue_pause }}"
+
+      - name: Wait for SSH after restart
+        ansible.builtin.wait_for:
+            port: "{{ ready_ssh_port }}"
+            host: "{{ ansible_host }}"
+            search_regex: OpenSSH
+            delay: "{{ ready_ssh_delay }}"
+            timeout: "{{ ready_ssh_timeout }}"
+        delegate_to: localhost
+
+  always:
+      - name: Gather system facts
+        ansible.builtin.setup:
+            gather_subset: "{{ ready_gather_subset if ready_gather_subset | length > 0 else omit }}"
+        when: ready_gather_facts | bool

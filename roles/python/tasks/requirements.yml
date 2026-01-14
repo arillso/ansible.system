@@ -1,0 +1,22 @@
+---
+- name: Install from requirements files
+  ansible.builtin.pip:
+      requirements: "{{ _python_req_item.path }}"
+      virtualenv: "{{ _python_req_item.virtualenv | default(omit) }}"
+      virtualenv_command: "{{ _python_req_item.virtualenv_command | default(python_virtualenv_command) }}"
+      virtualenv_site_packages: >-
+          {{ _python_req_item.virtualenv_site_packages |
+             default(python_virtualenv_site_packages) }}
+      virtualenv_python: "{{ _python_req_item.virtualenv_python | default(python_virtualenv_python) }}"
+      state: "{{ _python_req_item.state | default('present') }}"
+      extra_args: "{{ _python_req_item.extra_args | default(python_pip_extra_args) | default(omit) }}"
+      executable: "{{ _python_req_item.executable | default(python_pip_executable) }}"
+  become: true
+  loop: "{{ python_requirements_files }}"
+  loop_control:
+      loop_var: _python_req_item
+      label: "{{ _python_req_item.path }}"
+  retries: "{{ python_retry_count }}"
+  delay: "{{ python_retry_delay }}"
+  register: _python_requirements_result
+  until: _python_requirements_result is succeeded

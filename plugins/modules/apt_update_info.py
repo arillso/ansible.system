@@ -1,22 +1,20 @@
-#!/usr/bin/python3
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 # Copyright: (c) 2024, Arillso
-#
-# Licensed under the MIT License. See LICENSE file in the project root for full license information.
-# License available at https://opensource.org/licenses/MIT
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 """
 Ansible module to retrieve a list of updatable packages on an APT-based system.
 This module fetches and lists all packages that are available for update,
 providing current and available versions for each package.
 """
 
-# pylint: disable=import-error
-import apt
-import apt.progress.text
-from ansible.module_utils.basic import AnsibleModule
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: arillso.system.apt_update_info
+module: apt_update_info
 version_added: "0.0.1"
 short_description: Retrieves a list of updatable packages.
 description:
@@ -27,6 +25,47 @@ description:
 author: "arillso (@arillso) <hello@arillso.io>"
 """
 
+EXAMPLES = r"""
+- name: Get list of updatable packages
+  arillso.system.apt_update_info:
+  register: apt_updates
+
+- name: Display updatable packages
+  debug:
+    var: apt_updates.packages
+"""
+
+RETURN = r"""
+packages:
+    description: List of packages that can be updated
+    returned: always
+    type: list
+    elements: dict
+    contains:
+        package:
+            description: Name of the package
+            type: str
+            returned: always
+        current:
+            description: Currently installed version
+            type: str
+            returned: always
+        available:
+            description: Available version for update
+            type: str
+            returned: always
+"""
+
+# pylint: disable=import-error
+from ansible.module_utils.basic import AnsibleModule  # noqa: E402
+
+try:
+    import apt  # noqa: E402
+    import apt.progress.text  # noqa: E402
+    HAS_APT = True
+except ImportError:
+    HAS_APT = False
+
 
 def main():
     """
@@ -34,6 +73,9 @@ def main():
     """
     result = {"changed": False, "packages": []}
     module = AnsibleModule(argument_spec={}, supports_check_mode=True)
+
+    if not HAS_APT:
+        module.fail_json(msg="The python-apt package is required for this module")
 
     try:
         cache = apt.Cache()

@@ -1,0 +1,31 @@
+---
+# Internal variables for access role
+
+# SSH service names by OS family
+_access_ssh_service_names:
+    Debian: ssh
+    RedHat: sshd
+    Suse: sshd
+    Alpine: openssh
+    default: sshd
+
+# Dynamically selected SSH service name
+_access_ssh_service_name: >-
+    {{ _access_ssh_service_names[ansible_os_family] |
+       default(_access_ssh_service_names['default']) }}
+
+# Sudoers file validation command by OS family
+_access_sudoers_validation_commands:
+    Debian: visudo -cf %s
+    RedHat: visudo -cf %s
+    Suse: visudo -cf %s
+    Alpine: visudo -cf %s
+    default: visudo -cf %s
+
+# SSH config validation command by OS family
+_access_ssh_validation_commands:
+    Debian: sshd -t -f %s
+    RedHat: sshd -t -f %s
+    Suse: sshd -t -f %s
+    Alpine: sshd -t -f %s
+    default: sshd -t -f %s

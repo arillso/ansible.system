@@ -1,0 +1,84 @@
+// {{ ansible_managed }}
+// Comprehensive APT Configuration
+
+// ============================================================================
+// Install Behavior
+// ============================================================================
+APT::Install-Recommends "{{ packages_apt_install_recommends | lower }}";
+APT::Install-Suggests "{{ packages_apt_install_suggests | lower }}";
+APT::Get::Assume-Yes "{{ packages_apt_get_assume_yes | lower }}";
+APT::Get::AllowUnauthenticated "{{ packages_apt_get_allow_unauthenticated | lower }}";
+APT::Get::Fix-Broken "{{ packages_apt_fix_broken | lower }}";
+APT::Get::Fix-Missing "{{ packages_apt_fix_missing | lower }}";
+
+// ============================================================================
+// Configuration File Handling
+// ============================================================================
+{% if packages_apt_force_confold %}
+Dpkg::Options {
+    "--force-confold";
+};
+{% endif %}
+{% if packages_apt_force_confnew %}
+Dpkg::Options {
+    "--force-confnew";
+};
+{% endif %}
+{% if packages_apt_force_confdef %}
+Dpkg::Options {
+    "--force-confdef";
+};
+{% endif %}
+{% if packages_apt_force_confask %}
+Dpkg::Options {
+    "--force-confask";
+};
+{% endif %}
+
+// ============================================================================
+// Acquire Configuration
+// ============================================================================
+Acquire::Retries "{{ packages_apt_acquire_retries }}";
+Acquire::http::Timeout "{{ packages_apt_acquire_http_timeout }}";
+Acquire::http::Pipeline-Depth "{{ packages_apt_acquire_http_pipeline_depth }}";
+Acquire::Queue-Mode "{{ packages_apt_acquire_queue_mode }}";
+Acquire::Check-Valid-Until "{{ packages_apt_acquire_check_valid_until | lower }}";
+Acquire::AllowInsecureRepositories "{{ packages_apt_acquire_allow_insecure | lower }}";
+Acquire::AllowWeakRepositories "{{ packages_apt_acquire_allow_weak | lower }}";
+Acquire::AllowDowngradeToInsecureRepositories "{{ packages_apt_acquire_allow_downgrade_to_insecure | lower }}";
+
+// Language/Translation (disable for performance)
+Acquire::Languages "{{ packages_apt_acquire_languages }}";
+{% if packages_apt_acquire_translation | length > 0 %}
+Acquire::Translation {
+{% for lang in packages_apt_acquire_translation %}
+    "{{ lang }}";
+{% endfor %}
+};
+{% endif %}
+
+// ============================================================================
+// Update Configuration
+// ============================================================================
+APT::Update::Error-Mode "{{ packages_apt_update_error_mode }}";
+Acquire::AllowReleaseInfoChange "{{ packages_apt_update_allow_releaseinfo_change | lower }}";
+Acquire::AllowReleaseInfoChange::Origin "{{ packages_apt_update_allow_releaseinfo_change_origin | lower }}";
+Acquire::AllowReleaseInfoChange::Label "{{ packages_apt_update_allow_releaseinfo_change_label | lower }}";
+Acquire::AllowReleaseInfoChange::Codename "{{ packages_apt_update_allow_releaseinfo_change_codename | lower }}";
+Acquire::AllowReleaseInfoChange::Suite "{{ packages_apt_update_allow_releaseinfo_change_suite | lower }}";
+Acquire::AllowReleaseInfoChange::Version "{{ packages_apt_update_allow_releaseinfo_change_version | lower }}";
+
+// ============================================================================
+// Cache Configuration
+// ============================================================================
+{% if packages_apt_cache_limit > 0 %}
+APT::Cache-Limit "{{ packages_apt_cache_limit * 1048576 }}";  // Convert MB to bytes
+{% endif %}
+Dir::Cache::Archives "{{ packages_apt_cache_archives }}";
+Dir::Cache::srcpkgcache "{{ packages_apt_cache_srcpkgcache }}";
+Dir::Cache::pkgcache "{{ packages_apt_cache_pkgcache }}";
+
+// ============================================================================
+// Lists Configuration
+// ============================================================================
+Dir::State::lists "{{ packages_apt_lists_dir }}";

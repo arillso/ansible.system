@@ -1,0 +1,33 @@
+---
+- name: Manage groups
+  ansible.builtin.include_tasks: groups.yml
+  when:
+      - access_groups | length > 0
+      - access_groups_enabled | default(true) | bool
+  tags: ["access", "groups"]
+
+- name: Manage users
+  ansible.builtin.include_tasks: users.yml
+  when:
+      - access_users | length > 0
+      - access_users_enabled | default(true) | bool
+  tags: ["access", "users"]
+
+- name: Manage SSH keys
+  ansible.builtin.include_tasks: ssh_keys.yml
+  when:
+      - access_ssh_keys | length > 0
+      - access_ssh_keys_enabled | default(true) | bool
+  tags: ["access", "ssh", "keys"]
+
+- name: Manage sudoers configuration
+  ansible.builtin.include_tasks: sudoers.yml
+  when:
+      - access_sudoers | length > 0
+      - access_sudoers_enabled | default(true) | bool
+  tags: ["access", "sudo", "sudoers"]
+
+- name: Configure SSH server
+  ansible.builtin.include_tasks: ssh_server.yml
+  when: access_ssh_server_enabled | default(true) | bool
+  tags: ["access", "ssh", "server"]

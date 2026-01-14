@@ -1,0 +1,78 @@
+---
+# Core role identification
+facts_role_name: "{{ ansible_role_name }}"
+facts_collection_name: "{{ ansible_collection_name }}"
+facts_version: >-
+    {{ lookup('pipe',
+       'ansible-galaxy collection list ' + ansible_collection_name +
+       ' | grep ' + ansible_collection_name + ' | awk "{print $2}"') }}
+
+# Node classification
+facts_node_type: "generic"
+
+# System ownership and metadata
+facts_system_owner: "ops-team"
+facts_system_tags:
+    - "managed"
+    - "facts"
+facts_playbook_name: "facts"
+
+# SSH service configuration
+facts_ssh_service_names:
+    Debian: "ssh"
+    RedHat: "sshd"
+    Suse: "sshd"
+    Alpine: "openssh"
+    default: "sshd"
+
+# Feature flags for facts collection scripts
+facts_enable_cloud_metadata: true
+facts_enable_security_updates: true
+facts_enable_static_cache: true
+facts_enable_container_detection: true
+
+# Universal facts collection configuration
+facts_cache_enabled: true
+facts_cache_dir: "/var/cache/ansible-facts"
+facts_cache_default_ttl: 300
+facts_timeout_default: 5
+facts_timeout_api: 10
+facts_max_retries: 1
+
+# Script-specific cache TTL configuration (seconds)
+facts_cache_ttl_cloud: 3600
+facts_cache_ttl_container: 300
+facts_cache_ttl_security: 300
+facts_cache_ttl_system: 86400
+facts_cache_ttl_network: 1800
+
+# Cloud metadata collection configuration
+facts_cloud_metadata_base_url: "http://169.254.169.254"
+facts_cloud_providers_enabled:
+    - "aws"
+    - "digitalocean"
+    - "hetzner"
+    - "gcp"
+    - "generic"
+
+# Security facts configuration
+facts_security_check_method: "auto"
+facts_security_command_timeout: 15
+
+# Debug and logging configuration
+facts_debug_enabled: false
+facts_logging_level: "info"
+facts_error_on_failure: false
+
+# Performance and reliability configuration
+facts_concurrent_execution: false
+facts_script_execution_timeout: 30
+facts_cache_compression_enabled: false
+facts_cache_cleanup_enabled: true
+facts_cache_cleanup_age_days: 7
+
+# Container runtime detection and facts configuration
+facts_container_detect_docker: true
+facts_container_detect_podman: true
+facts_container_detect_kubernetes: true
+facts_container_detect_containerd: true

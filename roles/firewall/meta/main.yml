@@ -1,0 +1,36 @@
+---
+dependencies: []
+
+galaxy_info:
+    role_name: firewall
+    namespace: arillso
+    author: Enterprise DevOps Team
+    description: "YAML-driven nftables firewall management with hierarchical configuration merging"
+    company: Enterprise Infrastructure
+    license: MIT
+    min_ansible_version: "2.9"
+
+    platforms:
+        - name: Ubuntu
+          versions:
+              - focal
+              - jammy
+              - noble
+        - name: Debian
+          versions:
+              - bullseye
+              - bookworm
+        - name: EL
+          versions:
+              - "8"
+              - "9"
+
+    galaxy_tags:
+        - firewall
+        - nftables
+        - security
+        - networking
+        - yamldriven
+        - hierarchical
+        - infrastructure
+        - devops

@@ -1,0 +1,74 @@
+---
+- name: Check APT cache age
+  ansible.builtin.stat:
+      path: /var/lib/apt/periodic/update-success-stamp
+  register: _apt_cache_stat
+
+- name: Calculate cache age
+  ansible.builtin.set_fact:
+      _cache_age: "{{ ansible_date_time.epoch | int - _apt_cache_stat.stat.mtime | default(0) | int }}"
+  when: _apt_cache_stat.stat.exists
+
+- name: Set cache age to max if stamp doesn't exist
+  ansible.builtin.set_fact:
+      _cache_age: "{{ packages_cache_valid_time + 1 }}"
+  when: not _apt_cache_stat.stat.exists
+
+- name: Update APT cache (only when needed)
+  ansible.builtin.apt:
+      update_cache: true
+      cache_valid_time: 0
+  become: true
+  register: _packages_cache_updated
+  retries: "{{ packages_cache_update_retries }}"
+  delay: "{{ packages_cache_update_delay }}"
+  until: _packages_cache_updated is succeeded
+  when: >
+      packages_force_cache_update or
+      (_cache_age | int > packages_cache_valid_time | int)
+  changed_when: false
+  failed_when: >
+      _packages_cache_updated is failed and
+      'NO_PUBKEY' not in (_packages_cache_updated.msg | default(''))
+
+- name: Handle GPG key errors in cache update
+  ansible.builtin.debug:
+      msg: |
+          Warning: APT cache update failed due to missing GPG keys.
+          This is usually caused by repositories being added before their GPG keys.
+          Missing keys: {{ _packages_cache_updated.msg | regex_findall('NO_PUBKEY ([A-F0-9]+)') | join(', ') }}
+          Please ensure all repository GPG keys are properly configured.
+  when: >
+      _packages_cache_updated is defined and
+      _packages_cache_updated is failed and
+      'NO_PUBKEY' in (_packages_cache_updated.msg | default(''))
+
+- name: Update APT cache (forced by configuration changes)
+  ansible.builtin.apt:
+      update_cache: true
+      cache_valid_time: 0
+  become: true
+  register: _packages_cache_force_updated
+  retries: "{{ packages_cache_update_retries }}"
+  delay: "{{ packages_cache_update_delay }}"
+  until: _packages_cache_force_updated is succeeded
+  when: >
+      packages_repositories_changed | default(false) or
+      packages_keys_changed | default(false) or
+      packages_apt_conf_changed | default(false)
+  changed_when: false
+  failed_when: >
+      _packages_cache_force_updated is failed and
+      'NO_PUBKEY' not in (_packages_cache_force_updated.msg | default(''))
+
+- name: Handle GPG key errors in forced cache update
+  ansible.builtin.debug:
+      msg: |
+          Warning: Forced APT cache update failed due to missing GPG keys.
+          This is usually caused by repositories being added before their GPG keys.
+          Missing keys: {{ _packages_cache_force_updated.msg | regex_findall('NO_PUBKEY ([A-F0-9]+)') | join(', ') }}
+          Please ensure all repository GPG keys are properly configured.
+  when: >
+      _packages_cache_force_updated is defined and
+      _packages_cache_force_updated is failed and
+      'NO_PUBKEY' in (_packages_cache_force_updated.msg | default(''))

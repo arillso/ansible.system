@@ -1,28 +1,20 @@
-#!/usr/bin/python3
+# -*- coding: utf-8 -*-
 # Copyright: (c) 2024, Arillso
-#
-# Licensed under the MIT License. See LICENSE file in the project root for full license information.
-# License available at https://opensource.org/licenses/MIT
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 """
 Lookup plugin for Ansible to fetch the latest release version from GitHub repositories.
 This plugin returns the latest tagged release version of specified public GitHub repositories.
 """
 
-# pylint: disable=import-error
-from json import JSONDecodeError, loads
-from re import compile as regex_compile
-
-from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.urls import open_url
-from ansible.plugins.lookup import LookupBase
-from ansible.utils.display import Display
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 DOCUMENTATION = r"""
-lookup: latest_release
+name: github_latest_release
 author:
   - arillso (@arillso) <hello@arillso.io>
-version_added: "2.9"
+version_added: "0.0.1"
 requirements:
   - json
   - re
@@ -68,6 +60,16 @@ RETURN = r"""
       - List of latest Github repository version(s)
     type: list
 """
+
+# pylint: disable=import-error
+from json import JSONDecodeError, loads  # noqa: E402
+from re import compile as regex_compile  # noqa: E402
+
+from ansible.errors import AnsibleError, AnsibleParserError  # noqa: E402
+from ansible.module_utils._text import to_native, to_text  # noqa: E402
+from ansible.module_utils.urls import open_url  # noqa: E402
+from ansible.plugins.lookup import LookupBase  # noqa: E402
+from ansible.utils.display import Display  # noqa: E402
 
 display = Display()
 

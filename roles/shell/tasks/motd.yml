@@ -1,0 +1,87 @@
+---
+# MOTD configuration - Message of the Day setup and management
+
+- name: "Install MOTD utility functions"
+  ansible.builtin.template:
+      src: usr/local/bin/motd-utils.sh.j2
+      dest: /usr/local/bin/motd-utils.sh
+      mode: "0755"
+      owner: root
+      group: root
+  become: true
+  tags:
+      - motd
+      - utils
+
+- name: "Create update-motd.d directory"
+  ansible.builtin.file:
+      path: /etc/update-motd.d
+      state: directory
+      mode: "0755"
+      owner: root
+      group: root
+  become: true
+  when: ansible_facts['os_family'] == "Debian"
+  tags:
+      - motd
+
+- name: "Install dynamic MOTD scripts"
+  ansible.builtin.template:
+      src: "etc/update-motd.d/{{ item }}.j2"
+      dest: "/etc/update-motd.d/{{ item }}"
+      mode: "0755"
+      owner: root
+      group: root
+  become: true
+  loop: "{{ _shell_motd_scripts }}"
+  when: ansible_facts['os_family'] == "Debian"
+  tags:
+      - motd
+
+- name: "Create static MOTD file"
+  ansible.builtin.template:
+      src: etc/motd.j2
+      dest: /etc/motd
+      mode: "0644"
+      owner: root
+      group: root
+  become: true
+  tags:
+      - motd
+
+- name: "Remove unwanted default MOTD scripts"
+  ansible.builtin.file:
+      path: "{{ item }}"
+      state: absent
+  become: true
+  loop: "{{ _shell_unwanted_motd_scripts }}"
+  when: ansible_facts['os_family'] == "Debian"
+  tags:
+      - motd
+      - cleanup
+
+- name: "Install system status pre-compute script"
+  ansible.builtin.template:
+      src: usr/local/bin/system-status-precompute.sh.j2
+      dest: /usr/local/bin/system-status-precompute.sh
+      mode: "0755"
+      owner: root
+      group: root
+  become: true
+  when: shell_enable_background_processing
+  tags:
+      - motd
+      - performance
+
+- name: "Create system status cron job for background processing"
+  ansible.builtin.cron:
+      name: "system-status-precompute"
+      minute: "{{ shell_status_precompute_interval }}"
+      job: "/usr/local/bin/system-status-precompute.sh >/dev/null 2>&1"
+      user: root
+      state: present
+  become: true
+  when: shell_enable_background_processing
+  tags:
+      - motd
+      - cron

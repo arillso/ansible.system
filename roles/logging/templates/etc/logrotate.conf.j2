@@ -1,0 +1,63 @@
+# {{ ansible_managed }}
+# Global logrotate configuration
+
+# Rotate log files
+{% if logging_logrotate_weekly %}
+weekly
+{% endif %}
+
+# Keep {{ logging_logrotate_rotate }} rotations
+rotate {{ logging_logrotate_rotate }}
+
+# Create new log files after rotation
+{% if logging_logrotate_create %}
+create
+{% endif %}
+
+# Use date as suffix for rotated files
+{% if logging_logrotate_dateext %}
+dateext
+{% endif %}
+
+# Compress rotated files
+{% if logging_logrotate_compress %}
+compress
+{% endif %}
+
+# Delay compression until next rotation
+{% if logging_logrotate_delaycompress %}
+delaycompress
+{% endif %}
+
+# Don't rotate empty files
+{% if logging_logrotate_notifempty %}
+notifempty
+{% endif %}
+
+# Switch user/group for rotation
+{% if logging_logrotate_su %}
+su {{ logging_logrotate_su }}
+{% endif %}
+
+# Additional global options
+{% for option in logging_logrotate_extra_options %}
+{{ option }}
+{% endfor %}
+
+# Include directory
+include {{ logging_logrotate_include_dir }}
+
+# System-specific logs
+/var/log/wtmp {
+    missingok
+    monthly
+    create 0664 root utmp
+    rotate 1
+}
+
+/var/log/btmp {
+    missingok
+    monthly
+    create 0660 root utmp
+    rotate 1
+}

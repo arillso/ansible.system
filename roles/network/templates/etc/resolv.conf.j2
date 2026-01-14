@@ -1,0 +1,18 @@
+# {{ ansible_managed }}
+# DNS resolver configuration
+
+{% if network_dns_domain %}
+domain {{ network_dns_domain }}
+{% endif %}
+
+{% if network_dns_search | length > 0 %}
+search {{ network_dns_search | join(' ') }}
+{% endif %}
+
+{% for nameserver in network_dns_nameservers %}
+nameserver {{ nameserver }}
+{% endfor %}
+
+{% if network_dns_options | length > 0 %}
+options {{ network_dns_options | join(' ') }}
+{% endif %}

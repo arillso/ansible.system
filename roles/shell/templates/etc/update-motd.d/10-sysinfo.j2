@@ -1,0 +1,288 @@
+{% raw %}#!/bin/bash
+
+# Enterprise System Information Display for MOTD
+# Clean tabular format with proper alignment
+# Version: 4.0 - Aligned enterprise design
+
+set -euo pipefail
+
+# Configuration
+readonly STATUS_CACHE_FILE="/var/cache/ansible-facts/system.json"
+readonly STATUS_MAX_AGE=86400
+readonly DEBUG_MODE="${MOTD_DEBUG:-0}"
+
+# Minimal color scheme - only for highlights and alerts
+readonly BLUE='\033[0;34m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly RED='\033[0;31m'
+readonly NC='\033[0m'
+
+# Debug function
+debug_log() {
+    if [ "$DEBUG_MODE" = "1" ]; then
+        echo "[DEBUG] $*" >&2
+    fi
+}
+
+# Fast status retrieval from cache
+get_cached_status() {
+    local cache_file="$1"
+
+    debug_log "Checking cache file: $cache_file"
+
+    if [ ! -f "$cache_file" ]; then
+        debug_log "Cache file not found"
+        echo "{}"
+        return 1
+    fi
+
+    local cache_age
+    cache_age=$(($(date +%s) - $(stat -c %Y "$cache_file" 2>/dev/null || echo 0)))
+
+    debug_log "Cache age: ${cache_age}s (max: ${STATUS_MAX_AGE}s)"
+
+    if [ $cache_age -gt $STATUS_MAX_AGE ]; then
+        debug_log "Cache expired"
+        echo "{}"
+        return 1
+    fi
+
+    cat "$cache_file" 2>/dev/null || echo "{}"
+}
+
+# Extract value from JSON with fallback
+get_json_value() {
+    local json="$1"
+    local path="$2"
+    local default="$3"
+
+    echo "$json" | jq -r "$path // \"$default\"" 2>/dev/null || echo "$default"
+}
+
+# Get current timestamp
+get_current_timestamp() {
+    date '+%Y-%m-%d %H:%M:%S %z %Z'
+}
+
+# Get system uptime
+get_uptime() {
+    local uptime_info
+    uptime_info=$(uptime -p 2>/dev/null | sed 's/up //')
+
+    if [ -z "$uptime_info" ]; then
+        # Fallback for systems without uptime -p
+        local uptime_seconds
+        uptime_seconds=$(awk '{print int($1)}' /proc/uptime 2>/dev/null || echo 0)
+        local days=$((uptime_seconds / 86400))
+        local hours=$(((uptime_seconds % 86400) / 3600))
+        local minutes=$(((uptime_seconds % 3600) / 60))
+
+        if [ $days -gt 0 ]; then
+            uptime_info="${days} day(s), ${hours} hour(s), ${minutes} minute(s)"
+        elif [ $hours -gt 0 ]; then
+            uptime_info="${hours} hour(s), ${minutes} minute(s)"
+        else
+            uptime_info="${minutes} minute(s)"
+        fi
+    fi
+
+    echo "$uptime_info"
+}
+
+# Get system load with colors
+get_load_info() {
+    local load_info
+    load_info=$(cat /proc/loadavg 2>/dev/null | awk '{print $1, $2, $3, $4}' || echo "0.00 0.00 0.00 0/0")
+
+    local load1 load5 load15 processes
+    read -r load1 load5 load15 processes <<< "$load_info"
+
+    # Get CPU core count for load assessment
+    local cpu_cores
+    cpu_cores=$(nproc 2>/dev/null || echo 1)
+
+    # Color code load based on CPU cores
+    local load1_colored="$load1"
+    if command -v bc >/dev/null 2>&1; then
+        local load_ratio
+        load_ratio=$(echo "scale=2; $load1 / $cpu_cores" | bc 2>/dev/null || echo "0")
+
+        if [ "$(echo "$load_ratio > 1.0" | bc 2>/dev/null)" = "1" ]; then
+            load1_colored="${RED}${load1}${NC}"
+        elif [ "$(echo "$load_ratio > 0.7" | bc 2>/dev/null)" = "1" ]; then
+            load1_colored="${YELLOW}${load1}${NC}"
+        else
+            load1_colored="${GREEN}${load1}${NC}"
+        fi
+    fi
+
+    echo -e "${load1_colored} / ${BLUE}${load5}${NC} / ${GREEN}${load15}${NC} (${processes})"
+}
+
+# Get memory information with colors
+get_memory_info() {
+    local mem_total_kb mem_available_kb mem_free_kb
+
+    if [ -f /proc/meminfo ]; then
+        mem_total_kb=$(awk '/MemTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+        mem_available_kb=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+        mem_free_kb=$(awk '/MemFree:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+    else
+        mem_total_kb=0
+        mem_available_kb=0
+        mem_free_kb=0
+    fi
+
+    # Use available if present, otherwise free
+    local mem_usable_kb=$mem_available_kb
+    [ $mem_usable_kb -eq 0 ] && mem_usable_kb=$mem_free_kb
+
+    # Convert to MB for better precision, then format
+    local mem_total_mb=$((mem_total_kb / 1024))
+    local mem_usable_mb=$((mem_usable_kb / 1024))
+
+    # Format memory display
+    local mem_total_display mem_usable_display
+    if [ $mem_total_mb -gt 1024 ]; then
+        # Convert to GB with one decimal place
+        mem_total_display=$(echo "scale=1; $mem_total_mb/1024" | bc 2>/dev/null || echo "$((mem_total_mb/1024))")
+        mem_usable_display=$(echo "scale=1; $mem_usable_mb/1024" | bc 2>/dev/null || echo "$((mem_usable_mb/1024))")
+
+        # Remove trailing .0 if whole number
+        mem_total_display=$(echo "$mem_total_display" | sed 's/\.0$//')
+        mem_usable_display=$(echo "$mem_usable_display" | sed 's/\.0$//')
+
+        local unit="GB"
+    else
+        mem_total_display="$mem_total_mb"
+        mem_usable_display="$mem_usable_mb"
+        local unit="MB"
+    fi
+
+    # Color code memory usage
+    local mem_usable_colored="$mem_usable_display"
+    if [ $mem_total_mb -gt 0 ]; then
+        local usage_percent=$((100 - (mem_usable_mb * 100 / mem_total_mb)))
+
+        if [ $usage_percent -gt 90 ]; then
+            mem_usable_colored="${RED}${mem_usable_display}${NC}"
+        elif [ $usage_percent -gt 70 ]; then
+            mem_usable_colored="${YELLOW}${mem_usable_display}${NC}"
+        else
+            mem_usable_colored="${GREEN}${mem_usable_display}${NC}"
+        fi
+    fi
+
+    echo -e "${mem_usable_colored} ${unit} (free) / ${BLUE}${mem_total_display}${NC} ${unit} (total)"
+}
+
+# Get network interfaces with IPs
+get_network_interfaces() {
+    local interfaces_info=""
+
+    # Get all network interfaces except loopback
+    local interfaces
+    interfaces=$(ip -4 addr show 2>/dev/null | grep -E '^[0-9]+:' | awk -F': ' '{print $2}' | grep -v '^lo$' || echo "")
+
+    for interface in $interfaces; do
+        local ip_addr
+        ip_addr=$(ip -4 addr show "$interface" 2>/dev/null | grep -oP 'inet \K[0-9.]+' | head -1)
+
+        if [ -n "$ip_addr" ]; then
+            if [ -n "$interfaces_info" ]; then
+                interfaces_info="$interfaces_info, "
+            fi
+            interfaces_info="${interfaces_info}${interface}: ${BLUE}${ip_addr}${NC}"
+        fi
+    done
+
+    if [ -z "$interfaces_info" ]; then
+        interfaces_info="No active interfaces"
+    fi
+
+    echo -e "$interfaces_info"
+}
+
+# Get external IP if available
+get_external_ip() {
+    local json="$1"
+    local external_ip
+
+    external_ip=$(get_json_value "$json" ".cloud_provider.generic.ipv4" "")
+
+    if [ -n "$external_ip" ] && [ "$external_ip" != "null" ]; then
+        echo "$external_ip"
+    else
+        echo "unknown"
+    fi
+}
+
+# Main display logic
+main() {
+    debug_log "Starting system information display"
+
+    local status_json
+    status_json=$(get_cached_status "$STATUS_CACHE_FILE")
+
+    # Get basic system information
+    local hostname fqdn cpu_cores cpu_freq
+    hostname=$(hostname -s 2>/dev/null || echo "unknown")
+    fqdn=$(hostname -f 2>/dev/null || echo "localhost")
+    cpu_cores=$(nproc 2>/dev/null || echo "1")
+
+    # Try to get CPU frequency
+    cpu_freq=$(grep -m1 'cpu MHz' /proc/cpuinfo 2>/dev/null | awk '{print int($4)}' || echo "unknown")
+
+    # Get external IP
+    local external_ip
+    external_ip=$(get_external_ip "$status_json")
+
+    # Display information with proper alignment
+    echo
+    printf "FQDN              : ${BLUE}%s${NC}\n" "$fqdn"
+
+    # Show interfaces with IPs and external IP if different
+    local interfaces_line
+    interfaces_line=$(get_network_interfaces)
+    if [ "$external_ip" != "unknown" ]; then
+        printf "IP                : %s (external: ${BLUE}%s${NC})\n" "$interfaces_line" "$external_ip"
+    else
+        printf "IP                : %s\n" "$interfaces_line"
+    fi
+
+    printf "Uptime            : ${YELLOW}%s${NC}\n" "$(get_uptime)"
+    echo
+
+    # CPU and system load information
+    if [ "$cpu_freq" != "unknown" ]; then
+        printf "Core(s)           : ${BLUE}%s${NC} core(s) at ${BLUE}%s${NC} MHz\n" "$cpu_cores" "$cpu_freq"
+    else
+        printf "Core(s)           : ${BLUE}%s${NC} core(s)\n" "$cpu_cores"
+    fi
+
+    printf "Load              : %s\n" "$(get_load_info)"
+    printf "Memory            : %s\n" "$(get_memory_info)"
+
+    echo
+    debug_log "System information display completed"
+}
+
+# Execute system.fact script to refresh cache if needed
+execute_system_fact() {
+    local fact_script="/etc/ansible/facts.d/system.fact"
+
+    if [ -x "$fact_script" ]; then
+        "$fact_script" 2>/dev/null || return 1
+    fi
+    return 0
+}
+
+# Execute with minimal error handling
+main "$@" || {
+    echo
+    echo -e "${RED}System information unavailable${NC}"
+    echo
+    exit 1
+}
+{% endraw %}

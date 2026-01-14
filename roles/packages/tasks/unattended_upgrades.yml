@@ -1,0 +1,121 @@
+---
+- name: Install unattended-upgrades package
+  ansible.builtin.apt:
+      name: unattended-upgrades
+      state: "{{ 'present' if packages_unattended_upgrades_install else 'absent' }}"
+      update_cache: false
+  become: true
+  retries: "{{ packages_retry_count }}"
+  delay: "{{ packages_retry_delay }}"
+  register: _packages_unattended_install
+  until: _packages_unattended_install is succeeded
+
+- name: Configure unattended-upgrades
+  when: packages_unattended_upgrades_install
+  block:
+      - name: Generate APT preferences for version pinning
+        ansible.builtin.template:
+            src: etc/apt/preferences.d/unattended-upgrades-pins.j2
+            dest: /etc/apt/preferences.d/99unattended-upgrades-pins
+            owner: root
+            group: root
+            mode: "0644"
+        become: true
+        when: packages_unattended_upgrades_version_pins | length > 0
+
+      - name: Remove APT preferences if no pins configured
+        ansible.builtin.file:
+            path: /etc/apt/preferences.d/99unattended-upgrades-pins
+            state: absent
+        become: true
+        when: packages_unattended_upgrades_version_pins | length == 0
+
+      - name: Configure unattended-upgrades main settings
+        ansible.builtin.template:
+            src: etc/apt/apt.conf.d/50unattended-upgrades.j2
+            dest: /etc/apt/apt.conf.d/50unattended-upgrades
+            owner: root
+            group: root
+            mode: "0644"
+            backup: true
+        become: true
+        notify: packages update cache
+
+      - name: Configure auto-updates settings
+        ansible.builtin.template:
+            src: etc/apt/apt.conf.d/20auto-upgrades.j2
+            dest: /etc/apt/apt.conf.d/20auto-upgrades
+            owner: root
+            group: root
+            mode: "0644"
+            backup: true
+        become: true
+
+      - name: Create systemd timer override directory
+        ansible.builtin.file:
+            path: /etc/systemd/system/apt-daily-upgrade.timer.d
+            state: directory
+            owner: root
+            group: root
+            mode: "0755"
+        become: true
+
+      - name: Configure unattended-upgrades timer
+        ansible.builtin.template:
+            src: etc/systemd/system/apt-daily-upgrade.timer.d/override.conf.j2
+            dest: /etc/systemd/system/apt-daily-upgrade.timer.d/override.conf
+            owner: root
+            group: root
+            mode: "0644"
+        become: true
+        notify: packages daemon-reload
+        when: packages_unattended_upgrades_timer_enabled
+
+      - name: Remove timer override if disabled
+        ansible.builtin.file:
+            path: /etc/systemd/system/apt-daily-upgrade.timer.d/override.conf
+            state: absent
+        become: true
+        notify: packages daemon-reload
+        when: not packages_unattended_upgrades_timer_enabled
+
+      - name: Enable and start unattended-upgrades services via systemd role
+        ansible.builtin.include_role:
+            name: arillso.system.systemd
+            tasks_from: service
+        become: true
+        vars:
+            systemd_services:
+                - name: unattended-upgrades
+                  enabled: true
+                  state: started
+                  daemon_reload: true
+                - name: apt-daily-upgrade.timer
+                  enabled: true
+                  state: started
+                  daemon_reload: true
+
+- name: Remove unattended-upgrades configuration
+  when: not packages_unattended_upgrades_install
+  block:
+      - name: Stop and disable unattended-upgrades service via systemd role
+        ansible.builtin.include_role:
+            name: arillso.system.systemd
+            tasks_from: service
+        become: true
+        vars:
+            systemd_services:
+                - name: unattended-upgrades
+                  enabled: false
+                  state: stopped
+        failed_when: false
+
+      - name: Remove unattended-upgrades configuration files
+        ansible.builtin.file:
+            path: "{{ item }}"
+            state: absent
+        become: true
+        loop:
+            - /etc/apt/apt.conf.d/50unattended-upgrades
+            - /etc/apt/apt.conf.d/20auto-upgrades
+            - /etc/apt/preferences.d/99unattended-upgrades-pins

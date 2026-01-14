@@ -1,0 +1,26 @@
+---
+- name: Force systemd daemon reload if requested
+  ansible.builtin.systemd:
+      daemon_reload: true
+  become: true
+  when: systemd_daemon_reload | default(false)
+  tags: ["systemd", "daemon-reload"]
+
+- name: Manage systemd unit files
+  ansible.builtin.include_tasks: unit.yml
+  when:
+      - systemd_units | length > 0
+      - systemd_unit_enabled | default(true) | bool
+  tags: ["systemd", "unit"]
+
+- name: Manage systemd services
+  ansible.builtin.include_tasks: service.yml
+  when:
+      - systemd_services | length > 0
+      - systemd_service_enabled | default(true) | bool
+  tags: ["systemd", "service"]
+
+- name: Configure systemd-journald
+  ansible.builtin.include_tasks: journald.yml
+  when: systemd_journald_enabled | default(true) | bool
+  tags: ["systemd", "journald", "logging"]

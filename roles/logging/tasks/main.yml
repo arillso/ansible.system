@@ -1,0 +1,10 @@
+---
+- name: Manage logrotate
+  ansible.builtin.include_tasks: logrotate.yml
+  when: logging_logrotate_enabled | default(true) | bool
+  tags: ["logging", "logrotate"]
+
+- name: Manage rsyslog
+  ansible.builtin.include_tasks: rsyslog.yml
+  when: logging_rsyslog_enabled | default(true) | bool
+  tags: ["logging", "rsyslog", "syslog"]

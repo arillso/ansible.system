@@ -1,0 +1,53 @@
+---
+- name: Create .ssh directory
+  ansible.builtin.file:
+      path: /root/.ssh
+      state: directory
+      mode: "0700"
+      owner: root
+      group: root
+  become: true
+
+- name: Generate SSH key for ansible automation
+  community.crypto.openssh_keypair:
+      path: "{{ ansible_ssh_key_path }}"
+      type: "{{ ansible_ssh_key_type }}"
+      comment: "ansible-automation@{{ inventory_hostname }}"
+      mode: "0600"
+  become: true
+  register: _ansible_ssh_key_result
+
+- name: Configure SSH for Git (GitHub/GitLab)
+  ansible.builtin.copy:
+      dest: /root/.ssh/config
+      mode: "0600"
+      content: |
+          Host github.com gitlab.com
+            IdentityFile {{ ansible_ssh_key_path }}
+            StrictHostKeyChecking accept-new
+  become: true
+
+- name: Display public key for Git Deploy Key
+  ansible.builtin.pause:
+      prompt: |
+
+          ══════════════════════════════════════════════════════════════════
+            SSH PUBLIC KEY - Add as Git Deploy Key:
+          ══════════════════════════════════════════════════════════════════
+
+          {{ _ansible_ssh_key_result.public_key }}
+
+          ──────────────────────────────────────────────────────────────────
+            Instructions:
+            1. Open Git repository: {{ ansible_repo }}
+            2. Settings → Deploy Keys → Add deploy key
+            3. Title: ansible-automation@{{ inventory_hostname }}
+            4. Key: (copy above)
+            5. "Allow write access" NOT required (read-only is sufficient)
+          ══════════════════════════════════════════════════════════════════
+
+          Press ENTER when deploy key is added
+
+  when:
+      - ansible_ssh_key_prompt | default(true)
+      - _ansible_ssh_key_result is changed

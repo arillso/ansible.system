@@ -1,0 +1,84 @@
+---
+- name: Apply hierarchical override and generate final firewall configuration
+  ansible.builtin.set_fact:
+      _firewall: >-
+          {{ {
+              'firewall': firewall | default([]),
+              'firewall_global': firewall_global | default([]),
+              'firewall_group': firewall_group | default([]),
+              'firewall_host': firewall_host | default([])
+          } | arillso.system.to_nftables_hierarchy }}
+
+- name: Install nftables package
+  ansible.builtin.package:
+      name: nftables
+      state: present
+  become: true
+
+- name: Create nftables configuration directory
+  ansible.builtin.file:
+      path: /etc/nftables
+      state: directory
+      mode: "0755"
+      owner: root
+      group: root
+  become: true
+
+- name: Generate nftables.conf from hierarchical YAML structure
+  ansible.builtin.template:
+      src: etc/nftables.conf.j2
+      dest: /etc/nftables.conf
+      mode: "0644"
+      owner: root
+      group: root
+      backup: true
+  become: true
+  notify: Restart nftables
+
+- name: Check if tailscaled service exists
+  ansible.builtin.set_fact:
+      _firewall_tailscale_after: >-
+          {{ ['tailscaled.service']
+             if 'tailscaled.service' in ansible_facts.get('services', {})
+             else omit }}
+      _firewall_tailscale_wants: >-
+          {{ ['tailscaled.service']
+             if 'tailscaled.service' in ansible_facts.get('services', {})
+             else omit }}
+
+- name: Deploy nftables systemd override via systemd role
+  ansible.builtin.include_role:
+      name: arillso.system.systemd
+      tasks_from: unit
+  vars:
+      systemd_unit_path: /etc/systemd/system/nftables.service.d
+      systemd_units:
+          - name: override.conf
+            state: present
+            unit:
+                Unit:
+                    Description: nftables firewall with enhanced configuration
+                    Documentation: https://wiki.nftables.org/
+                    After: "{{ _firewall_tailscale_after }}"
+                    Wants: "{{ _firewall_tailscale_wants }}"
+                Service:
+                    Type: oneshot
+                    RemainAfterExit: "yes"
+                    ExecStart:
+                        - ""
+                        - /usr/sbin/nft -f /etc/nftables.conf
+                    ExecReload: /usr/sbin/nft -f /etc/nftables.conf
+                    ExecStop: /usr/sbin/nft flush ruleset
+                Install:
+                    WantedBy: multi-user.target
+
+- name: Enable and start nftables service via systemd role
+  ansible.builtin.include_role:
+      name: arillso.system.systemd
+      tasks_from: service
+  vars:
+      systemd_services:
+          - name: nftables
+            enabled: true
+            state: started
+            daemon_reload: true

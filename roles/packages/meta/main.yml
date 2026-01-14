@@ -1,19 +1,29 @@
 ---
 galaxy_info:
-  description: The role installs different packages on the system.
-  author: "arillso (@arillso)"
-  license: MIT
-  min_ansible_version: "2.15"
-  platforms:
-    - name: Ubuntu
-      versions:
-        - all
-    - name: Debian
-      versions:
-        - all
+    description: "Enterprise-ready Ansible role for managing APT packages, repositories, and keys"
+    author: "arillso (@arillso)"
+    license: MIT
+    min_ansible_version: "2.15"
+    platforms:
+        - name: Ubuntu
+          versions:
+              - bionic
+              - focal
+              - jammy
+              - noble
+        - name: Debian
+          versions:
+              - buster
+              - bullseye
+              - bookworm
 
-  galaxy_tags:
-    - package
-    - packages
+    galaxy_tags:
+        - packages
+        - apt
+        - system
+        - debian
+        - ubuntu
+        - repositories
+        - keys
 
 dependencies: []

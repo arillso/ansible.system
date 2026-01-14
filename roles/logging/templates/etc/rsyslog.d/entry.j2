@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+# Rsyslog configuration: {{ _logging_rsyslog_item.name }}
+
+{% if _logging_rsyslog_item.content is defined %}
+{{ _logging_rsyslog_item.content }}
+{% elif _logging_rsyslog_item.rules is defined %}
+{% for rule in _logging_rsyslog_item.rules %}
+{{ rule.selector }}    {{ rule.action }}
+{% endfor %}
+{% endif %}

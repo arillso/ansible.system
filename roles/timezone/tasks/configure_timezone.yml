@@ -1,6 +1,0 @@
----
-- name: Configure timezone setting
-  become: true
-  community.general.timezone:
-    name: "{{ timezone_name }}"
-    hwclock: "{{ timezone_hwclock | default(omit) }}"

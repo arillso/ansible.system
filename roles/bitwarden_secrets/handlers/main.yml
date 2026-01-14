@@ -1,0 +1,3 @@
+---
+# Bitwarden Secrets role does not require handlers
+# Binary installation doesn't trigger service restarts

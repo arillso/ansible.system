@@ -1,0 +1,17 @@
+---
+# Internal variables for python role
+
+# Common Python packages for different purposes
+_python_common_packages:
+    web:
+        - flask
+        - django
+        - fastapi
+    data:
+        - pandas
+        - numpy
+        - scipy
+    automation:
+        - ansible
+        - fabric
+        - paramiko

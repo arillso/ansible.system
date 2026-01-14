@@ -1,0 +1,50 @@
+---
+argument_specs:
+    main:
+        short_description: "Logging management with multi-entry-point support"
+        description:
+            - "Manages system logging via logrotate and rsyslog"
+            - "Supports granular control via entry points"
+        options:
+            logging_logrotate_enabled:
+                description: "Enable logrotate management"
+                type: bool
+                default: true
+            logging_rsyslog_enabled:
+                description: "Enable rsyslog management"
+                type: bool
+                default: true
+            logging_logrotate_entries:
+                description: "List of logrotate configurations"
+                type: list
+                elements: dict
+                default: []
+            logging_rsyslog_entries:
+                description: "List of rsyslog configurations"
+                type: list
+                elements: dict
+                default: []
+
+    logrotate:
+        short_description: "Logrotate management entry point"
+        description:
+            - "Entry point for managing logrotate configurations"
+            - "Configure log rotation policies"
+        options:
+            logging_logrotate_entries:
+                description: "List of logrotate configurations"
+                type: list
+                elements: dict
+                required: true
+
+    rsyslog:
+        short_description: "Rsyslog management entry point"
+        description:
+            - "Entry point for managing rsyslog configurations"
+            - "Configure system logging and forwarding"
+        options:
+            logging_rsyslog_entries:
+                description: "List of rsyslog configurations"
+                type: list
+                elements: dict
+                required: true

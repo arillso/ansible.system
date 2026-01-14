@@ -1,0 +1,89 @@
+---
+- name: Install required packages
+  ansible.builtin.package:
+      name: "{{ bitwarden_secrets_required_packages }}"
+      state: present
+  become: true
+  retries: "{{ bitwarden_secrets_retry_count }}"
+  delay: "{{ bitwarden_secrets_retry_delay }}"
+  register: _bitwarden_secrets_packages
+  until: _bitwarden_secrets_packages is succeeded
+  tags: ["bitwarden_secrets", "packages"]
+
+- name: Check if bws is installed
+  ansible.builtin.stat:
+      path: "{{ bitwarden_secrets_install_path }}/{{ bitwarden_secrets_binary_name }}"
+  register: _bitwarden_secrets_installed
+  tags: ["bitwarden_secrets"]
+
+- name: Get installed bws version
+  ansible.builtin.command:
+      cmd: "{{ bitwarden_secrets_install_path }}/{{ bitwarden_secrets_binary_name }} --version"
+  register: _bitwarden_secrets_current_version
+  changed_when: false
+  failed_when: false
+  when: _bitwarden_secrets_installed.stat.exists
+  tags: ["bitwarden_secrets"]
+
+- name: Determine if installation is needed
+  ansible.builtin.set_fact:
+      _bitwarden_secrets_needs_install: >-
+          {{
+            bitwarden_secrets_state == 'present' and
+            (
+              not _bitwarden_secrets_installed.stat.exists or
+              bitwarden_secrets_force_install or
+              (bitwarden_secrets_version not in (_bitwarden_secrets_current_version.stdout | default('')))
+            )
+          }}
+  tags: ["bitwarden_secrets"]
+
+- name: Download bws CLI
+  ansible.builtin.get_url:
+      url: "{{ bitwarden_secrets_download_url }}"
+      dest: "/tmp/bws-{{ bitwarden_secrets_version }}.zip"
+      mode: "0644"
+      timeout: "{{ bitwarden_secrets_download_timeout }}"
+  when: _bitwarden_secrets_needs_install | bool
+  retries: "{{ bitwarden_secrets_retry_count }}"
+  delay: "{{ bitwarden_secrets_retry_delay }}"
+  register: _bitwarden_secrets_download
+  until: _bitwarden_secrets_download is succeeded
+  tags: ["bitwarden_secrets", "download"]
+
+- name: Extract bws CLI
+  ansible.builtin.unarchive:
+      src: "/tmp/bws-{{ bitwarden_secrets_version }}.zip"
+      dest: "{{ bitwarden_secrets_install_path }}"
+      remote_src: true
+      mode: "0755"
+  become: true
+  when: _bitwarden_secrets_needs_install | bool
+  tags: ["bitwarden_secrets", "install"]
+
+- name: Ensure bws is executable
+  ansible.builtin.file:
+      path: "{{ bitwarden_secrets_install_path }}/{{ bitwarden_secrets_binary_name }}"
+      mode: "0755"
+      owner: root
+      group: root
+  become: true
+  when:
+      - bitwarden_secrets_state == 'present'
+      - _bitwarden_secrets_installed.stat.exists or _bitwarden_secrets_needs_install | bool
+  tags: ["bitwarden_secrets"]
+
+- name: Clean up download
+  ansible.builtin.file:
+      path: "/tmp/bws-{{ bitwarden_secrets_version }}.zip"
+      state: absent
+  when: _bitwarden_secrets_needs_install | bool
+  tags: ["bitwarden_secrets", "cleanup"]
+
+- name: Remove bws binary
+  ansible.builtin.file:
+      path: "{{ bitwarden_secrets_install_path }}/{{ bitwarden_secrets_binary_name }}"
+      state: absent
+  become: true
+  when: bitwarden_secrets_state == 'absent'
+  tags: ["bitwarden_secrets", "uninstall"]

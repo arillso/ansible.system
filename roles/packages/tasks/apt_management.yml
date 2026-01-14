@@ -1,0 +1,85 @@
+---
+- name: Configure APT system settings
+  ansible.builtin.template:
+      src: etc/apt/apt.conf.d/99packages-config.j2
+      dest: /etc/apt/apt.conf.d/99packages-config
+      owner: root
+      group: root
+      mode: "0644"
+      backup: true
+  become: true
+  notify: packages update cache
+
+- name: Configure APT proxy
+  ansible.builtin.template:
+      src: etc/apt/apt.conf.d/01proxy.j2
+      dest: /etc/apt/apt.conf.d/01proxy
+      owner: root
+      group: root
+      mode: "0644"
+  become: true
+  when: packages_apt_proxy_enabled
+  notify: packages update cache
+
+- name: Remove APT proxy configuration
+  ansible.builtin.file:
+      path: /etc/apt/apt.conf.d/01proxy
+      state: absent
+  become: true
+  when: not packages_apt_proxy_enabled
+  notify: packages update cache
+
+- name: Configure APT periodic updates
+  ansible.builtin.template:
+      src: etc/apt/apt.conf.d/10periodic.j2
+      dest: /etc/apt/apt.conf.d/10periodic
+      owner: root
+      group: root
+      mode: "0644"
+  become: true
+  when: packages_apt_periodic_enabled
+
+- name: Remove APT periodic configuration
+  ansible.builtin.file:
+      path: /etc/apt/apt.conf.d/10periodic
+      state: absent
+  become: true
+  when: not packages_apt_periodic_enabled
+
+- name: Configure APT preferences (pinning)
+  ansible.builtin.template:
+      src: etc/apt/preferences.d/packages-pins.j2
+      dest: /etc/apt/preferences.d/50packages-pins
+      owner: root
+      group: root
+      mode: "0644"
+  become: true
+  when: packages_apt_preferences | length > 0
+  notify: packages update cache
+
+- name: Remove APT preferences if not configured
+  ansible.builtin.file:
+      path: /etc/apt/preferences.d/50packages-pins
+      state: absent
+  become: true
+  when: packages_apt_preferences | length == 0
+
+- name: Configure APT sources for mirror
+  ansible.builtin.template:
+      src: etc/apt/sources.list.j2
+      dest: /etc/apt/sources.list
+      owner: root
+      group: root
+      mode: "0644"
+      backup: true
+  become: true
+  when: packages_apt_mirror_enabled
+  notify: packages update cache
+
+- name: Clean APT lists if requested
+  ansible.builtin.file:
+      path: "{{ packages_apt_lists_dir }}"
+      state: absent
+  become: true
+  when: packages_apt_clean_lists
+  notify: packages update cache

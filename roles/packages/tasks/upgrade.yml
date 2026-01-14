@@ -1,0 +1,19 @@
+---
+# Entry point for package upgrades
+- name: Upgrade packages
+  ansible.builtin.apt:
+      upgrade: "{{ packages_upgrade }}"
+      update_cache: false
+      autoremove: "{{ packages_autoremove | default(false) }}"
+      autoclean: "{{ packages_autoclean | default(false) }}"
+  become: true
+  register: _packages_upgraded
+  retries: "{{ packages_retry_count | default(3) }}"
+  delay: "{{ packages_retry_delay | default(10) }}"
+  until: _packages_upgraded is succeeded
+  when: packages_upgrade in ['yes', 'safe', 'full', 'dist']
+
+- name: Log upgrade results
+  ansible.builtin.debug:
+      msg: "Package upgrade completed: {{ _packages_upgraded.stdout_lines | default([]) }}"
+  when: _packages_upgraded is defined and _packages_upgraded.changed

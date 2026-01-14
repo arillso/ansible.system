@@ -1,0 +1,40 @@
+---
+- name: Ensure sudoers.d directory exists
+  ansible.builtin.file:
+      path: /etc/sudoers.d
+      state: directory
+      owner: root
+      group: root
+      mode: "0750"
+  become: true
+
+- name: Deploy sudoers configuration files
+  ansible.builtin.template:
+      src: etc/sudoers.d/sudoer.j2
+      dest: "/etc/sudoers.d/{{ _access_sudoer_item.name }}"
+      owner: "{{ access_sudoers_file_owner }}"
+      group: "{{ access_sudoers_file_group }}"
+      mode: "{{ access_sudoers_file_mode }}"
+      validate: "{{ 'visudo -cf %s' if access_validate_sudoers else omit }}"
+      backup: "{{ access_backup_configs }}"
+  become: true
+  loop: "{{ access_sudoers }}"
+  loop_control:
+      loop_var: _access_sudoer_item
+      label: "{{ _access_sudoer_item.name }}"
+  when: _access_sudoer_item.state | default('present') == 'present'
+  retries: "{{ access_retry_count }}"
+  delay: "{{ access_retry_delay }}"
+  register: _access_sudoers_result
+  until: _access_sudoers_result is succeeded
+
+- name: Remove sudoers configuration files
+  ansible.builtin.file:
+      path: "/etc/sudoers.d/{{ _access_sudoer_item.name }}"
+      state: absent
+  become: true
+  loop: "{{ access_sudoers }}"
+  loop_control:
+      loop_var: _access_sudoer_item
+      label: "{{ _access_sudoer_item.name }}"
+  when: _access_sudoer_item.state | default('present') == 'absent'

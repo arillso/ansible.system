@@ -1,0 +1,55 @@
+---
+# Core shell role identification
+shell_role_name: "shell"
+shell_collection_name: "arillso.system.shell"
+shell_version: "1.0.0"
+
+# Company branding
+shell_company_name: "Hetzner Cloud K3s Platform"
+shell_company_contact: "DevOps Team"
+shell_company_support_url: "https://github.com/sbaerlocher/devops"
+shell_environment: "production"
+
+# MOTD configuration
+shell_motd_enabled: true
+shell_motd_style: "standard"
+shell_motd_font: "standard"
+shell_motd_show_system_info: true
+shell_motd_show_performance: true
+shell_motd_show_network: true
+shell_motd_show_cloud_info: true
+shell_motd_show_footer: true
+
+# SSH banner configuration
+shell_ssh_banner_enabled: true
+shell_ssh_banner_show_warnings: true
+shell_ssh_banner_show_legal_notice: true
+
+# Shell configuration
+shell_enabled: true
+shell_default: "/bin/bash"
+shell_configure_profiles: true
+shell_configure_aliases: true
+shell_configure_prompt: true
+shell_configure_history: true
+
+# Terminal configuration
+shell_terminal_colors_enabled: true
+shell_terminal_completion_enabled: true
+
+# Background processing for performance data
+shell_enable_background_processing: true
+shell_status_precompute_interval: "*/5"
+shell_status_cache_ttl: 600
+shell_status_cache_dir: "/var/cache/arillso-system-shell"
+
+# Dependencies
+shell_facts_dependency: true
+shell_facts_collection_name: "arillso.system.facts"
+
+# Error handling
+shell_ignore_template_errors: false
+shell_ignore_package_errors: true
+
+# Debug configuration
+shell_debug_mode: false

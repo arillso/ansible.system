@@ -1,0 +1,61 @@
+---
+# Facts collection entry point - Install and configure facts scripts only
+# Usage: include_role: name=facts tasks_from=facts
+
+- name: "Gather system facts for role operation"
+  ansible.builtin.setup:
+      gather_subset:
+          - all
+  tags:
+      - facts
+
+- name: "Install required packages for facts collection"
+  ansible.builtin.package:
+      name: "{{ _facts_required_packages[ansible_facts['os_family']] | default(_facts_required_packages['Debian']) }}"
+      state: present
+  become: true
+  tags:
+      - facts
+      - packages
+
+- name: "Create facts collection directory"
+  ansible.builtin.file:
+      path: /etc/ansible/facts.d
+      state: directory
+      mode: "0755"
+      owner: root
+      group: root
+  become: true
+  tags:
+      - facts
+
+- name: "Install facts collection scripts"
+  ansible.builtin.template:
+      src: "etc/ansible/facts.d/{{ item }}.j2"
+      dest: "/etc/ansible/facts.d/{{ item }}"
+      mode: "0755"
+      owner: root
+      group: root
+  become: true
+  loop: "{{ _facts_collection_scripts }}"
+  tags:
+      - facts
+
+- name: "Create cloud metadata cache directory"
+  ansible.builtin.file:
+      path: "/var/cache/ansible-facts"
+      state: directory
+      mode: "0700"
+      owner: root
+      group: root
+  become: true
+  tags:
+      - facts
+      - cache
+
+- name: Refresh facts from local scripts
+  ansible.builtin.setup:
+      gather_subset:
+          - "!all"
+          - "!any"
+          - "local"

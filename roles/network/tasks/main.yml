@@ -1,0 +1,15 @@
+---
+- name: Manage network configuration
+  become: true
+  block:
+      - name: Manage DNS configuration
+        ansible.builtin.include_tasks: resolv.yml
+        when: network_resolv_enabled | default(true) | bool
+        tags: ["network", "dns", "resolv"]
+
+      - name: Manage netplan configuration
+        ansible.builtin.include_tasks: netplan.yml
+        when:
+            - network_netplan_enabled | default(false) | bool
+            - ansible_distribution == "Ubuntu"
+        tags: ["network", "netplan"]

@@ -1,0 +1,30 @@
+{% if shell_ssh_banner_enabled %}
+{#-
+SSH Banner Security Notice:
+This banner is displayed BEFORE authentication and MUST NOT contain
+sensitive system information like IP addresses, versions, or system details.
+Only display legal notices, company branding, and security warnings.
+-#}
+
+================================================================================
+                           {{ shell_company_name }}
+================================================================================
+
+NOTICE: This system is for authorized users only.
+
+{% if shell_ssh_banner_show_warnings %}
+WARNING:
+- Unauthorized access is prohibited and will be prosecuted
+- All activities are logged and monitored
+- By continuing, you consent to monitoring and auditing
+- Disconnect immediately if you are not an authorized user
+
+{% endif %}
+Contact your system administrator for access requests.
+
+Legal Notice:
+- Use of this system constitutes consent to monitoring
+- Unauthorized use may violate local and federal laws
+- All connections are logged with timestamp and source
+
+{% endif %}

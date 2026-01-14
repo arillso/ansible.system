@@ -1,0 +1,90 @@
+---
+# Entry Point Controls
+ansible_install_enabled: true
+ansible_timer_enabled: true
+
+# Execution Mode
+ansible_mode: "pull"
+
+# Git Repository Configuration
+ansible_repo: ""
+ansible_branch: "main"
+ansible_checkout_dir: "/var/lib/ansible-automation"
+
+# Playbook Configuration
+ansible_playbook: "site.yml"
+ansible_inventory: "inventory/hosts"
+ansible_extra_args: ""
+ansible_host_limit: "{{ inventory_hostname }}"
+
+# Systemd Timer Configuration
+ansible_schedule: "*:0/15"
+ansible_random_delay: 300
+ansible_service_name: "ansible-{{ ansible_mode }}"
+
+# Ansible Installation
+ansible_install_method: "pipx"
+ansible_pipx_home: "/opt/pipx"
+ansible_pipx_bin: "/opt/pipx/bin"
+ansible_package_version: ""
+ansible_remove_system_package: true
+
+# SSH Configuration
+ansible_ssh_key_enabled: true
+ansible_ssh_key_path: "/root/.ssh/ansible_automation_ed25519"
+ansible_ssh_key_type: "ed25519"
+ansible_ssh_key_prompt: true
+
+# Python Package Injection (pipx only)
+ansible_pipx_inject_packages: []
+# Example:
+# ansible_pipx_inject_packages:
+#   # Filter plugin dependencies
+#   - tomli             # TOML parsing (Python < 3.11)
+#   - tomli-w           # TOML writing
+#   # Cloud providers
+#   - kubernetes        # For k8s module support
+#   - openshift         # For OpenShift support
+#   - boto3             # For AWS modules
+#   - botocore          # For AWS modules
+#   - google-auth       # For GCP modules
+#   - azure-cli         # For Azure modules
+#   # Remote connections
+#   - pywinrm           # For Windows remote management
+#   - paramiko          # For SSH connections
+#   # Utilities
+#   - netaddr           # For network address manipulation
+#   - jmespath          # For JSON queries
+#   - dnspython         # For DNS lookups
+
+# ============================================================================
+# OpenTelemetry Configuration
+ansible_otel_enabled: false
+ansible_otel_endpoint: ""
+ansible_otel_headers: ""
+ansible_otel_service_name: "ansible-automation"
+ansible_otel_environment: "production"
+
+# Environment Variables
+ansible_environment: {}
+# Example:
+# ansible_environment:
+#   ANSIBLE_HOST_KEY_CHECKING: "False"
+#   ANSIBLE_TIMEOUT: "30"
+
+# System Packages
+ansible_required_packages:
+    - git
+ansible_pipx_packages:
+    - pipx
+
+# Service Management
+ansible_service_enabled: true
+ansible_timer_state: started
+
+# Retry Configuration
+ansible_retry_count: 3
+ansible_retry_delay: 10
+
+# Debug Configuration
+ansible_debug_mode: false

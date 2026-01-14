@@ -1,0 +1,65 @@
+# {{ ansible_managed }}
+# SSH Server Configuration
+
+# Network
+Port {{ access_ssh_port }}
+{% if access_ssh_listen_addresses | length > 0 %}
+{% for address in access_ssh_listen_addresses %}
+ListenAddress {{ address }}
+{% endfor %}
+{% endif %}
+
+# Authentication
+PermitRootLogin {{ access_ssh_permit_root_login }}
+PubkeyAuthentication {{ 'yes' if access_ssh_pubkey_authentication else 'no' }}
+PasswordAuthentication {{ 'yes' if access_ssh_password_authentication else 'no' }}
+ChallengeResponseAuthentication {{ 'yes' if access_ssh_challenge_response_authentication else 'no' }}
+GSSAPIAuthentication {{ 'yes' if access_ssh_gssapi_authentication else 'no' }}
+KerberosAuthentication {{ 'yes' if access_ssh_kerberos_authentication else 'no' }}
+PermitEmptyPasswords {{ 'yes' if access_ssh_permit_empty_passwords else 'no' }}
+PermitUserEnvironment {{ 'yes' if access_ssh_permit_user_environment else 'no' }}
+
+# Security
+MaxAuthTries {{ access_ssh_max_auth_tries }}
+MaxSessions {{ access_ssh_max_sessions }}
+MaxStartups {{ access_ssh_max_startups }}
+LoginGraceTime {{ access_ssh_login_grace_time }}
+
+# Forwarding
+X11Forwarding {{ 'yes' if access_ssh_x11_forwarding else 'no' }}
+AllowTcpForwarding {{ 'yes' if access_ssh_tcp_forwarding else 'no' }}
+AllowAgentForwarding {{ 'yes' if access_ssh_agent_forwarding else 'no' }}
+GatewayPorts {{ 'yes' if access_ssh_gateway_ports else 'no' }}
+PermitTunnel {{ 'yes' if access_ssh_permit_tunnel else 'no' }}
+
+# Logging
+LogLevel {{ access_ssh_log_level }}
+SyslogFacility {{ access_ssh_syslog_facility }}
+
+# Connection
+ClientAliveInterval {{ access_ssh_client_alive_interval }}
+ClientAliveCountMax {{ access_ssh_client_alive_count_max }}
+TCPKeepAlive {{ 'yes' if access_ssh_tcp_keep_alive else 'no' }}
+Compression {{ 'yes' if access_ssh_compression else 'no' }}
+
+# User/Group restrictions
+{% if access_ssh_allow_users | length > 0 %}
+AllowUsers {{ access_ssh_allow_users | join(' ') }}
+{% endif %}
+{% if access_ssh_allow_groups | length > 0 %}
+AllowGroups {{ access_ssh_allow_groups | join(' ') }}
+{% endif %}
+{% if access_ssh_deny_users | length > 0 %}
+DenyUsers {{ access_ssh_deny_users | join(' ') }}
+{% endif %}
+{% if access_ssh_deny_groups | length > 0 %}
+DenyGroups {{ access_ssh_deny_groups | join(' ') }}
+{% endif %}
+
+# Subsystems
+Subsystem sftp {{ access_ssh_subsystem_sftp }}
+
+# Additional configuration
+{% for key, value in access_ssh_config_extra.items() %}
+{{ key }} {{ value }}
+{% endfor %}

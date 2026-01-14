@@ -1,0 +1,18 @@
+---
+- name: Remove packages from unified list
+  ansible.builtin.apt:
+      name: "{{ _pkg_package_item.name }}"
+      state: absent
+      purge: "{{ _pkg_package_item.purge | default(false) }}"
+      autoremove: "{{ _pkg_package_item.autoremove | default(false) }}"
+      autoclean: "{{ _pkg_package_item.autoclean | default(false) }}"
+      force: "{{ _pkg_package_item.force | default(false) }}"
+  become: true
+  loop: "{{ packages_list }}"
+  loop_control:
+      loop_var: _pkg_package_item
+  when: _pkg_package_item.state | default('present') == 'absent'
+  register: _packages_unified_removed
+  retries: "{{ packages_retry_count }}"
+  delay: "{{ packages_retry_delay }}"
+  until: _packages_unified_removed is succeeded

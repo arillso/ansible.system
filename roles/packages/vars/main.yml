@@ -1,0 +1,19 @@
+---
+# Internal variables for packages role
+_packages_supported_entry_points:
+    - main
+    - repositories
+    - unified
+    - upgrade
+
+_packages_supported_os_families:
+    - "Debian"
+    - "Ubuntu"
+
+_packages_supported_package_managers:
+    - "apt"
+
+# Internal state tracking
+_packages_repositories_changed: false
+_packages_keys_changed: false
+_packages_apt_conf_changed: false

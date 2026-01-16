@@ -1,0 +1,31 @@
+---
+DOCUMENTATION:
+  name: from_toml
+  author: arillso (@arillso)
+  version_added: "1.0.0"
+  short_description: Convert TOML string to dictionary
+  description:
+    - Converts a TOML-formatted string into a Python dictionary.
+    - Uses tomllib (Python 3.11+) or tomli package for parsing.
+  positional: _input
+  options:
+    _input:
+      description: TOML string to parse
+      type: str
+      required: true
+
+EXAMPLES: |
+  # Parse TOML string
+  - name: Parse TOML configuration
+    ansible.builtin.set_fact:
+      config: "{{ toml_string | arillso.system.from_toml }}"
+
+  # Parse TOML from file
+  - name: Load TOML config file
+    ansible.builtin.set_fact:
+      app_config: "{{ lookup('file', 'config.toml') | arillso.system.from_toml }}"
+
+RETURN:
+  _value:
+    description: Python dictionary representation of the TOML input
+    type: dict

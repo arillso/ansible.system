@@ -4,54 +4,92 @@
 
 ## Description
 
-This is an Ansible collection that installs and then configures various system.
+This Ansible collection provides comprehensive system configuration and management capabilities for Linux servers. It includes unified roles for access control, package management, network configuration, firewall setup, logging, and system tuning.
 
 ## Roles
 
-- [apt_cache](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/apt_cache)
-- [apt_repositories](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/apt_repositories)
-- [iptables](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/iptables)
-- [packages](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/packages)
-- [ssh](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/ssh)
-- [systemd_service](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/systemd_service)
-- [yum_repositories](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/yum_repositories)
-- [apt_configuration](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/apt_configuration)
-- [chocolatey_packages](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/chocolatey_packages)
-- [dnf_packages](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/dnf_packages)
-- [environment](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/environment)
-- [maintenance](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/maintenance)
-- [netplan](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/netplan)
-- [reboot](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/reboot)
-- [sudoers](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/sudoers)
-- [systemd_unit](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/systemd_unit)
-- [apt_keys](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/apt_keys)
-- [logrotate](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/logrotate)
-- [pip](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/pip)
-- [resolv](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/resolv)
-- [sysctl](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/sysctl)
-- [systemd_journald](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/systemd_journald)
-- [timezone](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/timezone)
-- [users](https://galaxy.ansible.com/ui/repo/published/arillso/system/content/role/users)
+### Core System Roles
+
+- **[access](roles/access)** - User/group/SSH/sudo management
+- **[ansible](roles/ansible)** - Ansible automation with systemd timer
+- **[facts](roles/facts)** - Extended system facts (cloud, container, security)
+- **[packages](roles/packages)** - Package management with APT, DNF, unattended upgrades
+- **[python](roles/python)** - Python and pip management
+- **[ready](roles/ready)** - System readiness checks
+- **[shell](roles/shell)** - Shell environment and MOTD configuration
+
+### Infrastructure Roles
+
+- **[firewall](roles/firewall)** - NFTables firewall configuration
+- **[logging](roles/logging)** - Log management (rsyslog, logrotate)
+- **[network](roles/network)** - Network configuration (netplan, resolv)
+- **[systemd](roles/systemd)** - Systemd service/unit/journald management
+
+### Advanced Roles
+
+- **[bitwarden_secrets](roles/bitwarden_secrets)** - Bitwarden CLI secret management
+- **[thermal](roles/thermal)** - CPU thermal management
+- **[tuning](roles/tuning)** - System performance tuning (CPU, IO, network, swap)
 
 ## Plugins
 
-plugins/lookup:
+### Lookup Plugins
 
-- github_latest_release.py
+- **environment_files** - Curate file lists based on patterns
+- **github_latest_release** - Fetch latest GitHub release version
 
-plugins/modules:
+### Modules
 
-- apt_update_info.py
-- reboot_info.py
+- **apt_update_info** - Retrieve list of updatable APT packages
+- **reboot_info** - Check if system requires reboot
+
+### Filter Plugins
+
+- **from_toml** - Convert TOML string to dictionary
+- **to_toml** - Convert dictionary to TOML string
+- **to_nice_toml** - Convert dictionary to nicely formatted TOML
+- **to_nftables_hierarchy** - Generate nftables rule hierarchy
+- **to_nftables_rule** - Generate nftables rule
+- **to_nftables_ports** - Generate nftables port rules
+
+## Installation
+
+```bash
+ansible-galaxy collection install arillso.system
+```
+
+## Requirements
+
+- Ansible 2.16 or higher
+- Python 3.11 or higher
+- Dependencies:
+  - ansible.posix >= 2.0.0
+  - community.general >= 9.0.0
+  - community.crypto >= 2.0.0
+
+## Documentation
+
+Full documentation is available at: https://guide.arillso.io/collections/arillso/system/
+
+## Breaking Changes in 1.0.0
+
+Version 1.0.0 introduces a major restructuring. Many roles have been removed and consolidated:
+
+- `users`, `groups`, `ssh`, `sudoers` → **access**
+- `apt_*`, `dnf_packages`, `chocolatey_packages` → **packages**
+- `iptables` → **firewall**
+- `rsyslog`, `logrotate` → **logging**
+- `netplan`, `resolv` → **network**
+- `systemd_journald`, `systemd_service`, `systemd_unit` → **systemd**
+- `pip` → **python**
+- `motd` → **shell**
+
+See [CHANGELOG.md](CHANGELOG.md) for migration guidance.
 
 ## License
 
-<!-- markdownlint-disable -->
-
 This project is under the MIT License. See the [LICENSE](LICENSE) file for the full license text.
-
-<!-- markdownlint-enable -->
 
 ## Copyright
 
-(c) 2023, Arillso
+(c) 2024-2026, Arillso

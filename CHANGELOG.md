@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-01-16
+
+### Fixed
+
+- Add `-` prefix to systemd ExecStartPre commands to allow failure without stopping service
+- Fix environment variable building by replacing dict2items with keys/zip/values
+  for better compatibility
+- Ensures git pull and galaxy install failures don't prevent playbook execution
+
 ## [1.0.3] - 2026-01-16
 
 ### Fixed

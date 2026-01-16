@@ -61,7 +61,7 @@
 - name: Build galaxy collection install command
   ansible.builtin.set_fact:
       ansible_role_galaxy_collections_cmd: >-
-          {% if ansible_install_method == 'pipx' -%}
+          -{% if ansible_install_method == 'pipx' -%}
           {{ ansible_pipx_bin }}/ansible-galaxy{%- else -%}
           /usr/bin/ansible-galaxy{%- endif %}
           collection install
@@ -72,7 +72,7 @@
 - name: Build galaxy role install command
   ansible.builtin.set_fact:
       ansible_role_galaxy_roles_cmd: >-
-          {% if ansible_install_method == 'pipx' -%}
+          -{% if ansible_install_method == 'pipx' -%}
           {{ ansible_pipx_bin }}/ansible-galaxy{%- else -%}
           /usr/bin/ansible-galaxy{%- endif %}
           role install
@@ -90,7 +90,7 @@
 - name: Build ExecStartPre commands for playbook mode
   ansible.builtin.set_fact:
       ansible_role_exec_start_pre_playbook: >-
-          {{ ['/usr/bin/git -C ' + ansible_checkout_dir + '/repo pull origin ' + ansible_branch] +
+          {{ ['-/usr/bin/git -C ' + ansible_checkout_dir + '/repo pull origin ' + ansible_branch] +
              (ansible_install_collections | bool | ternary([ansible_role_galaxy_collections_cmd], [])) +
              (ansible_install_roles | bool | ternary([ansible_role_galaxy_roles_cmd], [])) }}
   when: ansible_mode == 'playbook'
@@ -98,8 +98,7 @@
 - name: Build environment variables for systemd
   ansible.builtin.set_fact:
       ansible_role_env_list: >-
-          {{ ansible_environment | dict2items |
-             map('community.general.dict_kv', 'key', 'value') |
+          {{ ansible_environment.keys() | zip(ansible_environment.values()) |
              map('join', '=') | list }}
   when: ansible_environment | length > 0
 

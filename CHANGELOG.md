@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-01-16
+
+### Added
+
+- Automatic Galaxy requirements installation for ansible role in both pull and playbook modes
+- New variables `ansible_install_collections` (default: true), `ansible_install_roles` (default: false), and `ansible_requirements_file`
+- Collections and roles are now automatically installed before playbook execution via systemd ExecStartPre
+- GitHub issue templates (bug report, feature request, documentation)
+- GitHub pull request template with contribution checklist
+
+### Fixed
+
+- ansible-pull does not automatically install collections/roles from requirements.yml
+  (addresses upstream issues #76535 and #70309)
+
 ## [1.0.1] - 2026-01-14
 
 ### Fixed

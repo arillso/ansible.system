@@ -1,0 +1,121 @@
+name: Documentation Improvement
+description: Suggest improvements to documentation
+title: "[Docs]: "
+labels: ["documentation", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve our documentation!
+
+  - type: dropdown
+    id: role
+    attributes:
+      label: Which documentation needs improvement?
+      description: Select the area that needs better documentation
+      options:
+        - Access role README
+        - Ansible role README
+        - Bitwarden Secrets role README
+        - Facts role README
+        - Firewall role README
+        - Logging role README
+        - Network role README
+        - Packages role README
+        - Python role README
+        - Ready role README
+        - Shell role README
+        - Systemd role README
+        - Thermal role README
+        - Tuning role README
+        - Collection README
+        - CHANGELOG
+        - CONTRIBUTING guide
+        - Code comments
+        - Variable documentation (argument_specs)
+        - Plugin documentation
+        - Example playbooks
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type of Documentation Issue
+      description: What kind of documentation improvement is needed?
+      options:
+        - Missing documentation
+        - Incorrect/outdated information
+        - Unclear explanation
+        - Missing examples
+        - Typo/grammar
+        - Formatting issue
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Location
+      description: Where is the documentation issue? (file path, section, line number)
+      placeholder: e.g., roles/firewall/README.md, line 123
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: Current Documentation
+      description: What does the current documentation say? (if applicable)
+      placeholder: Quote the current text or describe what's missing
+
+  - type: textarea
+    id: suggested
+    attributes:
+      label: Suggested Improvement
+      description: What should the documentation say instead?
+      placeholder: Provide your suggested text or describe the improvement
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Additional Examples
+      description: If suggesting new examples, provide them here
+      render: yaml
+      placeholder: |
+        - hosts: all
+          roles:
+            - role: arillso.system.firewall
+              vars:
+                # Your example here
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context about the documentation improvement
+      placeholder: Links to similar docs, screenshots, etc.
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Would you like to submit the documentation improvement yourself?
+      options:
+        - label: I would be willing to submit a pull request with this documentation fix
+          required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have checked the latest documentation version
+          required: true
+        - label: I have searched existing issues to avoid duplicates
+          required: true

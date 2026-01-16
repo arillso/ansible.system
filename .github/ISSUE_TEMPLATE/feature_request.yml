@@ -1,0 +1,117 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please provide as much detail as possible.
+
+  - type: dropdown
+    id: role
+    attributes:
+      label: Which role is this feature for?
+      description: Select the role that should have this feature
+      options:
+        - Access
+        - Ansible
+        - Bitwarden Secrets
+        - Facts
+        - Firewall
+        - Logging
+        - Network
+        - Packages
+        - Python
+        - Ready
+        - Shell
+        - Systemd
+        - Thermal
+        - Tuning
+        - New role
+        - Collection (general)
+        - Plugins/Modules
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Feature Type
+      description: What type of feature is this?
+      options:
+        - New functionality
+        - Enhancement to existing feature
+        - Configuration option
+        - Performance improvement
+        - Better error handling
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? What use case does it enable?
+      placeholder: Currently, I cannot... / It would be useful if...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How do you envision this feature working?
+      placeholder: Describe your ideal solution
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Example Usage
+      description: Show how you would use this feature
+      render: yaml
+      placeholder: |
+        - hosts: all
+          roles:
+            - role: arillso.system.firewall
+              vars:
+                # Your example here
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you considered any alternative solutions or workarounds?
+      placeholder: Describe alternatives or current workarounds
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context, screenshots, or examples
+      placeholder: Links to similar features, documentation, etc.
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Would you like to implement this feature yourself?
+      options:
+        - label: I would be willing to submit a pull request for this feature
+          required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues and feature requests
+          required: true
+        - label: This feature aligns with the collection's purpose
+          required: true

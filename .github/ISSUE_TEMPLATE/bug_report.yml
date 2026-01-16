@@ -1,0 +1,141 @@
+name: Bug Report
+description: File a bug report to help us improve
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please provide as much detail as possible.
+
+  - type: dropdown
+    id: role
+    attributes:
+      label: Which role is affected?
+      description: Select the role where you encountered the bug
+      options:
+        - Access
+        - Ansible
+        - Bitwarden Secrets
+        - Facts
+        - Firewall
+        - Logging
+        - Network
+        - Packages
+        - Python
+        - Ready
+        - Shell
+        - Systemd
+        - Thermal
+        - Tuning
+        - Collection (general)
+        - Plugins/Modules
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Install role with '...'
+        2. Run playbook with '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: playbook
+    attributes:
+      label: Playbook/Configuration
+      description: Please provide the relevant parts of your playbook or role configuration
+      render: yaml
+      placeholder: |
+        - hosts: all
+          roles:
+            - role: arillso.system.firewall
+              vars:
+                firewall_enabled: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Output/Logs
+      description: If applicable, paste any error messages or relevant logs
+      render: shell
+      placeholder: Paste error output here
+
+  - type: input
+    id: version
+    attributes:
+      label: Collection Version
+      description: What version of arillso.system are you using?
+      placeholder: e.g., 1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: ansible-version
+    attributes:
+      label: Ansible Version
+      description: Output of `ansible --version`
+      placeholder: e.g., ansible [core 2.16.0]
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: Which OS are you running on?
+      options:
+        - Ubuntu 20.04
+        - Ubuntu 22.04
+        - Ubuntu 24.04
+        - Debian 11
+        - Debian 12
+        - RHEL/CentOS 8
+        - RHEL/CentOS 9
+        - Other (please specify in description)
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here
+      placeholder: Any additional information that might help
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues to avoid duplicates
+          required: true
+        - label: I have provided all requested information
+          required: true
+        - label: I am using a supported platform and Ansible version
+          required: true

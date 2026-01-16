@@ -51,6 +51,27 @@ argument_specs:
                 type: str
                 default: ""
 
+            ansible_install_collections:
+                description: >-
+                    Install collections from requirements.yml before playbook execution.
+                    Note: ansible-pull does NOT automatically install collections, so this ensures
+                    dependencies are available in both pull and playbook modes.
+                type: bool
+                default: true
+
+            ansible_install_roles:
+                description: >-
+                    Install roles from requirements.yml before playbook execution.
+                    Note: ansible-pull does NOT automatically install roles, so this ensures
+                    dependencies are available in both pull and playbook modes.
+                type: bool
+                default: false
+
+            ansible_requirements_file:
+                description: Path to requirements file (relative to repository root)
+                type: str
+                default: requirements.yml
+
             ansible_schedule:
                 description: Systemd timer schedule (OnCalendar format)
                 type: str

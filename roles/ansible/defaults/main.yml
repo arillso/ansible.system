@@ -17,6 +17,10 @@ ansible_inventory: "inventory/hosts"
 ansible_extra_args: ""
 ansible_host_limit: "{{ inventory_hostname }}"
 
+ansible_install_collections: true
+ansible_install_roles: false
+ansible_requirements_file: "requirements.yml"
+
 # Systemd Timer Configuration
 ansible_schedule: "*:0/15"
 ansible_random_delay: 300

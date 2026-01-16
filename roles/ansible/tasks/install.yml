@@ -34,8 +34,9 @@
             name: "ansible{{ ('==' + ansible_package_version) if ansible_package_version else '' }}"
             state: install
             install_deps: true
-            pipx_home: "{{ ansible_pipx_home }}"
-            global_bin_dir: "{{ ansible_pipx_bin }}"
+        environment:
+            PIPX_HOME: "{{ ansible_pipx_home }}"
+            PIPX_BIN_DIR: "{{ ansible_pipx_bin }}"
         become: true
 
       - name: Build inject package list
@@ -51,8 +52,9 @@
             name: ansible
             state: inject
             inject_packages: "{{ ansible_role_inject_packages }}"
-            pipx_home: "{{ ansible_pipx_home }}"
-            global_bin_dir: "{{ ansible_pipx_bin }}"
+        environment:
+            PIPX_HOME: "{{ ansible_pipx_home }}"
+            PIPX_BIN_DIR: "{{ ansible_pipx_bin }}"
         become: true
         when: ansible_role_inject_packages | length > 0
 

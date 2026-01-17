@@ -1,6 +1,6 @@
 # Ansible Collection: arillso.system
 
-[![LICENSE](https://img.shields.io/github/license/mashape/apistatus.svg?style=popout-square)](LICENSE) [![Ansible Galaxy](http://img.shields.io/badge/ansible--galaxy-arillso.system-blue.svg?style=popout-square)](https://galaxy.ansible.com/arillso/system)
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg?style=popout-square)](LICENSE) [![Ansible Galaxy](http://img.shields.io/badge/ansible--galaxy-arillso.system-blue.svg?style=popout-square)](https://galaxy.ansible.com/arillso/system)
 
 ## Description
 
@@ -54,37 +54,40 @@ This Ansible collection provides comprehensive system configuration and manageme
 
 ## Installation
 
+Install this collection from Ansible Galaxy:
+
 ```bash
 ansible-galaxy collection install arillso.system
 ```
 
+Or add it to your `requirements.yml`:
+
+```yaml
+---
+collections:
+    - name: arillso.system
+      version: ">=1.0.0"
+```
+
 ## Requirements
 
-- Ansible 2.16 or higher
-- Python 3.11 or higher
-- Dependencies:
-  - ansible.posix >= 2.0.0
-  - community.general >= 9.0.0
-  - community.crypto >= 2.0.0
+- Ansible >= 2.16
+- Python >= 3.11
+
+## Dependencies
+
+- ansible.posix >= 2.0.0
+- community.general >= 9.0.0
+- community.crypto >= 2.0.0
 
 ## Documentation
 
-Full documentation is available at: https://guide.arillso.io/collections/arillso/system/
+Full documentation is available at:
+<https://guide.arillso.io/collections/arillso/system/>
 
-## Breaking Changes in 1.0.0
+**Breaking Changes in 1.0.0:**
 
-Version 1.0.0 introduces a major restructuring. Many roles have been removed and consolidated:
-
-- `users`, `groups`, `ssh`, `sudoers` → **access**
-- `apt_*`, `dnf_packages`, `chocolatey_packages` → **packages**
-- `iptables` → **firewall**
-- `rsyslog`, `logrotate` → **logging**
-- `netplan`, `resolv` → **network**
-- `systemd_journald`, `systemd_service`, `systemd_unit` → **systemd**
-- `pip` → **python**
-- `motd` → **shell**
-
-See [CHANGELOG.md](CHANGELOG.md) for migration guidance.
+Version 1.0.0 introduces a major restructuring. Many roles have been removed and consolidated. See [CHANGELOG.md](CHANGELOG.md) for migration guidance.
 
 ## License
 

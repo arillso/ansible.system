@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-01-16
+
+### Fixed
+
+- Fix Sphinx documentation build warning for to_toml filter examples
+- Convert bare Jinja2 expressions to valid YAML playbook tasks in filter documentation
+
+### Changed
+
+- Improve README.md formatting and installation instructions
+- Add requirements.yml installation example to README
+- Clarify dependencies section in README
+
 ## [1.0.4] - 2026-01-16
 
 ### Fixed

@@ -20,13 +20,22 @@ DOCUMENTATION:
 
 EXAMPLES: |
     # Convert dictionary to TOML string
-    {{ config_dict | arillso.system.to_toml }}
+    - name: Generate TOML configuration
+      ansible.builtin.set_fact:
+        toml_output: "{{ config_dict | arillso.system.to_toml }}"
 
-    # Example with data
-    {{ {'title': 'Example', 'owner': {'name': 'Admin'}} | arillso.system.to_toml }}
+    # Example with inline dictionary
+    - name: Convert inline dict to TOML
+      ansible.builtin.debug:
+        msg: "{{ {'title': 'Example', 'owner': {'name': 'Admin'}} | arillso.system.to_toml }}"
 
     # Use in template to create TOML config file
-    {{ application_config | arillso.system.to_toml }}
+    - name: Create TOML config file
+      ansible.builtin.template:
+        src: config.toml.j2
+        dest: /etc/app/config.toml
+      vars:
+        toml_content: "{{ application_config | arillso.system.to_toml }}"
 
 RETURN:
     _value:

@@ -1,7 +1,7 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": [
-        "github>arillso/.github:renovate-ansible#2026-03-08"
+        "github>arillso/.github:renovate-ansible#2026-03-09"
     ],
     "packageRules": [
         {

@@ -21,6 +21,7 @@ packages_autoclean: false
 packages_list: []
 packages_repositories: []
 packages_keys: []
+packages_keys_force_update: false
 packages_gpg_keyservers:
     - keyserver.ubuntu.com
     - keys.openpgp.org

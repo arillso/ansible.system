@@ -82,8 +82,9 @@ collections:
 
 ## Documentation
 
-Full documentation is available at:
-<https://guide.arillso.io/collections/arillso/system/>
+Full documentation is available at: [guide.arillso.io][docs]
+
+[docs]: https://guide.arillso.io/collections/arillso/system/?utm_source=github&utm_medium=readme&utm_campaign=documentation
 
 **Breaking Changes in 1.0.0:**
 

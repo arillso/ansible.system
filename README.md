@@ -10,7 +10,9 @@
 
 ## Description
 
-This Ansible collection provides comprehensive system configuration and management capabilities for Linux servers. It includes unified roles for access control, package management, network configuration, firewall setup, logging, and system tuning.
+This Ansible collection provides comprehensive system configuration and management
+capabilities for Linux servers. It includes unified roles for access control,
+package management, network configuration, firewall setup, logging, and system tuning.
 
 ## Roles
 

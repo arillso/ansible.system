@@ -8,6 +8,7 @@ This plugin returns the latest tagged release version of specified public GitHub
 """
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 DOCUMENTATION = r"""
@@ -97,9 +98,7 @@ class LookupModule(LookupBase):  # pylint: disable=too-few-public-methods
 
         for repo in terms:
             if not valid_github_username_and_repo_name.match(repo):
-                raise AnsibleParserError(
-                    f"Repo name is incorrectly formatted: {to_text(repo)}"
-                )
+                raise AnsibleParserError(f"Repo name is incorrectly formatted: {to_text(repo)}")
 
             display.debug(f"Github version lookup term: '{to_text(repo)}'")
 
@@ -114,9 +113,7 @@ class LookupModule(LookupBase):  # pylint: disable=too-few-public-methods
                 if version:
                     versions.append(version)
                 else:
-                    raise AnsibleError(
-                        "Error extracting version from Github API response."
-                    )
+                    raise AnsibleError("Error extracting version from Github API response.")
             except JSONDecodeError as e:
                 raise AnsibleError(
                     f"Error parsing JSON from Github API response: {to_native(e)}"

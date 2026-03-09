@@ -77,9 +77,7 @@ def to_toml(data):
     if TOMLW_IMPORT_ERROR:
         raise AnsibleFilterError(TOMLW_IMPORT_ERROR)
     if not isinstance(data, Mapping):
-        raise AnsibleFilterError(
-            f"to_toml requires a dict, received: {type(data).__name__}"
-        )
+        raise AnsibleFilterError(f"to_toml requires a dict, received: {type(data).__name__}")
     try:
         return to_text(tomlw.dumps(data), errors="surrogate_or_strict")
     except Exception as e:
@@ -103,9 +101,7 @@ def to_nice_toml(data):
     if TOMLW_IMPORT_ERROR:
         raise AnsibleFilterError(TOMLW_IMPORT_ERROR)
     if not isinstance(data, Mapping):
-        raise AnsibleFilterError(
-            f"to_nice_toml requires a dict, received: {type(data).__name__}"
-        )
+        raise AnsibleFilterError(f"to_nice_toml requires a dict, received: {type(data).__name__}")
 
     def format_toml_value(value):
         """

@@ -1,14 +1,14 @@
 # Ansible
 ansible-core>=2.18.0
-ansible-lint>=26.2.0
+ansible-lint>=26.3.0
 
 # Linting and Formatting
 yamllint>=1.38.0
 ruff>=0.15.5
-black>=26.1.0
+black>=26.3.0
 
 # Testing
-molecule>=26.2.0
+molecule>=26.3.0
 molecule-plugins[docker]>=25.8.12
 pytest>=9.0.2
 pytest-ansible>=26.2.0

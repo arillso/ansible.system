@@ -19,5 +19,5 @@ sphinx>=7.4.7
 sphinx-rtd-theme>=3.1.0
 
 # Runtime - TOML support for filter plugins
-tomli-w>=1.0.0
-tomli>=2.0.0; python_version < "3.11"
+tomli-w>=1.2.0
+tomli>=2.4.0; python_version < "3.11"

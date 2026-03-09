@@ -19,6 +19,9 @@ description:
     - Upon execution, it returns a detailed list of packages with information on current and available versions,
       aiding in the assessment of pending updates.
 author: "arillso (@arillso) <hello@arillso.io>"
+notes:
+    - This module requires root privileges to update the APT cache.
+    - Use C(become=true) when calling this module.
 """
 
 EXAMPLES = r"""
@@ -76,7 +79,16 @@ def main():
 
     try:
         cache = apt.Cache()
-        cache.update(fetch_progress=apt.progress.base.AcquireProgress())
+        try:
+            cache.update(fetch_progress=apt.progress.base.AcquireProgress())
+        except apt.LockFailedException:
+            module.fail_json(
+                msg="This module requires root privileges (become: true)"
+            )
+        except PermissionError:
+            module.fail_json(
+                msg="This module requires root privileges (become: true)"
+            )
         cache.open(None)
 
         for pkg in cache:

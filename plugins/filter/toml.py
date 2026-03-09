@@ -26,7 +26,7 @@ if sys.version_info >= (3, 11):
 else:
     try:
         import tomli as tomllib
-    except ImportError as exc:
+    except ImportError:
         tomllib = None
         TOMLLIB_IMPORT_ERROR = 'The Python library "tomli" is required for reading TOML.'
 
@@ -36,7 +36,7 @@ except ImportError:
     try:
         # pylint: disable=import-self
         import toml as tomlw
-    except ImportError as exc:
+    except ImportError:
         tomlw = None
         TOMLW_IMPORT_ERROR = 'A Python library for writing TOML is required ("tomli-w" or "toml").'
 

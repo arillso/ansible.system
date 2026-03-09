@@ -49,18 +49,23 @@
       - _pkg_key_item.keyring is defined
       - _pkg_key_item.state | default('present') == 'present'
       - _pkg_key_item.dearmor | default(false)
+      - not (_pkg_key_item.keyring |
+        default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
+                '-keyring.gpg')) is file
   register: _packages_keys_downloaded_url_keyring_dearmor
   become: true
 
 - name: Dearmor APT signing keys (URL with keyring)
   ansible.builtin.shell:
       cmd: >-
+          set -o pipefail &&
+          _tmp="/tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc" &&
+          trap 'rm -f "$_tmp"' EXIT &&
           gpg --dearmor -o
           {{ _pkg_key_item.keyring |
              default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
                      '-keyring.gpg') | quote }}
-          < /tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc &&
-          rm -f /tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc
+          < "$_tmp"
       executable: /bin/bash
       creates: >-
           {{ _pkg_key_item.keyring |
@@ -133,17 +138,21 @@
       - _pkg_key_item.keyring is not defined
       - _pkg_key_item.state | default('present') == 'present'
       - _pkg_key_item.dearmor | default(false)
+      - not ('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
+        '-keyring.gpg') is file
   register: _packages_keys_downloaded_url_dearmor
   become: true
 
 - name: Dearmor APT signing keys (URL without keyring)
   ansible.builtin.shell:
       cmd: >-
+          set -o pipefail &&
+          _tmp="/tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc" &&
+          trap 'rm -f "$_tmp"' EXIT &&
           gpg --dearmor -o
           {{ ('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
               '-keyring.gpg') | quote }}
-          < /tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc &&
-          rm -f /tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc
+          < "$_tmp"
       executable: /bin/bash
       creates: "/usr/share/keyrings/{{ _pkg_key_item.name | default('custom') }}-keyring.gpg"
   loop: "{{ packages_keys }}"
@@ -236,18 +245,23 @@
       - packages_keys | length > 0
       - _pkg_key_item.data is defined
       - _pkg_key_item.state | default('present') == 'present'
+      - not (_pkg_key_item.keyring |
+        default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom-data')) +
+                '-keyring.gpg')) is file
   register: _packages_keys_data_written
   become: true
 
 - name: Dearmor APT signing keys from data
   ansible.builtin.shell:
       cmd: >-
+          set -o pipefail &&
+          _tmp="/tmp/{{ _pkg_key_item.name | default('custom-data') }}-armored.asc" &&
+          trap 'rm -f "$_tmp"' EXIT &&
           gpg --dearmor -o
           {{ (_pkg_key_item.keyring |
               default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom-data')) +
                       '-keyring.gpg')) | quote }}
-          < /tmp/{{ _pkg_key_item.name | default('custom-data') }}-armored.asc &&
-          rm -f /tmp/{{ _pkg_key_item.name | default('custom-data') }}-armored.asc
+          < "$_tmp"
       executable: /bin/bash
       creates: >-
           {{ _pkg_key_item.keyring |

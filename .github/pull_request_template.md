@@ -17,6 +17,7 @@
 ## Related Issue
 
 <!-- Link to the issue this PR addresses -->
+
 Fixes #(issue number)
 
 ## Which Role(s) Are Affected?
@@ -55,10 +56,12 @@ Fixes #(issue number)
 ### Test Environment
 
 - **OS:** <!-- e.g., Ubuntu 22.04 -->
-- **Ansible Version:** <!-- e.g., 2.16.0 -->
+- **Ansible Version:** <!-- e.g., 2.18.0 -->
 - **Collection Version:** <!-- e.g., 1.0.0 -->
 
 ### Test Steps
+
+<!-- Describe how you tested your changes -->
 <!-- Describe how you tested your changes -->
 
 1.

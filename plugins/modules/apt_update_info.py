@@ -10,6 +10,7 @@ providing current and available versions for each package.
 """
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 DOCUMENTATION = r"""
@@ -62,6 +63,7 @@ from ansible.module_utils.basic import AnsibleModule  # noqa: E402
 try:
     import apt  # noqa: E402
     import apt.progress.text  # noqa: E402
+
     HAS_APT = True
 except ImportError:
     HAS_APT = False

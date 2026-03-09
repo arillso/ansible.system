@@ -1,6 +1,7 @@
 # Ansible Role: tuning
 
-Comprehensive system performance tuning for Linux systems including sysctl parameters, I/O schedulers, CPU governors, and resource limits.
+Comprehensive system performance tuning for Linux systems including sysctl parameters,
+I/O schedulers, CPU governors, and resource limits.
 
 ## Features
 

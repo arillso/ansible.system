@@ -93,9 +93,7 @@ class FilterModule(object):
             result = self._validate_config(firewall_host, "firewall_host")
 
         if self._debug_enabled:
-            self._debug_print(
-                f"Final result: {json.dumps(result, indent=2, default=str)}"
-            )
+            self._debug_print(f"Final result: {json.dumps(result, indent=2, default=str)}")
 
         return result
 
@@ -113,9 +111,7 @@ class FilterModule(object):
         validated_tables = []
 
         for i, table_config in enumerate(config):
-            self._debug_print(
-                f"Validating {config_name}[{i}]: type={type(table_config)}"
-            )
+            self._debug_print(f"Validating {config_name}[{i}]: type={type(table_config)}")
 
             if not isinstance(table_config, dict):
                 self._debug_print(
@@ -129,37 +125,27 @@ class FilterModule(object):
 
             table = table_config["table"]
             if not isinstance(table, dict):
-                self._debug_print(
-                    f"WARNING: {config_name}[{i}].table is not a dict: {type(table)}"
-                )
+                self._debug_print(f"WARNING: {config_name}[{i}].table is not a dict: {type(table)}")
                 continue
 
             if "name" not in table or "family" not in table:
-                self._debug_print(
-                    f"WARNING: {config_name}[{i}].table missing name/family"
-                )
+                self._debug_print(f"WARNING: {config_name}[{i}].table missing name/family")
                 continue
 
             # Normalize chains
             chains = table.get("chains", [])
             if not isinstance(chains, list):
-                self._debug_print(
-                    f"WARNING: {config_name}[{i}].table.chains is not a list"
-                )
+                self._debug_print(f"WARNING: {config_name}[{i}].table.chains is not a list")
                 continue
 
             normalized_chains = []
             for j, chain in enumerate(chains):
                 if not isinstance(chain, dict):
-                    self._debug_print(
-                        f"WARNING: {config_name}[{i}].chains[{j}] is not a dict"
-                    )
+                    self._debug_print(f"WARNING: {config_name}[{i}].chains[{j}] is not a dict")
                     continue
 
                 if "name" not in chain:
-                    self._debug_print(
-                        f"WARNING: {config_name}[{i}].chains[{j}] missing name"
-                    )
+                    self._debug_print(f"WARNING: {config_name}[{i}].chains[{j}] missing name")
                     continue
 
                 # Normalize chain with defaults
@@ -356,9 +342,7 @@ class FilterModule(object):
             if "-" in port_value and not port_value.startswith("{"):
                 # Check if it's a numeric port range like "1000-2000"
                 range_parts = port_value.split("-")
-                if len(range_parts) == 2 and all(
-                    part.strip().isdigit() for part in range_parts
-                ):
+                if len(range_parts) == 2 and all(part.strip().isdigit() for part in range_parts):
                     return port_value  # It's a valid port range
                 else:
                     return port_value  # It's a service name or other string

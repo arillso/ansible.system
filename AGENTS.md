@@ -2,7 +2,9 @@
 
 ## Context
 
-This is an Ansible collection that provides roles for system configuration and management. The collection includes roles for access control, package management, network configuration, firewall setup, logging, systemd services, and system tuning.
+This is an Ansible collection that provides roles for system configuration and management.
+The collection includes roles for access control, package management, network configuration,
+firewall setup, logging, systemd services, and system tuning.
 
 ## Structure
 
@@ -104,6 +106,7 @@ Key roles:
    - Creates GitHub Release with changelog notes
 
 **Release Checklist:**
+
 - [ ] CHANGELOG.md updated with new version
 - [ ] galaxy.yml version updated
 - [ ] All CI tests passing

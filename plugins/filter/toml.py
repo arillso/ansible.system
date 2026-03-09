@@ -26,7 +26,7 @@ if sys.version_info >= (3, 11):
 else:
     try:
         import tomli as tomllib
-    except ImportError as exc:
+    except ImportError:
         tomllib = None
         TOMLLIB_IMPORT_ERROR = 'The Python library "tomli" is required for reading TOML.'
 
@@ -36,7 +36,7 @@ except ImportError:
     try:
         # pylint: disable=import-self
         import toml as tomlw
-    except ImportError as exc:
+    except ImportError:
         tomlw = None
         TOMLW_IMPORT_ERROR = 'A Python library for writing TOML is required ("tomli-w" or "toml").'
 
@@ -77,9 +77,7 @@ def to_toml(data):
     if TOMLW_IMPORT_ERROR:
         raise AnsibleFilterError(TOMLW_IMPORT_ERROR)
     if not isinstance(data, Mapping):
-        raise AnsibleFilterError(
-            f"to_toml requires a dict, received: {type(data).__name__}"
-        )
+        raise AnsibleFilterError(f"to_toml requires a dict, received: {type(data).__name__}")
     try:
         return to_text(tomlw.dumps(data), errors="surrogate_or_strict")
     except Exception as e:
@@ -103,9 +101,7 @@ def to_nice_toml(data):
     if TOMLW_IMPORT_ERROR:
         raise AnsibleFilterError(TOMLW_IMPORT_ERROR)
     if not isinstance(data, Mapping):
-        raise AnsibleFilterError(
-            f"to_nice_toml requires a dict, received: {type(data).__name__}"
-        )
+        raise AnsibleFilterError(f"to_nice_toml requires a dict, received: {type(data).__name__}")
 
     def format_toml_value(value):
         """

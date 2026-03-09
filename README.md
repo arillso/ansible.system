@@ -1,10 +1,18 @@
 # Ansible Collection: arillso.system
 
-[![license](https://img.shields.io/github/license/mashape/apistatus.svg?style=popout-square)](LICENSE) [![Ansible Galaxy](http://img.shields.io/badge/ansible--galaxy-arillso.system-blue.svg?style=popout-square)](https://galaxy.ansible.com/arillso/system)
+[![license][license-badge]][license-url]
+[![Ansible Galaxy][galaxy-badge]][galaxy-url]
+
+[license-badge]: https://img.shields.io/github/license/mashape/apistatus.svg?style=popout-square
+[license-url]: LICENSE
+[galaxy-badge]: http://img.shields.io/badge/ansible--galaxy-arillso.system-blue.svg?style=popout-square
+[galaxy-url]: https://galaxy.ansible.com/arillso/system
 
 ## Description
 
-This Ansible collection provides comprehensive system configuration and management capabilities for Linux servers. It includes unified roles for access control, package management, network configuration, firewall setup, logging, and system tuning.
+This Ansible collection provides comprehensive system configuration and management
+capabilities for Linux servers. It includes unified roles for access control,
+package management, network configuration, firewall setup, logging, and system tuning.
 
 ## Roles
 
@@ -84,11 +92,12 @@ collections:
 
 Full documentation is available at: [guide.arillso.io][docs]
 
-[docs]: https://guide.arillso.io/collections/arillso/system/?utm_source=github&utm_medium=readme&utm_campaign=documentation
+[docs]: https://guide.arillso.io/collections/arillso/system/
 
 **Breaking Changes in 1.0.0:**
 
-Version 1.0.0 introduces a major restructuring. Many roles have been removed and consolidated. See [CHANGELOG.md](CHANGELOG.md) for migration guidance.
+Version 1.0.0 introduces a major restructuring. Many roles have been removed and consolidated.
+See [CHANGELOG.md](CHANGELOG.md) for migration guidance.
 
 ## License
 

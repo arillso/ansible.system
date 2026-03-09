@@ -9,6 +9,7 @@ and returns a curated list of files that match the patterns.
 """
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -84,9 +85,7 @@ class LookupModule(LookupBase):  # pylint: disable=too-few-public-methods
             else:
                 # Must be a dict
                 if not isinstance(file, dict):
-                    raise AnsibleError(
-                        f"Expected a dict but was a {type(file).__name__}"
-                    )
+                    raise AnsibleError(f"Expected a dict but was a {type(file).__name__}")
 
                 # Check index key
                 if "file" not in file:

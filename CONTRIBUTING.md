@@ -61,7 +61,7 @@ git checkout -b fix/issue-description
 
 ### Role Structure
 
-```
+```text
 roles/ROLE_NAME/
 ├── defaults/
 │   └── main.yml              # User-configurable variables
@@ -116,7 +116,7 @@ make build
 
 Write clear, descriptive commit messages:
 
-```
+```text
 Brief summary (50 chars or less)
 
 - Detailed description with bullet points

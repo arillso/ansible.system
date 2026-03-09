@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright: (c) 2024, Arillso
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -7,10 +6,6 @@ Lookup plugin for Ansible to curate a list of files based on specific patterns.
 This module takes a list of files and patterns, compares them,
 and returns a curated list of files that match the patterns.
 """
-
-from __future__ import absolute_import, division, print_function
-
-__metaclass__ = type
 
 DOCUMENTATION = """
     name: environment_files

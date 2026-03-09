@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 # Copyright: (c) 2024, Arillso
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -9,10 +8,6 @@ Ansible module for checking if the system requires a reboot.
 This module assesses the system state to determine if a reboot is required,
 typically useful after applying package updates or system changes that necessitate a restart.
 """
-
-from __future__ import absolute_import, division, print_function
-
-__metaclass__ = type
 
 DOCUMENTATION = r"""
 ---

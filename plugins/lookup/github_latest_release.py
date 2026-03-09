@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright: (c) 2024, Arillso
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -6,10 +5,6 @@
 Lookup plugin for Ansible to fetch the latest release version from GitHub repositories.
 This plugin returns the latest tagged release version of specified public GitHub repositories.
 """
-
-from __future__ import absolute_import, division, print_function
-
-__metaclass__ = type
 
 DOCUMENTATION = r"""
 name: github_latest_release

@@ -8,7 +8,7 @@ import json
 import os
 
 
-class FilterModule(object):
+class FilterModule:
     """Ansible filter plugins for nftables YAML structure processing"""
 
     def filters(self):
@@ -183,7 +183,7 @@ class FilterModule(object):
 
         return validated_tables
 
-    def rule_to_nft(self, rule_dict):
+    def rule_to_nft(self, rule_dict):  # noqa: C901
         """Convert YAML rule format to nftables syntax"""
         if not isinstance(rule_dict, dict):
             return str(rule_dict)

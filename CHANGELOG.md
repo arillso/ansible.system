@@ -20,8 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Migrate CI workflow to reusable org-level workflows from `arillso/.github`
 - Migrate publish workflow to reusable `release-ansible-collection.yml`
 - Update minimum Python version from 3.11 to 3.12 (required by Sphinx 9.1+)
-- Update dependencies: ansible-lint v26, black v26, molecule v26, pytest-ansible v26,
-  pytest-cov v7, pytest v9, sphinx v9.1
+- Update dependencies: ansible-lint v26.3, black v26, molecule v26, molecule-plugins v25,
+  pytest v9, pytest-ansible v26, pytest-cov v7, sphinx v9.1
 - Consolidate Python linter configuration into `pyproject.toml`
 - Update GitHub Actions dependencies
 - Improve README badge formatting with reference-style links

@@ -21,13 +21,13 @@ description:
 author: "arillso (@arillso) <hello@arillso.io>"
 notes:
     - This module requires root privileges to update the APT cache.
-    - Use C(become: true) when calling this module.
+    - Use C(become=true) when calling this module.
 """
 
 EXAMPLES = r"""
 - name: Get list of updatable packages
-  arillso.system.apt_update_info:
   become: true
+  arillso.system.apt_update_info:
   register: apt_updates
 
 - name: Display updatable packages

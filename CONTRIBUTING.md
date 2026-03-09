@@ -5,7 +5,7 @@ Thank you for your interest in contributing! This document provides guidelines a
 ## Prerequisites
 
 - Ansible >= 2.18
-- Python >= 3.11
+- Python >= 3.12
 - Git
 - Docker (for testing)
 

@@ -9,7 +9,7 @@ black>=26.1.0
 
 # Testing
 molecule>=26.2.0
-molecule-plugins[docker]>=23.7.0
+molecule-plugins[docker]>=25.8.12
 pytest>=9.0.2
 pytest-ansible>=26.2.0
 pytest-cov>=7.0.0

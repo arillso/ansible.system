@@ -32,7 +32,7 @@ EXAMPLES = r"""
 
 - name: Display reboot requirement
   debug:
-    msg: "System reboot required: {{ reboot_status.reboot }}"
+      msg: "System reboot required: {{ reboot_status.reboot }}"
 
 - name: Reboot system if needed
   reboot:

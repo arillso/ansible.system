@@ -33,7 +33,7 @@ EXAMPLES = r"""
 
 - name: Display updatable packages
   debug:
-    var: apt_updates.packages
+      var: apt_updates.packages
 """
 
 RETURN = r"""

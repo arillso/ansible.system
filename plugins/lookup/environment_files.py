@@ -17,26 +17,26 @@ DOCUMENTATION = """
     author: arillso (@arillso)
     short_description: returns a curated files list
     description:
-      - Takes a files list and returns it curated.
+        - Takes a files list and returns it curated.
     options:
-      _terms:
-        description:
-          - First item is the list of files, second is the patterns dict.
-        required: true
+        _terms:
+            description:
+                - First item is the list of files, second is the patterns dict.
+            required: true
 """
 
 EXAMPLES = """
 # Example usage in a playbook
 - name: Curate files based on patterns
   debug:
-    msg: "{{ lookup('arillso.system.environment_files', files_list, patterns_dict) }}"
+      msg: "{{ lookup('arillso.system.environment_files', files_list, patterns_dict) }}"
 """
 
 RETURN = """
-  _list:
-    description: A curated list of files matching the patterns.
-    type: list
-    elements: dict
+    _list:
+        description: A curated list of files matching the patterns.
+        type: list
+        elements: dict
 """
 
 from ansible.errors import AnsibleError  # noqa: E402

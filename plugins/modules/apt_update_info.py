@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 # Copyright: (c) 2024, Arillso
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -8,10 +7,6 @@ Ansible module to retrieve a list of updatable packages on an APT-based system.
 This module fetches and lists all packages that are available for update,
 providing current and available versions for each package.
 """
-
-from __future__ import absolute_import, division, print_function
-
-__metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
@@ -33,7 +28,7 @@ EXAMPLES = r"""
 
 - name: Display updatable packages
   debug:
-    var: apt_updates.packages
+      var: apt_updates.packages
 """
 
 RETURN = r"""

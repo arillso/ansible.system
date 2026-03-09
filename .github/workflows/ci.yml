@@ -25,6 +25,7 @@ jobs:
         with:
             collection_namespace: arillso
             collection_name: system
+            enable_unit_tests: true
 
     security-secrets:
         uses: arillso/.github/.github/workflows/security-secrets.yml@2026-03-08

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright: (c) 2024, Arillso
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -8,35 +7,31 @@ This module takes a list of files and patterns, compares them,
 and returns a curated list of files that match the patterns.
 """
 
-from __future__ import absolute_import, division, print_function
-
-__metaclass__ = type
-
 DOCUMENTATION = """
     name: environment_files
     author: arillso (@arillso)
     short_description: returns a curated files list
     description:
-      - Takes a files list and returns it curated.
+        - Takes a files list and returns it curated.
     options:
-      _terms:
-        description:
-          - First item is the list of files, second is the patterns dict.
-        required: true
+        _terms:
+            description:
+                - First item is the list of files, second is the patterns dict.
+            required: true
 """
 
 EXAMPLES = """
 # Example usage in a playbook
 - name: Curate files based on patterns
   debug:
-    msg: "{{ lookup('arillso.system.environment_files', files_list, patterns_dict) }}"
+      msg: "{{ lookup('arillso.system.environment_files', files_list, patterns_dict) }}"
 """
 
 RETURN = """
-  _list:
-    description: A curated list of files matching the patterns.
-    type: list
-    elements: dict
+    _list:
+        description: A curated list of files matching the patterns.
+        type: list
+        elements: dict
 """
 
 from ansible.errors import AnsibleError  # noqa: E402

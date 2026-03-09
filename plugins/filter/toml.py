@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Ansible Filter Plugin for TOML conversion.
 
@@ -7,9 +5,7 @@ This module provides filters for converting between TOML strings and Python obje
 with support for Python versions before and after 3.11.
 """
 
-from __future__ import absolute_import, division, print_function
-
-import sys
+import tomllib
 from datetime import datetime
 
 # pylint: disable=import-error
@@ -17,18 +13,8 @@ from ansible.errors import AnsibleFilterError
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping
 
-# Importing libraries for reading and writing TOML
-TOMLLIB_IMPORT_ERROR = None
+# Importing libraries for writing TOML
 TOMLW_IMPORT_ERROR = None
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    try:
-        import tomli as tomllib
-    except ImportError:
-        tomllib = None
-        TOMLLIB_IMPORT_ERROR = 'The Python library "tomli" is required for reading TOML.'
 
 try:
     import tomli_w as tomlw
@@ -52,8 +38,6 @@ def from_toml(toml_string):
     :raises AnsibleFilterError: If the input string is not a valid TOML string or another
         error occurs.
     """
-    if TOMLLIB_IMPORT_ERROR:
-        raise AnsibleFilterError(TOMLLIB_IMPORT_ERROR)
     if not isinstance(toml_string, str):
         raise AnsibleFilterError(
             f"from_toml requires a string, received: {type(toml_string).__name__}"
@@ -84,7 +68,7 @@ def to_toml(data):
         raise AnsibleFilterError(f"Error generating TOML: {e}") from e
 
 
-def to_nice_toml(data):
+def to_nice_toml(data):  # noqa: C901
     """
     Convert a Python dictionary to a nicely formatted TOML string.
 

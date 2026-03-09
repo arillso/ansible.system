@@ -57,7 +57,7 @@ from ansible.module_utils.basic import AnsibleModule  # noqa: E402
 
 try:
     import apt  # noqa: E402
-    import apt.progress.text  # noqa: E402
+    import apt.progress.base  # noqa: E402
 
     HAS_APT = True
 except ImportError:
@@ -76,7 +76,7 @@ def main():
 
     try:
         cache = apt.Cache()
-        cache.update(fetch_progress=apt.progress.text.AcquireProgress())
+        cache.update(fetch_progress=apt.progress.base.AcquireProgress())
         cache.open(None)
 
         for pkg in cache:

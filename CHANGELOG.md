@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-03-09
+
+### Added
+
+- Claude AI code review integration for pull requests
+- Claude AI workflow for issue and PR comment automation
+- CONTRIBUTING.md with development guidelines and coding standards
+
+### Changed
+
+- Migrate CI workflow to reusable org-level workflows from `arillso/.github`
+- Migrate publish workflow to reusable `release-ansible-collection.yml`
+- Update minimum Python version from 3.11 to 3.12 (required by Sphinx 9.1+)
+- Update dependencies: ansible-lint v26.3, black v26, molecule v26, molecule-plugins v25,
+  pytest v9, pytest-ansible v26, pytest-cov v7, sphinx v9.1
+- Consolidate Python linter configuration into `pyproject.toml`
+- Update GitHub Actions dependencies
+- Improve README badge formatting with reference-style links
+- Update GitHub issue and pull request templates
+
+### Removed
+
+- Remove standalone linter config files (`.flake8`, `.isort.cfg`, `.mypy.ini`,
+  `.pylintrc`, `.ruff.toml`, `pyrightconfig.json`, `.yamllint.yml`, `.markdownlint.jsonc`)
+- Remove `tomli` runtime dependency (use stdlib `tomllib` with Python 3.12+)
+- Remove inaccurate `windows` tag from `galaxy.yml`
+
+### Fixed
+
+- Fix Python plugin lint errors (remove legacy coding comments, `__future__` imports,
+  `__metaclass__` assignments, and `object` base class)
+- Fix YAML indentation in filter plugin documentation files (2-space to 4-space)
+- Fix markdown lint errors in README, AGENTS.md, and template files
+- Add `no_log` to user management task when password is defined
+- Fix `apt_update_info` module using text progress that pollutes Ansible JSON output
+
 ## [1.0.5] - 2026-01-16
 
 ### Fixed
@@ -137,3 +173,12 @@ Users need to migrate to the new role structure. See role documentation for migr
 ## Previous Releases
 
 For releases prior to this changelog format change, see: <https://github.com/arillso/ansible.system/releases>
+
+[Unreleased]: https://github.com/arillso/ansible.system/compare/1.1.0...HEAD
+[1.1.0]: https://github.com/arillso/ansible.system/compare/1.0.5...1.1.0
+[1.0.5]: https://github.com/arillso/ansible.system/compare/1.0.4...1.0.5
+[1.0.4]: https://github.com/arillso/ansible.system/compare/1.0.3...1.0.4
+[1.0.3]: https://github.com/arillso/ansible.system/compare/1.0.2...1.0.3
+[1.0.2]: https://github.com/arillso/ansible.system/compare/1.0.1...1.0.2
+[1.0.1]: https://github.com/arillso/ansible.system/compare/1.0.0...1.0.1
+[1.0.0]: https://github.com/arillso/ansible.system/releases/tag/1.0.0

@@ -21,7 +21,6 @@
       mode: "0644"
       owner: root
       group: root
-      backup: true
       timeout: 30
   loop: "{{ packages_keys }}"
   loop_control:
@@ -73,7 +72,7 @@
   loop_control:
       loop_var: _pkg_key_item
   when:
-      - packages_keys | length > 0
+      - _packages_keys_added_url_keyring_dearmor is changed
       - _pkg_key_item.url is defined
       - _pkg_key_item.keyring is defined
       - _pkg_key_item.state | default('present') == 'present'
@@ -87,7 +86,6 @@
       mode: "0644"
       owner: root
       group: root
-      backup: true
       timeout: 30
   loop: "{{ packages_keys }}"
   loop_control:
@@ -132,7 +130,7 @@
   loop_control:
       loop_var: _pkg_key_item
   when:
-      - packages_keys | length > 0
+      - _packages_keys_added_url_dearmor is changed
       - _pkg_key_item.url is defined
       - _pkg_key_item.keyring is not defined
       - _pkg_key_item.state | default('present') == 'present'
@@ -143,16 +141,17 @@
   ansible.builtin.shell:
       cmd: >-
           set -o pipefail &&
-          gpg --no-default-keyring --keyring /tmp/{{ _pkg_key_item.id }}-temp.gpg
+          _tmpfile=$(mktemp --suffix=.gpg) &&
+          trap 'rm -f "$_tmpfile" "${_tmpfile}~"' EXIT &&
+          gpg --no-default-keyring --keyring "$_tmpfile"
           --keyserver {{ _pkg_key_item.keyserver | quote }}
           --recv-keys {{ _pkg_key_item.id | quote }} &&
-          gpg --no-default-keyring --keyring /tmp/{{ _pkg_key_item.id }}-temp.gpg
+          gpg --no-default-keyring --keyring "$_tmpfile"
           --export {{ _pkg_key_item.id | quote }} |
           gpg --dearmor -o
           {{ (_pkg_key_item.keyring |
               default('/usr/share/keyrings/' + (_pkg_key_item.name | default(_pkg_key_item.id)) +
-                      '-keyring.gpg')) | quote }} &&
-          rm -f /tmp/{{ _pkg_key_item.id }}-temp.gpg /tmp/{{ _pkg_key_item.id }}-temp.gpg~
+                      '-keyring.gpg')) | quote }}
       executable: /bin/bash
       creates: >-
           {{ _pkg_key_item.keyring |
@@ -182,7 +181,7 @@
   loop_control:
       loop_var: _pkg_key_item
   when:
-      - packages_keys | length > 0
+      - _packages_keys_added_keyserver is changed
       - _pkg_key_item.keyserver is defined
       - _pkg_key_item.id is defined
       - _pkg_key_item.state | default('present') == 'present'
@@ -192,7 +191,7 @@
   ansible.builtin.shell:
       cmd: >-
           set -o pipefail &&
-          echo {{ _pkg_key_item.data | quote }} |
+          printf '%s' {{ _pkg_key_item.data | quote }} |
           gpg --dearmor -o
           {{ (_pkg_key_item.keyring |
               default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom-data')) +
@@ -225,7 +224,7 @@
   loop_control:
       loop_var: _pkg_key_item
   when:
-      - packages_keys | length > 0
+      - _packages_keys_added_data is changed
       - _pkg_key_item.data is defined
       - _pkg_key_item.state | default('present') == 'present'
   become: true

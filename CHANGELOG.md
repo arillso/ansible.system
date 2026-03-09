@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove standalone linter config files (`.flake8`, `.isort.cfg`, `.mypy.ini`,
   `.pylintrc`, `.ruff.toml`, `pyrightconfig.json`, `.yamllint.yml`, `.markdownlint.jsonc`)
 - Remove `tomli` runtime dependency (use stdlib `tomllib` with Python 3.12+)
+- Remove inaccurate `windows` tag from `galaxy.yml`
 
 ### Fixed
 
@@ -39,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `__metaclass__` assignments, and `object` base class)
 - Fix YAML indentation in filter plugin documentation files (2-space to 4-space)
 - Fix markdown lint errors in README, AGENTS.md, and template files
+- Add `no_log` to user management task when password is defined
+- Fix `apt_update_info` module using text progress that pollutes Ansible JSON output
 
 ## [1.0.5] - 2026-01-16
 

@@ -15,6 +15,7 @@
       password: "{{ _access_user_item.password | default(omit) }}"
       update_password: "{{ _access_user_item.update_password | default(access_user_update_password_default) }}"
       remove: "{{ _access_user_item.remove | default(false) }}"
+  no_log: "{{ _access_user_item.password is defined }}"
   become: true
   loop: "{{ access_users }}"
   loop_control:

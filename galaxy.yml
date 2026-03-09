@@ -18,7 +18,6 @@ tags:
     - apt
     - systemd
     - linux
-    - windows
 
 dependencies:
     ansible.posix: ">=2.0.0"

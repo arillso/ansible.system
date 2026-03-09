@@ -34,14 +34,33 @@
   register: _packages_keys_added_url_keyring
   become: true
 
-- name: Download and dearmor APT signing keys (URL with keyring and dearmor)
+- name: Download APT signing keys for dearmoring (URL with keyring)
+  ansible.builtin.get_url:
+      url: "{{ _pkg_key_item.url }}"
+      dest: "/tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc"
+      mode: "0600"
+      timeout: 30
+  loop: "{{ packages_keys }}"
+  loop_control:
+      loop_var: _pkg_key_item
+  when:
+      - packages_keys | length > 0
+      - _pkg_key_item.url is defined
+      - _pkg_key_item.keyring is defined
+      - _pkg_key_item.state | default('present') == 'present'
+      - _pkg_key_item.dearmor | default(false)
+  register: _packages_keys_downloaded_url_keyring_dearmor
+  become: true
+
+- name: Dearmor APT signing keys (URL with keyring)
   ansible.builtin.shell:
       cmd: >-
-          set -o pipefail &&
-          curl -fsSL {{ _pkg_key_item.url | quote }} | gpg --dearmor -o
+          gpg --dearmor -o
           {{ _pkg_key_item.keyring |
              default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
                      '-keyring.gpg') | quote }}
+          < /tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc &&
+          rm -f /tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc
       executable: /bin/bash
       creates: >-
           {{ _pkg_key_item.keyring |
@@ -99,13 +118,32 @@
   register: _packages_keys_added_url
   become: true
 
-- name: Download and dearmor APT signing keys (URL without keyring, dearmor)
+- name: Download APT signing keys for dearmoring (URL without keyring)
+  ansible.builtin.get_url:
+      url: "{{ _pkg_key_item.url }}"
+      dest: "/tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc"
+      mode: "0600"
+      timeout: 30
+  loop: "{{ packages_keys }}"
+  loop_control:
+      loop_var: _pkg_key_item
+  when:
+      - packages_keys | length > 0
+      - _pkg_key_item.url is defined
+      - _pkg_key_item.keyring is not defined
+      - _pkg_key_item.state | default('present') == 'present'
+      - _pkg_key_item.dearmor | default(false)
+  register: _packages_keys_downloaded_url_dearmor
+  become: true
+
+- name: Dearmor APT signing keys (URL without keyring)
   ansible.builtin.shell:
       cmd: >-
-          set -o pipefail &&
-          curl -fsSL {{ _pkg_key_item.url | quote }} | gpg --dearmor -o
+          gpg --dearmor -o
           {{ ('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
               '-keyring.gpg') | quote }}
+          < /tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc &&
+          rm -f /tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc
       executable: /bin/bash
       creates: "/usr/share/keyrings/{{ _pkg_key_item.name | default('custom') }}-keyring.gpg"
   loop: "{{ packages_keys }}"
@@ -147,8 +185,7 @@
           --keyserver {{ _pkg_key_item.keyserver | quote }}
           --recv-keys {{ _pkg_key_item.id | quote }} &&
           gpg --no-default-keyring --keyring "$_tmpfile"
-          --export {{ _pkg_key_item.id | quote }} |
-          gpg --dearmor -o
+          --export {{ _pkg_key_item.id | quote }} >
           {{ (_pkg_key_item.keyring |
               default('/usr/share/keyrings/' + (_pkg_key_item.name | default(_pkg_key_item.id)) +
                       '-keyring.gpg')) | quote }}
@@ -187,15 +224,30 @@
       - _pkg_key_item.state | default('present') == 'present'
   become: true
 
-- name: Import APT signing keys from data
+- name: Write APT signing key data to temp file
+  ansible.builtin.copy:
+      content: "{{ _pkg_key_item.data }}"
+      dest: "/tmp/{{ _pkg_key_item.name | default('custom-data') }}-armored.asc"
+      mode: "0600"
+  loop: "{{ packages_keys }}"
+  loop_control:
+      loop_var: _pkg_key_item
+  when:
+      - packages_keys | length > 0
+      - _pkg_key_item.data is defined
+      - _pkg_key_item.state | default('present') == 'present'
+  register: _packages_keys_data_written
+  become: true
+
+- name: Dearmor APT signing keys from data
   ansible.builtin.shell:
       cmd: >-
-          set -o pipefail &&
-          printf '%s' {{ _pkg_key_item.data | quote }} |
           gpg --dearmor -o
           {{ (_pkg_key_item.keyring |
               default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom-data')) +
                       '-keyring.gpg')) | quote }}
+          < /tmp/{{ _pkg_key_item.name | default('custom-data') }}-armored.asc &&
+          rm -f /tmp/{{ _pkg_key_item.name | default('custom-data') }}-armored.asc
       executable: /bin/bash
       creates: >-
           {{ _pkg_key_item.keyring |
@@ -233,7 +285,8 @@
   ansible.builtin.file:
       path: >-
           {{ _pkg_key_item.keyring |
-             default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
+             default('/usr/share/keyrings/' + (_pkg_key_item.name |
+                     default(_pkg_key_item.id | default('custom'))) +
                      '-keyring.gpg') }}
       state: absent
   loop: "{{ packages_keys }}"

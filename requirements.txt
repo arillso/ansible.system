@@ -12,7 +12,7 @@ molecule>=6.0.3
 molecule-plugins[docker]>=23.7.0
 pytest>=7.4.4
 pytest-ansible>=4.1.1
-pytest-cov>=5.0.0
+pytest-cov>=7.0.0
 
 # Documentation
 sphinx>=7.4.7

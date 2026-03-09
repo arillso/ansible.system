@@ -20,8 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Migrate CI workflow to reusable org-level workflows from `arillso/.github`
 - Migrate publish workflow to reusable `release-ansible-collection.yml`
 - Update minimum Python version from 3.11 to 3.12 (required by Sphinx 9.1+)
-- Update dependencies: ansible-lint v26, black v26, molecule v26, pytest-ansible v26
-- Update dependencies: pytest-cov v7, pytest v9, sphinx v9.1
+- Update dependencies: ansible-lint v26, black v26, molecule v26, pytest-ansible v26,
+  pytest-cov v7, pytest v9, sphinx v9.1
 - Consolidate Python linter configuration into `pyproject.toml`
 - Update GitHub Actions dependencies
 - Improve README badge formatting with reference-style links
@@ -170,3 +170,12 @@ Users need to migrate to the new role structure. See role documentation for migr
 ## Previous Releases
 
 For releases prior to this changelog format change, see: <https://github.com/arillso/ansible.system/releases>
+
+[Unreleased]: https://github.com/arillso/ansible.system/compare/1.1.0...HEAD
+[1.1.0]: https://github.com/arillso/ansible.system/compare/1.0.5...1.1.0
+[1.0.5]: https://github.com/arillso/ansible.system/compare/1.0.4...1.0.5
+[1.0.4]: https://github.com/arillso/ansible.system/compare/1.0.3...1.0.4
+[1.0.3]: https://github.com/arillso/ansible.system/compare/1.0.2...1.0.3
+[1.0.2]: https://github.com/arillso/ansible.system/compare/1.0.1...1.0.2
+[1.0.1]: https://github.com/arillso/ansible.system/compare/1.0.0...1.0.1
+[1.0.0]: https://github.com/arillso/ansible.system/releases/tag/1.0.0

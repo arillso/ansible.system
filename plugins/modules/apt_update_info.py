@@ -21,12 +21,13 @@ description:
 author: "arillso (@arillso) <hello@arillso.io>"
 notes:
     - This module requires root privileges to update the APT cache.
-    - Use C(become=true) when calling this module.
+    - Use C(become: true) when calling this module.
 """
 
 EXAMPLES = r"""
 - name: Get list of updatable packages
   arillso.system.apt_update_info:
+  become: true
   register: apt_updates
 
 - name: Display updatable packages
@@ -81,11 +82,7 @@ def main():
         cache = apt.Cache()
         try:
             cache.update(fetch_progress=apt.progress.base.AcquireProgress())
-        except apt.LockFailedException:
-            module.fail_json(
-                msg="This module requires root privileges (become: true)"
-            )
-        except PermissionError:
+        except (PermissionError, OSError):
             module.fail_json(
                 msg="This module requires root privileges (become: true)"
             )

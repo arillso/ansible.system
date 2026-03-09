@@ -25,6 +25,7 @@ jobs:
         with:
             collection_namespace: arillso
             collection_name: system
+            python_version: "3.12"
             enable_unit_tests: true
 
     security-secrets:

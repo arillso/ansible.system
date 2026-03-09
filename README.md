@@ -79,8 +79,8 @@ collections:
 
 ## Requirements
 
-- Ansible >= 2.16
-- Python >= 3.11
+- Ansible >= 2.18
+- Python >= 3.12
 
 ## Dependencies
 

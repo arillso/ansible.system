@@ -1,0 +1,25 @@
+---
+name: Claude
+
+on:
+    issue_comment:
+        types: [created]
+    pull_request_review_comment:
+        types: [created]
+    pull_request_review:
+        types: [submitted]
+    issues:
+        types: [opened]
+
+permissions:
+    contents: read
+    pull-requests: read
+    issues: read
+    id-token: write
+    actions: read
+
+jobs:
+    claude:
+        uses: arillso/.github/.github/workflows/ai-claude.yml@2026-03-08
+        secrets:
+            CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

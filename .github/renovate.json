@@ -1,4 +1,25 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": ["github>arillso/.github:renovate-ansible"]
+    "extends": [
+        "github>arillso/.github:renovate-ansible#2026-03-08"
+    ],
+    "packageRules": [
+        {
+            "matchPackageNames": ["ansible-core"],
+            "enabled": false
+        }
+    ],
+    "customManagers": [
+        {
+            "customType": "regex",
+            "managerFilePatterns": [
+                "/^roles/.*/defaults/main\\.yml$/"
+            ],
+            "matchStrings": [
+                "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+extractVersion=(?<extractVersion>\\S+))?(?:\\s+versioning=(?<versioning>\\S+))?\\s*(?:\\r?\\n|\\r).*?:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?\\s*(?:\\r?\\n|\\r|$)"
+            ],
+            "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^(?<version>.*)${{/if}}",
+            "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+        }
+    ]
 }

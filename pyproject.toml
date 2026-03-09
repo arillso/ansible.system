@@ -4,18 +4,11 @@ target-version = ['py311']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
+  \.ansible
   | \.venv
-  | _build
-  | buck-out
+  | venv
   | build
   | dist
-  | \.ansible
 )/
 '''
 
@@ -56,13 +49,13 @@ ignore = [
 [tool.ruff.lint.mccabe]
 max-complexity = 15
 
-[tool.pylint.messages_control]
-disable = [
-  "line-too-long",
-  "missing-module-docstring",
-  "invalid-name",
-  "too-few-public-methods",
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --strict-markers --tb=short --cov-report=term-missing"
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
 ]
-
-[tool.pylint.format]
-max-line-length = 100

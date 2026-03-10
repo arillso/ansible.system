@@ -21,6 +21,10 @@ packages_autoclean: false
 packages_list: []
 packages_repositories: []
 packages_keys: []
+# Force re-download and replacement of all keyring files.
+# When true, existing keyrings are removed before re-downloading,
+# allowing key rotation or renewal without manual cleanup.
+packages_keys_force_update: false
 packages_gpg_keyservers:
     - keyserver.ubuntu.com
     - keys.openpgp.org

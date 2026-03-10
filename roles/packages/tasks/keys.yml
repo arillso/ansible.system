@@ -11,6 +11,25 @@
       group: root
   become: true
 
+# Note: This task removes keyring files before re-downloading, which naturally
+# bypasses the `creates:` guard on downstream dearmor and keyserver tasks.
+- name: Remove existing keyrings for force update
+  ansible.builtin.file:
+      path: >-
+          {{ _pkg_key_item.keyring |
+             default('/usr/share/keyrings/' + (_pkg_key_item.name |
+                     default(_pkg_key_item.id | default('custom'))) +
+                     '-keyring.gpg') }}
+      state: absent
+  loop: "{{ packages_keys }}"
+  loop_control:
+      loop_var: _pkg_key_item
+  when:
+      - packages_keys_force_update
+      - packages_keys | length > 0
+      - _pkg_key_item.state | default('present') == 'present'
+  become: true
+
 - name: Download APT signing keys (URL with keyring)
   ansible.builtin.get_url:
       url: "{{ _pkg_key_item.url }}"
@@ -21,6 +40,7 @@
       mode: "0644"
       owner: root
       group: root
+      force: "{{ packages_keys_force_update | bool }}"
       timeout: 30
   loop: "{{ packages_keys }}"
   loop_control:
@@ -51,7 +71,7 @@
       - _pkg_key_item.dearmor | default(false)
       - not (_pkg_key_item.keyring |
         default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
-                '-keyring.gpg')) is file
+        '-keyring.gpg')) is file or packages_keys_force_update
   register: _packages_keys_downloaded_url_keyring_dearmor
   become: true
 
@@ -110,6 +130,7 @@
       mode: "0644"
       owner: root
       group: root
+      force: "{{ packages_keys_force_update | bool }}"
       timeout: 30
   loop: "{{ packages_keys }}"
   loop_control:
@@ -139,7 +160,7 @@
       - _pkg_key_item.state | default('present') == 'present'
       - _pkg_key_item.dearmor | default(false)
       - not ('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
-        '-keyring.gpg') is file
+        '-keyring.gpg') is file or packages_keys_force_update
   register: _packages_keys_downloaded_url_dearmor
   become: true
 
@@ -247,7 +268,7 @@
       - _pkg_key_item.state | default('present') == 'present'
       - not (_pkg_key_item.keyring |
         default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom-data')) +
-                '-keyring.gpg')) is file
+        '-keyring.gpg')) is file or packages_keys_force_update
   register: _packages_keys_data_written
   become: true
 

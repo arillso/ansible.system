@@ -19,10 +19,113 @@ argument_specs:
                 type: list
                 elements: str
                 default: []
+            network_dns_search:
+                description: "List of DNS search domains"
+                type: list
+                elements: str
+                default: []
+            network_dns_domain:
+                description: "Default DNS domain"
+                type: str
+                default: ""
+            network_dns_options:
+                description: "DNS resolver options"
+                type: list
+                elements: str
+                default: []
             network_use_systemd_resolved:
                 description: "Use systemd-resolved instead of /etc/resolv.conf"
                 type: bool
                 default: true
+            network_resolved_dns:
+                description: "DNS servers for systemd-resolved"
+                type: list
+                elements: str
+                default: []
+            network_resolved_fallback_dns:
+                description: "Fallback DNS servers for systemd-resolved"
+                type: list
+                elements: str
+                default:
+                    - 8.8.8.8
+                    - 8.8.4.4
+            network_resolved_domains:
+                description: "Search domains for systemd-resolved"
+                type: list
+                elements: str
+                default: []
+            network_resolved_llmnr:
+                description: "LLMNR setting for systemd-resolved"
+                type: str
+                default: "yes"
+            network_resolved_multicast_dns:
+                description: "Multicast DNS setting for systemd-resolved"
+                type: str
+                default: "yes"
+            network_resolved_dnssec:
+                description: "DNSSEC setting for systemd-resolved"
+                type: str
+                default: "allow-downgrade"
+            network_resolved_dns_over_tls:
+                description: "DNS-over-TLS setting for systemd-resolved"
+                type: str
+                default: "no"
+            network_resolved_cache:
+                description: "DNS cache setting for systemd-resolved"
+                type: str
+                default: "yes"
+            network_resolved_dnsstublistener:
+                description: "DNS stub listener setting for systemd-resolved"
+                type: str
+                default: "yes"
+            network_netplan_config:
+                description: "Netplan configuration dictionary"
+                type: dict
+                default: {}
+            network_netplan_filename:
+                description: "Filename for the netplan configuration"
+                type: str
+                default: "01-netcfg.yaml"
+            network_netplan_apply:
+                description: "Apply netplan configuration after writing"
+                type: bool
+                default: false
+            network_netplan_renderer:
+                description: "Netplan renderer backend"
+                type: str
+                default: "networkd"
+            network_restart_services:
+                description: "Restart network services after configuration changes"
+                type: bool
+                default: true
+            network_systemd_resolved_restart:
+                description: "Restart systemd-resolved after DNS changes"
+                type: bool
+                default: true
+            network_systemd_networkd_restart:
+                description: "Restart systemd-networkd after network changes"
+                type: bool
+                default: false
+            network_retry_count:
+                description: "Number of retry attempts for tasks"
+                type: int
+                default: 3
+            network_retry_delay:
+                description: "Delay in seconds between retry attempts"
+                type: int
+                default: 5
+            network_backup_configs:
+                description: "Create backups before modifying configuration files"
+                type: bool
+                default: true
+            network_validate_netplan:
+                description: "Validate netplan configuration before applying"
+                type: bool
+                default: true
+            network_debug_mode:
+                description: "Enable debug output for troubleshooting"
+                type: bool
+                default: false
 
     dns:
         short_description: "DNS configuration entry point"
@@ -35,6 +138,65 @@ argument_specs:
                 type: list
                 elements: str
                 required: true
+            network_dns_search:
+                description: "List of DNS search domains"
+                type: list
+                elements: str
+                default: []
+            network_dns_domain:
+                description: "Default DNS domain"
+                type: str
+                default: ""
+            network_dns_options:
+                description: "DNS resolver options"
+                type: list
+                elements: str
+                default: []
+            network_use_systemd_resolved:
+                description: "Use systemd-resolved instead of /etc/resolv.conf"
+                type: bool
+                default: true
+            network_resolved_dns:
+                description: "DNS servers for systemd-resolved"
+                type: list
+                elements: str
+                default: []
+            network_resolved_fallback_dns:
+                description: "Fallback DNS servers for systemd-resolved"
+                type: list
+                elements: str
+                default:
+                    - 8.8.8.8
+                    - 8.8.4.4
+            network_resolved_domains:
+                description: "Search domains for systemd-resolved"
+                type: list
+                elements: str
+                default: []
+            network_resolved_llmnr:
+                description: "LLMNR setting for systemd-resolved"
+                type: str
+                default: "yes"
+            network_resolved_multicast_dns:
+                description: "Multicast DNS setting for systemd-resolved"
+                type: str
+                default: "yes"
+            network_resolved_dnssec:
+                description: "DNSSEC setting for systemd-resolved"
+                type: str
+                default: "allow-downgrade"
+            network_resolved_dns_over_tls:
+                description: "DNS-over-TLS setting for systemd-resolved"
+                type: str
+                default: "no"
+            network_resolved_cache:
+                description: "DNS cache setting for systemd-resolved"
+                type: str
+                default: "yes"
+            network_resolved_dnsstublistener:
+                description: "DNS stub listener setting for systemd-resolved"
+                type: str
+                default: "yes"
 
     netplan:
         short_description: "Netplan configuration entry point"
@@ -46,3 +208,19 @@ argument_specs:
                 description: "Netplan configuration dictionary"
                 type: dict
                 required: true
+            network_netplan_filename:
+                description: "Filename for the netplan configuration"
+                type: str
+                default: "01-netcfg.yaml"
+            network_netplan_apply:
+                description: "Apply netplan configuration after writing"
+                type: bool
+                default: false
+            network_netplan_renderer:
+                description: "Netplan renderer backend"
+                type: str
+                default: "networkd"
+            network_validate_netplan:
+                description: "Validate netplan configuration before applying"
+                type: bool
+                default: true

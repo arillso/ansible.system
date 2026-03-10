@@ -71,8 +71,25 @@ facts_cache_compression_enabled: false
 facts_cache_cleanup_enabled: true
 facts_cache_cleanup_age_days: 7
 
+# System facts collection granularity
+facts_system_collect_hardware: true
+facts_system_collect_network: true
+facts_system_collect_storage: true
+facts_system_collect_performance: true
+facts_system_collect_virtualization: true
+
+# Network facts collection granularity
+facts_network_collect_interfaces: true
+facts_network_collect_routes: true
+facts_network_collect_dns: true
+facts_network_collect_firewall: true
+
 # Container runtime detection and facts configuration
 facts_container_detect_docker: true
 facts_container_detect_podman: true
 facts_container_detect_kubernetes: true
 facts_container_detect_containerd: true
+facts_container_collect_inventory: true
+facts_container_collect_health: true
+facts_container_collect_volumes: true
+facts_container_collect_networks: true

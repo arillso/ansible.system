@@ -63,3 +63,123 @@ argument_specs:
                 type: bool
                 default: true
                 description: "Require facts role for system data"
+
+            shell_role_name:
+                type: str
+                default: "shell"
+                description: "Name of this role for internal references"
+
+            shell_collection_name:
+                type: str
+                default: "arillso.system.shell"
+                description: "Fully qualified collection name for this role"
+
+            shell_version:
+                type: str
+                default: "1.0.0"
+                description: "Version of the shell role"
+
+            shell_motd_font:
+                type: str
+                default: "standard"
+                description: "Font used for figlet MOTD style"
+
+            shell_motd_show_performance:
+                type: bool
+                default: true
+                description: "Show performance metrics in MOTD"
+
+            shell_motd_show_network:
+                type: bool
+                default: true
+                description: "Show network information in MOTD"
+
+            shell_motd_show_cloud_info:
+                type: bool
+                default: true
+                description: "Show cloud provider information in MOTD"
+
+            shell_ssh_banner_show_warnings:
+                type: bool
+                default: true
+                description: "Show security warnings in SSH banner"
+
+            shell_ssh_banner_show_legal_notice:
+                type: bool
+                default: true
+                description: "Show legal notice in SSH banner"
+
+            shell_default:
+                type: str
+                default: "/bin/bash"
+                description: "Default shell for the system"
+
+            shell_configure_profiles:
+                type: bool
+                default: true
+                description: "Configure shell profile files"
+
+            shell_configure_aliases:
+                type: bool
+                default: true
+                description: "Configure shell aliases"
+
+            shell_configure_prompt:
+                type: bool
+                default: true
+                description: "Configure shell prompt"
+
+            shell_configure_history:
+                type: bool
+                default: true
+                description: "Configure shell history settings"
+
+            shell_terminal_colors_enabled:
+                type: bool
+                default: true
+                description: "Enable terminal color support"
+
+            shell_terminal_completion_enabled:
+                type: bool
+                default: true
+                description: "Enable tab completion"
+
+            shell_enable_background_processing:
+                type: bool
+                default: true
+                description: "Enable background processing for status data"
+
+            shell_status_precompute_interval:
+                type: str
+                default: "*/5"
+                description: "Cron interval for precomputing status data"
+
+            shell_status_cache_ttl:
+                type: int
+                default: 600
+                description: "Cache time-to-live in seconds for status data"
+
+            shell_status_cache_dir:
+                type: str
+                default: "/var/cache/arillso-system-shell"
+                description: "Directory for caching status data"
+
+            shell_facts_collection_name:
+                type: str
+                default: "arillso.system.facts"
+                description: "Facts collection name for gathering system data"
+
+            shell_ignore_template_errors:
+                type: bool
+                default: false
+                description: "Ignore errors when rendering templates"
+
+            shell_ignore_package_errors:
+                type: bool
+                default: true
+                description: "Ignore errors when installing packages"
+
+            shell_debug_mode:
+                type: bool
+                default: false
+                description: "Enable debug output for troubleshooting"

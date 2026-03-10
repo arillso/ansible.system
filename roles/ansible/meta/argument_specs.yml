@@ -52,9 +52,8 @@ argument_specs:
                 default: inventory/hosts
 
             ansible_host_limit:
-                description: Limit execution to specific hosts
+                description: Limit execution to specific hosts. Defaults to inventory_hostname.
                 type: str
-                default: "{{ inventory_hostname }}"
 
             ansible_extra_args:
                 description: Additional arguments to pass to ansible-pull or ansible-playbook
@@ -93,9 +92,8 @@ argument_specs:
                 default: 300
 
             ansible_service_name:
-                description: Name of the systemd service unit
+                description: Name of the systemd service unit. Defaults to 'ansible-<mode>' based on ansible_mode.
                 type: str
-                default: "ansible-{{ ansible_mode }}"
 
             ansible_install_method:
                 description: Installation method - 'pipx' or 'package'

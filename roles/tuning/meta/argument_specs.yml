@@ -13,130 +13,20 @@ argument_specs:
             tuning_sysctl_config:
                 type: "dict"
                 required: false
-                description: "Dictionary of sysctl parameters for performance tuning"
-                options:
-                    vm.dirty_ratio:
-                        type: "int"
-                        default: 10
-                        description: "Percentage of system memory for dirty pages"
-                    vm.dirty_background_ratio:
-                        type: "int"
-                        default: 3
-                        description: "Percentage of system memory for background writeback"
-                    vm.dirty_expire_centisecs:
-                        type: "int"
-                        default: 12000
-                        description: "Age in centiseconds before dirty data is written"
-                    vm.dirty_writeback_centisecs:
-                        type: "int"
-                        default: 500
-                        description: "Interval in centiseconds between writeback passes"
-                    vm.swappiness:
-                        type: "int"
-                        default: 10
-                        description: "Tendency to swap out memory pages (0-100)"
-                    vm.vfs_cache_pressure:
-                        type: "int"
-                        default: 50
-                        description: "Tendency to reclaim inode/dentry cache"
-                    vm.min_free_kbytes:
-                        type: "int"
-                        default: 131072
-                        description: "Minimum free memory in KB"
-                    net.core.rmem_default:
-                        type: "int"
-                        default: 262144
-                        description: "Default receive socket buffer size"
-                    net.core.rmem_max:
-                        type: "int"
-                        default: 33554432
-                        description: "Maximum receive socket buffer size"
-                    net.core.wmem_default:
-                        type: "int"
-                        default: 262144
-                        description: "Default send socket buffer size"
-                    net.core.wmem_max:
-                        type: "int"
-                        default: 33554432
-                        description: "Maximum send socket buffer size"
-                    net.core.netdev_max_backlog:
-                        type: "int"
-                        default: 10000
-                        description: "Maximum network device backlog"
-                    net.core.somaxconn:
-                        type: "int"
-                        default: 32768
-                        description: "Maximum socket connection backlog"
-                    net.ipv4.tcp_rmem:
-                        type: "str"
-                        default: "4096 131072 33554432"
-                        description: "TCP receive buffer sizes (min default max)"
-                    net.ipv4.tcp_wmem:
-                        type: "str"
-                        default: "4096 131072 33554432"
-                        description: "TCP send buffer sizes (min default max)"
-                    net.ipv4.tcp_congestion_control:
-                        type: "str"
-                        default: "bbr"
-                        description: "TCP congestion control algorithm"
-                    net.ipv4.tcp_slow_start_after_idle:
-                        type: "int"
-                        default: 0
-                        description: "Disable slow start after idle"
-                    net.ipv4.tcp_tw_reuse:
-                        type: "int"
-                        default: 1
-                        description: "Allow reuse of TIME_WAIT sockets"
-                    fs.file-max:
-                        type: "int"
-                        default: 6815744
-                        description: "Maximum number of file handles"
-                    fs.nr_open:
-                        type: "int"
-                        default: 1048576
-                        description: "Maximum number of open files per process"
-                    kernel.pid_max:
-                        type: "int"
-                        default: 4194304
-                        description: "Maximum PID value"
-                    kernel.threads-max:
-                        type: "int"
-                        default: 4194304
-                        description: "Maximum number of threads"
+                description: >-
+                    Dictionary of sysctl parameters for performance tuning.
+                    Keys are sysctl parameter names (e.g. vm.dirty_ratio, net.core.rmem_max,
+                    fs.file-max, kernel.pid_max). Values are the desired settings.
+                    See defaults/main.yml for the full set of default parameters.
 
             tuning_network_sysctl_config:
                 type: "dict"
                 required: false
-                description: "Additional network-specific sysctl parameters"
-                options:
-                    net.ipv4.tcp_window_scaling:
-                        type: "int"
-                        default: 1
-                        description: "Enable TCP window scaling"
-                    net.ipv4.tcp_timestamps:
-                        type: "int"
-                        default: 1
-                        description: "Enable TCP timestamps"
-                    net.ipv4.tcp_sack:
-                        type: "int"
-                        default: 1
-                        description: "Enable TCP selective acknowledgments"
-                    net.ipv4.tcp_fack:
-                        type: "int"
-                        default: 1
-                        description: "Enable TCP forward acknowledgment"
-                    net.ipv4.tcp_moderate_rcvbuf:
-                        type: "int"
-                        default: 1
-                        description: "Enable automatic receive buffer tuning"
-                    net.ipv4.tcp_no_metrics_save:
-                        type: "int"
-                        default: 1
-                        description: "Disable caching of TCP metrics on close"
-                    net.ipv4.ip_local_port_range:
-                        type: "str"
-                        default: "1024 65535"
-                        description: "Local port range for outgoing connections"
+                description: >-
+                    Additional network-specific sysctl parameters.
+                    Keys are sysctl parameter names (e.g. net.ipv4.tcp_window_scaling,
+                    net.ipv4.tcp_timestamps, net.ipv4.ip_local_port_range).
+                    See defaults/main.yml for the full set of default parameters.
 
             tuning_grub_cmdline_linux_append:
                 type: "str"

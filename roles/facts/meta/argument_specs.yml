@@ -10,17 +10,20 @@ argument_specs:
             cloud metadata, and provides K3s cluster state detection.
 
         options:
-            # Core role identification
+            # Core role identification (defaults set dynamically in defaults/main.yml)
             facts_role_name:
                 type: str
+                default: "facts"
                 description: "Internal role identifier for facts collection"
 
             facts_collection_name:
                 type: str
+                default: "arillso.system.facts"
                 description: "Full collection name for metadata tracking"
 
             facts_version:
                 type: str
+                default: ""
                 description: "Auto-detected collection version"
 
             # Node classification

@@ -25,10 +25,9 @@ argument_specs:
                     - thermald
 
             thermal_platform_name:
-                description: "Platform name for thermal configuration (auto-detected if not set)"
+                description: "Platform name for thermal configuration (auto-detected from ansible_product_name)"
                 type: "str"
                 required: false
-                default: "{{ ansible_product_name | default('Generic') }}"
 
             thermal_preference:
                 description: "Thermal management preference mode"

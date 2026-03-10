@@ -12,6 +12,7 @@ argument_specs:
                 description: "Main nftables configuration with default filter table (input/forward/output chains)"
                 type: list
                 elements: dict
+                required: false
                 options: &firewall_structure
                     table:
                         description: nftables table configuration

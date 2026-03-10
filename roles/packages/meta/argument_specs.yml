@@ -133,7 +133,7 @@ argument_specs:
                 type: list
                 elements: dict
                 default: []
-                options:
+                options: &key_options
                     url:
                         description: "URL to key file"
                         type: str
@@ -158,11 +158,11 @@ argument_specs:
                         default: "present"
                         choices: ["present", "absent"]
 
-            packages_keys_force_update:
+            packages_keys_force_update: &keys_force_update
                 description: "Force update of GPG keys even if they already exist"
                 type: bool
                 default: false
-            packages_gpg_keyservers:
+            packages_gpg_keyservers: &gpg_keyservers
                 description: "List of GPG keyservers to try"
                 type: list
                 elements: str
@@ -254,9 +254,8 @@ argument_specs:
                 type: str
                 default: ""
             packages_apt_mirror_distribution:
-                description: "APT mirror distribution"
+                description: "APT mirror distribution. Defaults to ansible_distribution_release."
                 type: str
-                default: "{{ ansible_distribution_release }}"
             packages_apt_mirror_components:
                 description: "APT mirror components"
                 type: list
@@ -295,7 +294,7 @@ argument_specs:
             packages_apt_force_confdef:
                 description: "Use default action for configuration files"
                 type: bool
-                default: true
+                default: false
             packages_apt_force_confask:
                 description: "Ask about configuration file changes"
                 type: bool
@@ -612,42 +611,9 @@ argument_specs:
                 type: list
                 elements: dict
                 default: []
-                options:
-                    url:
-                        description: "URL to key file"
-                        type: str
-                    keyserver:
-                        description: "Keyserver to use"
-                        type: str
-                    id:
-                        description: "Key ID for keyserver"
-                        type: str
-                    data:
-                        description: "Key data directly"
-                        type: str
-                    keyring:
-                        description: "Path to keyring file for modern GPG key management"
-                        type: str
-                    name:
-                        description: "Name for the key (used for default keyring filename)"
-                        type: str
-                    state:
-                        description: "Key state"
-                        type: str
-                        default: "present"
-                        choices: ["present", "absent"]
-            packages_keys_force_update:
-                description: "Force update of GPG keys even if they already exist"
-                type: bool
-                default: false
-            packages_gpg_keyservers:
-                description: "List of GPG keyservers to try"
-                type: list
-                elements: str
-                default:
-                    - keyserver.ubuntu.com
-                    - keys.openpgp.org
-                    - pgp.mit.edu
+                options: *key_options
+            packages_keys_force_update: *keys_force_update
+            packages_gpg_keyservers: *gpg_keyservers
 
     upgrade:
         short_description: "Upgrade packages entry point"
@@ -743,45 +709,13 @@ argument_specs:
                 elements: dict
                 required: true
                 options:
-                    url:
-                        description: "URL to key file"
-                        type: str
-                    keyserver:
-                        description: "Keyserver to use"
-                        type: str
-                    id:
-                        description: "Key ID for keyserver"
-                        type: str
-                    data:
-                        description: "Key data directly"
-                        type: str
-                    keyring:
-                        description: "Path to keyring file for modern GPG key management"
-                        type: str
-                    name:
-                        description: "Name for the key (used for default keyring filename)"
-                        type: str
-                    state:
-                        description: "Key state"
-                        type: str
-                        default: "present"
-                        choices: ["present", "absent"]
+                    <<: *key_options
                     dearmor:
                         description: "Convert ASCII-armored key to binary format using gpg --dearmor"
                         type: bool
                         default: false
-            packages_keys_force_update:
-                description: "Force update of GPG keys even if they already exist"
-                type: bool
-                default: false
-            packages_gpg_keyservers:
-                description: "List of GPG keyservers to try"
-                type: list
-                elements: str
-                default:
-                    - keyserver.ubuntu.com
-                    - keys.openpgp.org
-                    - pgp.mit.edu
+            packages_keys_force_update: *keys_force_update
+            packages_gpg_keyservers: *gpg_keyservers
 
     packages:
         short_description: "Package processing entry point"

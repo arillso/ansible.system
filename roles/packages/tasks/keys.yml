@@ -98,7 +98,6 @@
       - _pkg_key_item.keyring is defined
       - _pkg_key_item.state | default('present') == 'present'
       - _pkg_key_item.dearmor | default(false)
-      - _pkg_key_item.dearmor | default(false)
   register: _packages_keys_added_url_keyring_dearmor
   become: true
 

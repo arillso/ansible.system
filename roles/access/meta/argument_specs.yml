@@ -87,9 +87,8 @@ argument_specs:
                         elements: dict
                         options:
                             user:
-                                description: "Username"
+                                description: "Username (optional, defaults to parent user's name)"
                                 type: str
-                                required: true
                             key:
                                 description: "SSH public key"
                                 type: str
@@ -483,9 +482,8 @@ argument_specs:
                         elements: dict
                         options:
                             user:
-                                description: "Username"
+                                description: "Username (optional, defaults to parent user's name)"
                                 type: str
-                                required: true
                             key:
                                 description: "SSH public key"
                                 type: str

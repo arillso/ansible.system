@@ -11,6 +11,8 @@
       group: root
   become: true
 
+# Note: This task removes keyring files before re-downloading, which naturally
+# bypasses the `creates:` guard on downstream dearmor and keyserver tasks.
 - name: Remove existing keyrings for force update
   ansible.builtin.file:
       path: >-

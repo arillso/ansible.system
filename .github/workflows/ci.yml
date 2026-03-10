@@ -33,6 +33,6 @@ jobs:
 
     claude-review:
         uses: arillso/.github/.github/workflows/ai-claude-review.yml@2026-03-09
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
         secrets:
             CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

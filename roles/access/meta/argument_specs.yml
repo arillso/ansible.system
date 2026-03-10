@@ -224,7 +224,7 @@ argument_specs:
                 description: "Permit root login"
                 type: str
                 default: prohibit-password
-                choices: ["true", "false", prohibit-password, forced-commands-only]
+                choices: ["yes", "no", prohibit-password, forced-commands-only]
             access_ssh_pubkey_authentication:
                 description: "Enable public key authentication"
                 type: bool
@@ -635,7 +635,7 @@ argument_specs:
                 description: "Permit root login"
                 type: str
                 default: prohibit-password
-                choices: ["true", "false", prohibit-password, forced-commands-only]
+                choices: ["yes", "no", prohibit-password, forced-commands-only]
             access_ssh_pubkey_authentication:
                 description: "Enable public key authentication"
                 type: bool

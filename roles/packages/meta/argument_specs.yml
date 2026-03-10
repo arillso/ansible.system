@@ -60,7 +60,7 @@ argument_specs:
                 description: "Upgrade packages (false, yes, safe, full, dist)"
                 type: str
                 default: false
-                choices: [false, "yes", "safe", "full", "dist"]
+                choices: ["false", "yes", "safe", "full", "dist"]
             packages_autoremove:
                 description: "Remove unused packages"
                 type: bool

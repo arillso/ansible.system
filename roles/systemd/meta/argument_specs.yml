@@ -68,6 +68,24 @@ argument_specs:
                         description: "Unit file content (structured dict)"
                         type: dict
 
+            # Unit File Path and Ownership
+            systemd_unit_path:
+                description: "Path for systemd unit files"
+                type: str
+                default: /etc/systemd/system
+            systemd_unit_owner:
+                description: "Owner of systemd unit files"
+                type: str
+                default: root
+            systemd_unit_group:
+                description: "Group of systemd unit files"
+                type: str
+                default: root
+            systemd_unit_mode:
+                description: "File mode for systemd unit files"
+                type: str
+                default: "0644"
+
             # Journald Configuration
             systemd_journald_storage:
                 description: "Journal storage mode"
@@ -78,18 +96,151 @@ argument_specs:
                 description: "Compress journal data"
                 type: bool
                 default: true
-            systemd_journald_system_max_use:
-                description: "Maximum disk space for system journal"
-                type: str
-                default: 1G
+            systemd_journald_seal:
+                description: "Enable Forward Secure Sealing for journal"
+                type: bool
+                default: true
             systemd_journald_max_retention_sec:
                 description: "Maximum retention time for journal entries"
                 type: str
                 default: 1month
+            systemd_journald_max_file_sec:
+                description: "Maximum time to store entries in a single journal file"
+                type: str
+                default: 1month
+            systemd_journald_system_max_use:
+                description: "Maximum disk space for system journal"
+                type: str
+                default: 1G
+            systemd_journald_system_keep_free:
+                description: "Minimum free disk space for system journal"
+                type: str
+                default: 500M
+            systemd_journald_system_max_file_size:
+                description: "Maximum size of individual system journal files"
+                type: str
+                default: 10M
+            systemd_journald_system_max_files:
+                description: "Maximum number of system journal files"
+                type: int
+                default: 100
+            systemd_journald_runtime_max_use:
+                description: "Maximum disk space for runtime journal"
+                type: str
+                default: ""
+            systemd_journald_runtime_keep_free:
+                description: "Minimum free disk space for runtime journal"
+                type: str
+                default: ""
+            systemd_journald_runtime_max_file_size:
+                description: "Maximum size of individual runtime journal files"
+                type: str
+                default: ""
+            systemd_journald_runtime_max_files:
+                description: "Maximum number of runtime journal files"
+                type: int
+                default: 100
+            systemd_journald_rate_limit_interval:
+                description: "Rate limiting interval for journal messages"
+                type: str
+                default: 30s
+            systemd_journald_rate_limit_burst:
+                description: "Maximum burst of messages within rate limit interval"
+                type: int
+                default: 1000
             systemd_journald_forward_to_syslog:
                 description: "Forward journal to syslog"
                 type: bool
                 default: true
+            systemd_journald_forward_to_kmsg:
+                description: "Forward journal to kernel log buffer"
+                type: bool
+                default: false
+            systemd_journald_forward_to_console:
+                description: "Forward journal to console"
+                type: bool
+                default: false
+            systemd_journald_forward_to_wall:
+                description: "Forward journal to wall messages"
+                type: bool
+                default: true
+            systemd_journald_max_level_store:
+                description: "Maximum log level to store in journal"
+                type: str
+                default: info
+            systemd_journald_max_level_syslog:
+                description: "Maximum log level to forward to syslog"
+                type: str
+                default: info
+            systemd_journald_max_level_kmsg:
+                description: "Maximum log level to forward to kernel log"
+                type: str
+                default: notice
+            systemd_journald_max_level_console:
+                description: "Maximum log level to forward to console"
+                type: str
+                default: warning
+            systemd_journald_max_level_wall:
+                description: "Maximum log level to forward to wall"
+                type: str
+                default: emerg
+            systemd_journald_line_max:
+                description: "Maximum line length for journal entries"
+                type: str
+                default: 48K
+            systemd_journald_sync_interval_sec:
+                description: "Interval for syncing journal to disk"
+                type: str
+                default: 5m
+            systemd_journald_split_mode:
+                description: "Journal split mode"
+                type: str
+                default: uid
+            systemd_journald_service_state:
+                description: "State of the journald service"
+                type: str
+                default: started
+                choices: [started, stopped, restarted, reloaded]
+            systemd_journald_service_enabled:
+                description: "Enable journald service on boot"
+                type: bool
+                default: true
+            systemd_journald_restart_on_change:
+                description: "Restart journald when configuration changes"
+                type: bool
+                default: true
+
+            # Validation
+            systemd_validate_units:
+                description: "Validate unit files before deploying"
+                type: bool
+                default: true
+            systemd_backup_units:
+                description: "Create backups before modifying unit files"
+                type: bool
+                default: true
+
+            # Systemd Daemon Configuration
+            systemd_daemon_reload:
+                description: "Reload systemd daemon after unit file changes"
+                type: bool
+                default: false
+
+            # Retry Configuration
+            systemd_retry_count:
+                description: "Number of retry attempts for tasks"
+                type: int
+                default: 3
+            systemd_retry_delay:
+                description: "Delay in seconds between retry attempts"
+                type: int
+                default: 5
+
+            # Debug Configuration
+            systemd_debug_mode:
+                description: "Enable debug output for troubleshooting"
+                type: bool
+                default: false
 
     service:
         short_description: "Service management entry point"
@@ -102,6 +253,24 @@ argument_specs:
                 type: list
                 elements: dict
                 required: true
+                options:
+                    name:
+                        description: "Service name"
+                        type: str
+                        required: true
+                    state:
+                        description: "Service state"
+                        type: str
+                        choices: [started, stopped, restarted, reloaded]
+                    enabled:
+                        description: "Enable service on boot"
+                        type: bool
+                    masked:
+                        description: "Mask service"
+                        type: bool
+                    daemon_reload:
+                        description: "Reload systemd daemon"
+                        type: bool
 
     unit:
         short_description: "Unit file management entry point"
@@ -114,6 +283,46 @@ argument_specs:
                 type: list
                 elements: dict
                 required: true
+                options:
+                    name:
+                        description: "Unit file name"
+                        type: str
+                        required: true
+                    state:
+                        description: "Unit state"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+                    content:
+                        description: "Unit file content (raw text)"
+                        type: str
+                    unit:
+                        description: "Unit file content (structured dict)"
+                        type: dict
+            systemd_unit_path:
+                description: "Path for systemd unit files"
+                type: str
+                default: /etc/systemd/system
+            systemd_unit_owner:
+                description: "Owner of systemd unit files"
+                type: str
+                default: root
+            systemd_unit_group:
+                description: "Group of systemd unit files"
+                type: str
+                default: root
+            systemd_unit_mode:
+                description: "File mode for systemd unit files"
+                type: str
+                default: "0644"
+            systemd_validate_units:
+                description: "Validate unit files before deploying"
+                type: bool
+                default: true
+            systemd_backup_units:
+                description: "Create backups before modifying unit files"
+                type: bool
+                default: true
 
     journald:
         short_description: "Journald configuration entry point"
@@ -125,11 +334,121 @@ argument_specs:
                 description: "Journal storage mode"
                 type: str
                 default: auto
-            systemd_journald_system_max_use:
-                description: "Maximum disk space"
-                type: str
-                default: 1G
+                choices: [auto, volatile, persistent, none]
+            systemd_journald_compress:
+                description: "Compress journal data"
+                type: bool
+                default: true
+            systemd_journald_seal:
+                description: "Enable Forward Secure Sealing for journal"
+                type: bool
+                default: true
             systemd_journald_max_retention_sec:
-                description: "Maximum retention time"
+                description: "Maximum retention time for journal entries"
                 type: str
                 default: 1month
+            systemd_journald_max_file_sec:
+                description: "Maximum time to store entries in a single journal file"
+                type: str
+                default: 1month
+            systemd_journald_system_max_use:
+                description: "Maximum disk space for system journal"
+                type: str
+                default: 1G
+            systemd_journald_system_keep_free:
+                description: "Minimum free disk space for system journal"
+                type: str
+                default: 500M
+            systemd_journald_system_max_file_size:
+                description: "Maximum size of individual system journal files"
+                type: str
+                default: 10M
+            systemd_journald_system_max_files:
+                description: "Maximum number of system journal files"
+                type: int
+                default: 100
+            systemd_journald_runtime_max_use:
+                description: "Maximum disk space for runtime journal"
+                type: str
+                default: ""
+            systemd_journald_runtime_keep_free:
+                description: "Minimum free disk space for runtime journal"
+                type: str
+                default: ""
+            systemd_journald_runtime_max_file_size:
+                description: "Maximum size of individual runtime journal files"
+                type: str
+                default: ""
+            systemd_journald_runtime_max_files:
+                description: "Maximum number of runtime journal files"
+                type: int
+                default: 100
+            systemd_journald_rate_limit_interval:
+                description: "Rate limiting interval for journal messages"
+                type: str
+                default: 30s
+            systemd_journald_rate_limit_burst:
+                description: "Maximum burst of messages within rate limit interval"
+                type: int
+                default: 1000
+            systemd_journald_forward_to_syslog:
+                description: "Forward journal to syslog"
+                type: bool
+                default: true
+            systemd_journald_forward_to_kmsg:
+                description: "Forward journal to kernel log buffer"
+                type: bool
+                default: false
+            systemd_journald_forward_to_console:
+                description: "Forward journal to console"
+                type: bool
+                default: false
+            systemd_journald_forward_to_wall:
+                description: "Forward journal to wall messages"
+                type: bool
+                default: true
+            systemd_journald_max_level_store:
+                description: "Maximum log level to store in journal"
+                type: str
+                default: info
+            systemd_journald_max_level_syslog:
+                description: "Maximum log level to forward to syslog"
+                type: str
+                default: info
+            systemd_journald_max_level_kmsg:
+                description: "Maximum log level to forward to kernel log"
+                type: str
+                default: notice
+            systemd_journald_max_level_console:
+                description: "Maximum log level to forward to console"
+                type: str
+                default: warning
+            systemd_journald_max_level_wall:
+                description: "Maximum log level to forward to wall"
+                type: str
+                default: emerg
+            systemd_journald_line_max:
+                description: "Maximum line length for journal entries"
+                type: str
+                default: 48K
+            systemd_journald_sync_interval_sec:
+                description: "Interval for syncing journal to disk"
+                type: str
+                default: 5m
+            systemd_journald_split_mode:
+                description: "Journal split mode"
+                type: str
+                default: uid
+            systemd_journald_service_state:
+                description: "State of the journald service"
+                type: str
+                default: started
+                choices: [started, stopped, restarted, reloaded]
+            systemd_journald_service_enabled:
+                description: "Enable journald service on boot"
+                type: bool
+                default: true
+            systemd_journald_restart_on_change:
+                description: "Restart journald when configuration changes"
+                type: bool
+                default: true

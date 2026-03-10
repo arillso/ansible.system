@@ -14,16 +14,237 @@ argument_specs:
                 description: "Enable rsyslog management"
                 type: bool
                 default: true
+
+            # Logrotate Entries
             logging_logrotate_entries:
                 description: "List of logrotate configurations"
                 type: list
                 elements: dict
                 default: []
+                options:
+                    name:
+                        description: "Name of the logrotate configuration file"
+                        type: str
+                        required: true
+                    path:
+                        description: "Path to log file(s) to rotate"
+                        type: str
+                        required: true
+                    state:
+                        description: "State of the logrotate configuration"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+                    options:
+                        description: "List of logrotate directives"
+                        type: list
+                        elements: str
+                        default: []
+                    prerotate:
+                        description: "Script to run before log rotation"
+                        type: str
+                    postrotate:
+                        description: "Script to run after log rotation"
+                        type: str
+                    firstaction:
+                        description: "Script to run before all rotations"
+                        type: str
+                    lastaction:
+                        description: "Script to run after all rotations"
+                        type: str
+
+            # Logrotate Global Options
+            logging_logrotate_weekly:
+                description: "Enable weekly log rotation by default"
+                type: bool
+                default: true
+            logging_logrotate_rotate:
+                description: "Number of rotated log files to keep"
+                type: int
+                default: 4
+            logging_logrotate_create:
+                description: "Create new log files after rotation"
+                type: bool
+                default: true
+            logging_logrotate_dateext:
+                description: "Use date extension for rotated log files"
+                type: bool
+                default: true
+            logging_logrotate_compress:
+                description: "Compress rotated log files"
+                type: bool
+                default: true
+            logging_logrotate_delaycompress:
+                description: "Delay compression to the next rotation cycle"
+                type: bool
+                default: false
+            logging_logrotate_notifempty:
+                description: "Do not rotate empty log files"
+                type: bool
+                default: true
+            logging_logrotate_su:
+                description: "Run logrotate as specified user/group"
+                type: str
+                default: ""
+            logging_logrotate_include_dir:
+                description: "Directory for additional logrotate configurations"
+                type: str
+                default: /etc/logrotate.d
+            logging_logrotate_extra_options:
+                description: "Extra global logrotate options"
+                type: list
+                elements: str
+                default: []
+            logging_logrotate_packages:
+                description: "Packages required for logrotate"
+                type: list
+                elements: str
+                default:
+                    - logrotate
+
+            # Rsyslog Entries
             logging_rsyslog_entries:
                 description: "List of rsyslog configurations"
                 type: list
                 elements: dict
                 default: []
+                options:
+                    name:
+                        description: "Name of the rsyslog configuration"
+                        type: str
+                        required: true
+                    priority:
+                        description: "Priority prefix for configuration file ordering"
+                        type: int
+                        default: 50
+                    state:
+                        description: "State of the rsyslog configuration"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+                    content:
+                        description: "Raw rsyslog configuration content"
+                        type: str
+                    rules:
+                        description: "Structured rsyslog rules (alternative to content)"
+                        type: list
+                        elements: dict
+                        default: []
+
+            # Rsyslog Remote Servers
+            logging_rsyslog_remote_servers:
+                description: "List of remote syslog servers for forwarding"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    host:
+                        description: "Hostname or IP of remote syslog server"
+                        type: str
+                        required: true
+                    port:
+                        description: "Port of remote syslog server"
+                        type: int
+                        required: true
+                    protocol:
+                        description: "Transport protocol"
+                        type: str
+                        default: udp
+                        choices: [tcp, udp]
+
+            # Rsyslog Global Options
+            logging_rsyslog_preserve_fqdn:
+                description: "Preserve fully qualified domain name in logs"
+                type: bool
+                default: false
+            logging_rsyslog_work_directory:
+                description: "Working directory for rsyslog"
+                type: str
+                default: /var/lib/rsyslog
+            logging_rsyslog_include_config:
+                description: "Glob pattern for included rsyslog configuration files"
+                type: str
+                default: "/etc/rsyslog.d/*.conf"
+            logging_rsyslog_main_queue_size:
+                description: "Main message queue size"
+                type: int
+                default: 10000
+            logging_rsyslog_main_queue_type:
+                description: "Main message queue type"
+                type: str
+                default: LinkedList
+            logging_rsyslog_main_queue_worker_threads:
+                description: "Number of worker threads for main queue"
+                type: int
+                default: 2
+            logging_rsyslog_file_owner:
+                description: "Owner for log files created by rsyslog"
+                type: str
+                default: root
+            logging_rsyslog_file_group:
+                description: "Group for log files created by rsyslog"
+                type: str
+                default: adm
+            logging_rsyslog_file_create_mode:
+                description: "File creation mode for log files"
+                type: str
+                default: "0640"
+            logging_rsyslog_dir_create_mode:
+                description: "Directory creation mode for log directories"
+                type: str
+                default: "0755"
+            logging_rsyslog_traditional_log_format:
+                description: "Use traditional syslog log format"
+                type: bool
+                default: false
+            logging_rsyslog_klog_permit_non_kernel_facility:
+                description: "Allow non-kernel facility messages from klog"
+                type: bool
+                default: false
+            logging_rsyslog_modules:
+                description: "Rsyslog input modules to load"
+                type: list
+                elements: str
+                default:
+                    - imuxsock
+                    - imklog
+            logging_rsyslog_service_state:
+                description: "State of the rsyslog service"
+                type: str
+                default: started
+                choices: [started, stopped, restarted, reloaded]
+            logging_rsyslog_service_enabled:
+                description: "Enable rsyslog service on boot"
+                type: bool
+                default: true
+            logging_rsyslog_restart_on_change:
+                description: "Restart rsyslog when configuration changes"
+                type: bool
+                default: true
+            logging_rsyslog_packages:
+                description: "Packages required for rsyslog"
+                type: list
+                elements: str
+                default:
+                    - rsyslog
+
+            # Retry and Debug
+            logging_retry_count:
+                description: "Number of retry attempts for tasks"
+                type: int
+                default: 3
+            logging_retry_delay:
+                description: "Delay in seconds between retry attempts"
+                type: int
+                default: 5
+            logging_backup_configs:
+                description: "Create backups before modifying configuration files"
+                type: bool
+                default: true
+            logging_debug_mode:
+                description: "Enable debug output for troubleshooting"
+                type: bool
+                default: false
 
     logrotate:
         short_description: "Logrotate management entry point"
@@ -35,7 +256,85 @@ argument_specs:
                 description: "List of logrotate configurations"
                 type: list
                 elements: dict
-                required: true
+                default: []
+                options:
+                    name:
+                        description: "Name of the logrotate configuration file"
+                        type: str
+                        required: true
+                    path:
+                        description: "Path to log file(s) to rotate"
+                        type: str
+                        required: true
+                    state:
+                        description: "State of the logrotate configuration"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+                    options:
+                        description: "List of logrotate directives"
+                        type: list
+                        elements: str
+                        default: []
+                    prerotate:
+                        description: "Script to run before log rotation"
+                        type: str
+                    postrotate:
+                        description: "Script to run after log rotation"
+                        type: str
+                    firstaction:
+                        description: "Script to run before all rotations"
+                        type: str
+                    lastaction:
+                        description: "Script to run after all rotations"
+                        type: str
+            logging_logrotate_weekly:
+                description: "Enable weekly log rotation by default"
+                type: bool
+                default: true
+            logging_logrotate_rotate:
+                description: "Number of rotated log files to keep"
+                type: int
+                default: 4
+            logging_logrotate_create:
+                description: "Create new log files after rotation"
+                type: bool
+                default: true
+            logging_logrotate_dateext:
+                description: "Use date extension for rotated log files"
+                type: bool
+                default: true
+            logging_logrotate_compress:
+                description: "Compress rotated log files"
+                type: bool
+                default: true
+            logging_logrotate_delaycompress:
+                description: "Delay compression to the next rotation cycle"
+                type: bool
+                default: false
+            logging_logrotate_notifempty:
+                description: "Do not rotate empty log files"
+                type: bool
+                default: true
+            logging_logrotate_su:
+                description: "Run logrotate as specified user/group"
+                type: str
+                default: ""
+            logging_logrotate_include_dir:
+                description: "Directory for additional logrotate configurations"
+                type: str
+                default: /etc/logrotate.d
+            logging_logrotate_extra_options:
+                description: "Extra global logrotate options"
+                type: list
+                elements: str
+                default: []
+            logging_logrotate_packages:
+                description: "Packages required for logrotate"
+                type: list
+                elements: str
+                default:
+                    - logrotate
 
     rsyslog:
         short_description: "Rsyslog management entry point"
@@ -47,4 +346,119 @@ argument_specs:
                 description: "List of rsyslog configurations"
                 type: list
                 elements: dict
-                required: true
+                default: []
+                options:
+                    name:
+                        description: "Name of the rsyslog configuration"
+                        type: str
+                        required: true
+                    priority:
+                        description: "Priority prefix for configuration file ordering"
+                        type: int
+                        default: 50
+                    state:
+                        description: "State of the rsyslog configuration"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+                    content:
+                        description: "Raw rsyslog configuration content"
+                        type: str
+                    rules:
+                        description: "Structured rsyslog rules (alternative to content)"
+                        type: list
+                        elements: dict
+                        default: []
+            logging_rsyslog_remote_servers:
+                description: "List of remote syslog servers for forwarding"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    host:
+                        description: "Hostname or IP of remote syslog server"
+                        type: str
+                        required: true
+                    port:
+                        description: "Port of remote syslog server"
+                        type: int
+                        required: true
+                    protocol:
+                        description: "Transport protocol"
+                        type: str
+                        default: udp
+                        choices: [tcp, udp]
+            logging_rsyslog_preserve_fqdn:
+                description: "Preserve fully qualified domain name in logs"
+                type: bool
+                default: false
+            logging_rsyslog_work_directory:
+                description: "Working directory for rsyslog"
+                type: str
+                default: /var/lib/rsyslog
+            logging_rsyslog_include_config:
+                description: "Glob pattern for included rsyslog configuration files"
+                type: str
+                default: "/etc/rsyslog.d/*.conf"
+            logging_rsyslog_main_queue_size:
+                description: "Main message queue size"
+                type: int
+                default: 10000
+            logging_rsyslog_main_queue_type:
+                description: "Main message queue type"
+                type: str
+                default: LinkedList
+            logging_rsyslog_main_queue_worker_threads:
+                description: "Number of worker threads for main queue"
+                type: int
+                default: 2
+            logging_rsyslog_file_owner:
+                description: "Owner for log files created by rsyslog"
+                type: str
+                default: root
+            logging_rsyslog_file_group:
+                description: "Group for log files created by rsyslog"
+                type: str
+                default: adm
+            logging_rsyslog_file_create_mode:
+                description: "File creation mode for log files"
+                type: str
+                default: "0640"
+            logging_rsyslog_dir_create_mode:
+                description: "Directory creation mode for log directories"
+                type: str
+                default: "0755"
+            logging_rsyslog_traditional_log_format:
+                description: "Use traditional syslog log format"
+                type: bool
+                default: false
+            logging_rsyslog_klog_permit_non_kernel_facility:
+                description: "Allow non-kernel facility messages from klog"
+                type: bool
+                default: false
+            logging_rsyslog_modules:
+                description: "Rsyslog input modules to load"
+                type: list
+                elements: str
+                default:
+                    - imuxsock
+                    - imklog
+            logging_rsyslog_service_state:
+                description: "State of the rsyslog service"
+                type: str
+                default: started
+                choices: [started, stopped, restarted, reloaded]
+            logging_rsyslog_service_enabled:
+                description: "Enable rsyslog service on boot"
+                type: bool
+                default: true
+            logging_rsyslog_restart_on_change:
+                description: "Restart rsyslog when configuration changes"
+                type: bool
+                default: true
+            logging_rsyslog_packages:
+                description: "Packages required for rsyslog"
+                type: list
+                elements: str
+                default:
+                    - rsyslog

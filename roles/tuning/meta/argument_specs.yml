@@ -14,15 +14,21 @@ argument_specs:
                 type: "dict"
                 required: false
                 default: {}
-                description: |
+                description: >-
                     Dictionary of sysctl parameters for performance tuning.
-                    Includes VM, network, filesystem, and kernel tuning.
+                    Keys are sysctl parameter names (e.g. vm.dirty_ratio, net.core.rmem_max,
+                    fs.file-max, kernel.pid_max). Values are the desired settings.
+                    See defaults/main.yml for the full set of default parameters.
 
             tuning_network_sysctl_config:
                 type: "dict"
                 required: false
                 default: {}
-                description: "Additional network-specific sysctl parameters"
+                description: >-
+                    Additional network-specific sysctl parameters.
+                    Keys are sysctl parameter names (e.g. net.ipv4.tcp_window_scaling,
+                    net.ipv4.tcp_timestamps, net.ipv4.ip_local_port_range).
+                    See defaults/main.yml for the full set of default parameters.
 
             tuning_grub_cmdline_linux_append:
                 type: "str"
@@ -68,6 +74,13 @@ argument_specs:
                 default: null
                 description: "Override automatic I/O scheduler detection"
 
+            tuning_io_scheduler_devices:
+                type: "list"
+                required: false
+                default: []
+                elements: "str"
+                description: "List of specific block devices to apply I/O scheduler settings to"
+
             tuning_cpu_governor:
                 type: "str"
                 required: false
@@ -100,9 +113,52 @@ argument_specs:
                 required: false
                 default: []
                 elements: "dict"
-                description: |
-                    List of security limit configurations.
-                    Each entry requires: domain, type, item, value.
+                description: "List of security limit configurations"
+                options:
+                    domain:
+                        type: "str"
+                        required: true
+                        description: "User or group domain (e.g., '*', '@group', 'user')"
+                    type:
+                        type: "str"
+                        required: true
+                        choices: ["soft", "hard"]
+                        description: "Limit type (soft or hard)"
+                    item:
+                        type: "str"
+                        required: true
+                        description: "Resource item (e.g., nofile, nproc, memlock)"
+                    value:
+                        type: "int"
+                        required: true
+                        description: "Limit value"
+
+            tuning_network_ring_buffers:
+                type: "list"
+                required: false
+                default: []
+                elements: "dict"
+                description: "List of network interface ring buffer configurations"
+                options:
+                    interface:
+                        type: "str"
+                        required: true
+                        description: "Network interface name (e.g., eth0, ens3)"
+                    rx_buffer:
+                        type: "int"
+                        required: true
+                        description: "Receive ring buffer size"
+                    tx_buffer:
+                        type: "int"
+                        required: true
+                        description: "Transmit ring buffer size"
+
+            tuning_packages_list:
+                type: "list"
+                required: false
+                elements: "str"
+                default: []
+                description: "List of packages required for tuning (auto-detected based on OS family)"
 
             tuning_network_tuning_enabled:
                 type: "bool"

@@ -8,6 +8,16 @@ argument_specs:
             - Handles SSH key generation for Git repository access
             - Configures OpenTelemetry integration for observability
         options:
+            ansible_install_enabled:
+                description: Enable Ansible installation
+                type: bool
+                default: true
+
+            ansible_timer_enabled:
+                description: Enable systemd timer configuration
+                type: bool
+                default: true
+
             ansible_mode:
                 description: Execution mode - 'pull' for ansible-pull or 'playbook' for ansible-playbook
                 type: str
@@ -42,9 +52,8 @@ argument_specs:
                 default: inventory/hosts
 
             ansible_host_limit:
-                description: Limit execution to specific hosts
+                description: Limit execution to specific hosts. Defaults to inventory_hostname.
                 type: str
-                default: "{{ inventory_hostname }}"
 
             ansible_extra_args:
                 description: Additional arguments to pass to ansible-pull or ansible-playbook
@@ -82,6 +91,10 @@ argument_specs:
                 type: int
                 default: 300
 
+            ansible_service_name:
+                description: Name of the systemd service unit. Defaults to 'ansible-<mode>' based on ansible_mode.
+                type: str
+
             ansible_install_method:
                 description: Installation method - 'pipx' or 'package'
                 type: str
@@ -90,10 +103,25 @@ argument_specs:
                     - pipx
                     - package
 
+            ansible_pipx_home:
+                description: Home directory for pipx installation
+                type: str
+                default: /opt/pipx
+
+            ansible_pipx_bin:
+                description: Binary directory for pipx executables
+                type: str
+                default: /opt/pipx/bin
+
             ansible_package_version:
                 description: Specific Ansible version to install (empty for latest)
                 type: str
                 default: ""
+
+            ansible_remove_system_package:
+                description: Remove system-installed Ansible package when using pipx
+                type: bool
+                default: true
 
             ansible_ssh_key_enabled:
                 description: Generate SSH key for Git access
@@ -103,7 +131,7 @@ argument_specs:
             ansible_ssh_key_path:
                 description: Path to SSH private key
                 type: str
-                default: /root/.ssh/ansible_automation
+                default: /root/.ssh/ansible_automation_ed25519
 
             ansible_ssh_key_type:
                 description: SSH key type
@@ -131,12 +159,17 @@ argument_specs:
             ansible_otel_endpoint:
                 description: OpenTelemetry collector endpoint
                 type: str
-                default: http://localhost:4318
+                default: ""
+
+            ansible_otel_headers:
+                description: OpenTelemetry headers for authentication
+                type: str
+                default: ""
 
             ansible_otel_service_name:
                 description: Service name for OpenTelemetry traces
                 type: str
-                default: ansible.infrastructure
+                default: ansible-automation
 
             ansible_otel_environment:
                 description: Deployment environment tag
@@ -153,6 +186,20 @@ argument_specs:
                 type: bool
                 default: true
 
+            ansible_required_packages:
+                description: System packages required for Ansible operation
+                type: list
+                elements: str
+                default:
+                    - git
+
+            ansible_pipx_packages:
+                description: System packages required for pipx installation
+                type: list
+                elements: str
+                default:
+                    - pipx
+
             ansible_timer_state:
                 description: State of the systemd timer (started/stopped)
                 type: str
@@ -160,3 +207,18 @@ argument_specs:
                 choices:
                     - started
                     - stopped
+
+            ansible_retry_count:
+                description: Number of retry attempts for tasks
+                type: int
+                default: 3
+
+            ansible_retry_delay:
+                description: Delay in seconds between retry attempts
+                type: int
+                default: 10
+
+            ansible_debug_mode:
+                description: Enable debug output for troubleshooting
+                type: bool
+                default: false

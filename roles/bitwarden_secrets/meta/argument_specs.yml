@@ -14,6 +14,20 @@ argument_specs:
                 description: "Installation path for bws binary"
                 type: str
                 default: "/usr/local/bin"
+            bitwarden_secrets_binary_name:
+                description: "Name of the bws binary file"
+                type: str
+                default: "bws"
+            bitwarden_secrets_arch:
+                description: "Target architecture for the bws binary (auto-detected from ansible_architecture)"
+                type: str
+            bitwarden_secrets_download_url:
+                description: "Full download URL for the bws release archive (auto-constructed from version and arch)"
+                type: str
+            bitwarden_secrets_download_timeout:
+                description: "Timeout in seconds for downloading the bws binary"
+                type: int
+                default: 120
             bitwarden_secrets_state:
                 description: "Installation state"
                 type: str
@@ -21,5 +35,23 @@ argument_specs:
                 choices: [present, absent, latest]
             bitwarden_secrets_force_install:
                 description: "Force reinstall even if version matches"
+                type: bool
+                default: false
+            bitwarden_secrets_required_packages:
+                description: "List of system packages required for installation"
+                type: list
+                elements: str
+                default:
+                    - unzip
+            bitwarden_secrets_retry_count:
+                description: "Number of retry attempts for download operations"
+                type: int
+                default: 3
+            bitwarden_secrets_retry_delay:
+                description: "Delay in seconds between retry attempts"
+                type: int
+                default: 10
+            bitwarden_secrets_debug_mode:
+                description: "Enable debug output during installation"
                 type: bool
                 default: false

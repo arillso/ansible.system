@@ -64,7 +64,7 @@ packages_apt_fix_broken: true
 packages_apt_fix_missing: true
 packages_apt_force_confold: true
 packages_apt_force_confnew: false
-packages_apt_force_confdef: true
+packages_apt_force_confdef: false
 packages_apt_force_confask: false
 
 # APT Acquire Configuration

@@ -9,9 +9,10 @@ argument_specs:
 
         options:
             firewall:
-                description: Main nftables configuration (defaults/main.yml)
+                description: "Main nftables configuration with default filter table (input/forward/output chains)"
                 type: list
                 elements: dict
+                required: false
                 default: []
                 options: &firewall_structure
                     table:
@@ -299,6 +300,7 @@ argument_specs:
                 type: list
                 elements: dict
                 required: false
+                default: []
                 options: *firewall_structure
 
             firewall_group:
@@ -306,6 +308,7 @@ argument_specs:
                 type: list
                 elements: dict
                 required: false
+                default: []
                 options: *firewall_structure
 
             firewall_host:
@@ -313,4 +316,5 @@ argument_specs:
                 type: list
                 elements: dict
                 required: false
+                default: []
                 options: *firewall_structure

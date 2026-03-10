@@ -28,13 +28,102 @@ argument_specs:
                         type: str
                         default: present
                         choices: [present, latest, absent]
-                    virtualenv:
+                    virtualenv: &opt_virtualenv
                         description: "Virtualenv path"
                         type: str
+                    virtualenv_command: &opt_virtualenv_command
+                        description: "Command to create virtualenv"
+                        type: str
+                    virtualenv_site_packages: &opt_virtualenv_site_packages
+                        description: "Allow virtualenv access to system site-packages"
+                        type: bool
+                    virtualenv_python: &opt_virtualenv_python
+                        description: "Python interpreter for virtualenv"
+                        type: str
+                    extra_args: &opt_extra_args
+                        description: "Extra arguments for pip"
+                        type: str
+                    executable: &opt_executable
+                        description: "Pip executable to use"
+                        type: str
+            python_virtualenv_enabled:
+                description: "Enable virtualenv management"
+                type: bool
+                default: true
+            python_pip_executable:
+                description: "Default pip executable"
+                type: str
+                default: pip3
+            python_pip_extra_args:
+                description: "Extra arguments passed to pip"
+                type: str
+                default: ""
+            python_upgrade_pip:
+                description: "Upgrade pip before installing packages"
+                type: bool
+                default: false
+            python_virtualenv_command:
+                description: "Command to create virtualenvs"
+                type: str
+                default: python3 -m venv
+            python_virtualenv_site_packages:
+                description: "Allow virtualenv access to system site-packages"
+                type: bool
+                default: false
+            python_virtualenv_python:
+                description: "Python interpreter for virtualenvs"
+                type: str
+                default: python3
             python_install_packages:
                 description: "Install Python system packages"
                 type: bool
                 default: true
+            python_system_packages:
+                description: "System packages to install for Python"
+                type: list
+                elements: str
+                default:
+                    - python3
+                    - python3-pip
+                    - python3-venv
+            python_dev_packages:
+                description: "Development packages to install"
+                type: list
+                elements: str
+                default: []
+            python_requirements_files:
+                description: "List of requirements files to install"
+                type: list
+                elements: dict
+                default: []
+                options:
+                    path:
+                        description: "Path to requirements file"
+                        type: str
+                        required: true
+                    state:
+                        description: "Desired state"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+                    virtualenv: *opt_virtualenv
+                    virtualenv_command: *opt_virtualenv_command
+                    virtualenv_site_packages: *opt_virtualenv_site_packages
+                    virtualenv_python: *opt_virtualenv_python
+                    extra_args: *opt_extra_args
+                    executable: *opt_executable
+            python_retry_count:
+                description: "Number of retry attempts for tasks"
+                type: int
+                default: 3
+            python_retry_delay:
+                description: "Delay in seconds between retry attempts"
+                type: int
+                default: 10
+            python_debug_mode:
+                description: "Enable debug output for troubleshooting"
+                type: bool
+                default: false
 
     pip:
         short_description: "Pip package management entry point"
@@ -46,6 +135,25 @@ argument_specs:
                 type: list
                 elements: dict
                 required: true
+                options:
+                    name:
+                        description: "Package name"
+                        type: str
+                        required: true
+                    version:
+                        description: "Package version"
+                        type: str
+                    state:
+                        description: "Package state"
+                        type: str
+                        default: present
+                        choices: [present, latest, absent]
+                    virtualenv: *opt_virtualenv
+                    virtualenv_command: *opt_virtualenv_command
+                    virtualenv_site_packages: *opt_virtualenv_site_packages
+                    virtualenv_python: *opt_virtualenv_python
+                    extra_args: *opt_extra_args
+                    executable: *opt_executable
 
     requirements:
         short_description: "Requirements file entry point"
@@ -57,3 +165,19 @@ argument_specs:
                 type: list
                 elements: dict
                 required: true
+                options:
+                    path:
+                        description: "Path to requirements file"
+                        type: str
+                        required: true
+                    state:
+                        description: "Desired state"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+                    virtualenv: *opt_virtualenv
+                    virtualenv_command: *opt_virtualenv_command
+                    virtualenv_site_packages: *opt_virtualenv_site_packages
+                    virtualenv_python: *opt_virtualenv_python
+                    extra_args: *opt_extra_args
+                    executable: *opt_executable

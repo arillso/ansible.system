@@ -10,7 +10,7 @@ argument_specs:
             cloud metadata, and provides K3s cluster state detection.
 
         options:
-            # Core role identification
+            # Core role identification (defaults set dynamically in defaults/main.yml)
             facts_role_name:
                 type: str
                 default: "facts"
@@ -23,6 +23,7 @@ argument_specs:
 
             facts_version:
                 type: str
+                default: ""
                 description: "Auto-detected collection version"
 
             # Node classification
@@ -53,6 +54,27 @@ argument_specs:
             facts_ssh_service_names:
                 type: dict
                 description: "SSH service names by OS family for handler operations"
+                options:
+                    Debian:
+                        type: str
+                        default: "ssh"
+                        description: "SSH service name on Debian-based systems"
+                    RedHat:
+                        type: str
+                        default: "sshd"
+                        description: "SSH service name on RedHat-based systems"
+                    Suse:
+                        type: str
+                        default: "sshd"
+                        description: "SSH service name on SUSE-based systems"
+                    Alpine:
+                        type: str
+                        default: "openssh"
+                        description: "SSH service name on Alpine-based systems"
+                    default:
+                        type: str
+                        default: "sshd"
+                        description: "Fallback SSH service name"
 
             # Feature flags for facts collection
             facts_enable_cloud_metadata:

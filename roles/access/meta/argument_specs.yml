@@ -85,10 +85,44 @@ argument_specs:
                         description: "SSH keys for this user"
                         type: list
                         elements: dict
+                        options:
+                            user:
+                                description: "Username (optional, defaults to parent user's name)"
+                                type: str
+                            key:
+                                description: "SSH public key"
+                                type: str
+                                required: true
+                            key_options:
+                                description: "SSH key options"
+                                type: str
+                            state:
+                                description: "Key state"
+                                type: str
+                                default: present
+                                choices: [present, absent]
+                            exclusive:
+                                description: "Remove all other keys"
+                                type: bool
+                                default: false
                     remove:
                         description: "Remove home directory when state=absent"
                         type: bool
                         default: false
+
+            # User Defaults
+            access_user_shell_default:
+                description: "Default shell for new users"
+                type: str
+                default: /bin/bash
+            access_user_create_home_default:
+                description: "Create home directory by default for new users"
+                type: bool
+                default: true
+            access_user_update_password_default:
+                description: "Default password update policy for users"
+                type: str
+                default: on_create
 
             # Group Management
             access_groups:
@@ -114,7 +148,7 @@ argument_specs:
                         type: bool
                         default: false
 
-            # Sudoers Configuration
+            # Sudoers
             access_sudoers:
                 description: "List of sudoers entries"
                 type: list
@@ -157,16 +191,39 @@ argument_specs:
                         default: present
                         choices: [present, absent]
 
+            # Sudoers File Settings
+            access_sudoers_file_owner:
+                description: "Owner of sudoers files"
+                type: str
+                default: root
+            access_sudoers_file_group:
+                description: "Group of sudoers files"
+                type: str
+                default: root
+            access_sudoers_file_mode:
+                description: "File mode for sudoers files"
+                type: str
+                default: "0440"
+            access_sudoers_validate:
+                description: "Validate sudoers syntax with visudo"
+                type: bool
+                default: true
+
             # SSH Server Configuration
             access_ssh_port:
                 description: "SSH port"
                 type: int
                 default: 22
+            access_ssh_listen_addresses:
+                description: "List of addresses for SSH to listen on"
+                type: list
+                elements: str
+                default: []
             access_ssh_permit_root_login:
                 description: "Permit root login"
                 type: str
                 default: prohibit-password
-                choices: [true, false, prohibit-password, forced-commands-only]
+                choices: ["yes", "no", prohibit-password, forced-commands-only]
             access_ssh_pubkey_authentication:
                 description: "Enable public key authentication"
                 type: bool
@@ -175,10 +232,114 @@ argument_specs:
                 description: "Enable password authentication"
                 type: bool
                 default: false
+            access_ssh_challenge_response_authentication:
+                description: "Enable challenge-response authentication"
+                type: bool
+                default: false
+            access_ssh_gssapi_authentication:
+                description: "Enable GSSAPI authentication"
+                type: bool
+                default: false
+            access_ssh_kerberos_authentication:
+                description: "Enable Kerberos authentication"
+                type: bool
+                default: false
+            access_ssh_permit_empty_passwords:
+                description: "Permit empty passwords"
+                type: bool
+                default: false
+            access_ssh_permit_user_environment:
+                description: "Allow users to set environment variables"
+                type: bool
+                default: false
+            access_ssh_max_auth_tries:
+                description: "Maximum authentication attempts per connection"
+                type: int
+                default: 3
+            access_ssh_max_sessions:
+                description: "Maximum number of open sessions per connection"
+                type: int
+                default: 10
+            access_ssh_max_startups:
+                description: "Maximum concurrent unauthenticated connections"
+                type: str
+                default: "10:30:60"
+            access_ssh_login_grace_time:
+                description: "Time in seconds to authenticate before disconnecting"
+                type: int
+                default: 60
             access_ssh_x11_forwarding:
                 description: "Enable X11 forwarding"
                 type: bool
                 default: false
+            access_ssh_tcp_forwarding:
+                description: "Enable TCP forwarding"
+                type: bool
+                default: true
+            access_ssh_agent_forwarding:
+                description: "Enable SSH agent forwarding"
+                type: bool
+                default: false
+            access_ssh_gateway_ports:
+                description: "Allow remote hosts to connect to forwarded ports"
+                type: bool
+                default: false
+            access_ssh_permit_tunnel:
+                description: "Allow tunnel device forwarding"
+                type: bool
+                default: false
+            access_ssh_log_level:
+                description: "SSH daemon log level"
+                type: str
+                default: INFO
+            access_ssh_syslog_facility:
+                description: "Syslog facility for SSH daemon"
+                type: str
+                default: AUTH
+            access_ssh_client_alive_interval:
+                description: "Interval in seconds for client alive messages"
+                type: int
+                default: 300
+            access_ssh_client_alive_count_max:
+                description: "Maximum client alive messages without response"
+                type: int
+                default: 3
+            access_ssh_tcp_keep_alive:
+                description: "Enable TCP keepalive messages"
+                type: bool
+                default: true
+            access_ssh_compression:
+                description: "Enable SSH compression"
+                type: bool
+                default: false
+            access_ssh_allow_users:
+                description: "List of users allowed to connect via SSH"
+                type: list
+                elements: str
+                default: []
+            access_ssh_allow_groups:
+                description: "List of groups allowed to connect via SSH"
+                type: list
+                elements: str
+                default: []
+            access_ssh_deny_users:
+                description: "List of users denied SSH access"
+                type: list
+                elements: str
+                default: []
+            access_ssh_deny_groups:
+                description: "List of groups denied SSH access"
+                type: list
+                elements: str
+                default: []
+            access_ssh_subsystem_sftp:
+                description: "Path to SFTP server binary"
+                type: str
+                default: /usr/lib/openssh/sftp-server
+            access_ssh_config_extra:
+                description: "Extra SSH configuration options as key-value pairs"
+                type: dict
+                default: {}
             access_ssh_service_enabled:
                 description: "Enable SSH service"
                 type: bool
@@ -188,8 +349,12 @@ argument_specs:
                 type: str
                 default: started
                 choices: [started, stopped, restarted, reloaded]
+            access_ssh_restart_on_change:
+                description: "Restart SSH service when configuration changes"
+                type: bool
+                default: true
 
-            # SSH Key Management
+            # SSH Keys
             access_ssh_keys:
                 description: "List of SSH keys to manage"
                 type: list
@@ -217,7 +382,24 @@ argument_specs:
                         type: bool
                         default: false
 
-            # Validation
+            # Service Options
+            access_services_to_restart:
+                description: "Additional services to restart after access changes"
+                type: list
+                elements: str
+                default: []
+
+            # Retry Options
+            access_retry_count:
+                description: "Number of retry attempts for tasks"
+                type: int
+                default: 3
+            access_retry_delay:
+                description: "Delay in seconds between retry attempts"
+                type: int
+                default: 5
+
+            # Validation Options
             access_validate_sudoers:
                 description: "Validate sudoers files before applying"
                 type: bool
@@ -231,6 +413,12 @@ argument_specs:
                 type: bool
                 default: true
 
+            # Debug Options
+            access_debug_mode:
+                description: "Enable debug output for troubleshooting"
+                type: bool
+                default: false
+
     users:
         short_description: "User management entry point"
         description:
@@ -241,7 +429,93 @@ argument_specs:
                 description: "List of users to manage"
                 type: list
                 elements: dict
-                required: true
+                default: []
+                options:
+                    name:
+                        description: "Username"
+                        type: str
+                        required: true
+                    comment:
+                        description: "User comment (GECOS)"
+                        type: str
+                    uid:
+                        description: "User ID"
+                        type: int
+                    group:
+                        description: "Primary group"
+                        type: str
+                    groups:
+                        description: "List of supplementary groups"
+                        type: list
+                        elements: str
+                    shell:
+                        description: "User shell"
+                        type: str
+                        default: /bin/bash
+                    home:
+                        description: "Home directory"
+                        type: str
+                    create_home:
+                        description: "Create home directory"
+                        type: bool
+                        default: true
+                    state:
+                        description: "User state"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+                    system:
+                        description: "System user"
+                        type: bool
+                        default: false
+                    password:
+                        description: "Encrypted password hash"
+                        type: str
+                    update_password:
+                        description: "When to update password"
+                        type: str
+                        default: on_create
+                        choices: [always, on_create]
+                    ssh_keys:
+                        description: "SSH keys for this user"
+                        type: list
+                        elements: dict
+                        options:
+                            user:
+                                description: "Username (optional, defaults to parent user's name)"
+                                type: str
+                            key:
+                                description: "SSH public key"
+                                type: str
+                                required: true
+                            key_options:
+                                description: "SSH key options"
+                                type: str
+                            state:
+                                description: "Key state"
+                                type: str
+                                default: present
+                                choices: [present, absent]
+                            exclusive:
+                                description: "Remove all other keys"
+                                type: bool
+                                default: false
+                    remove:
+                        description: "Remove home directory when state=absent"
+                        type: bool
+                        default: false
+            access_user_shell_default:
+                description: "Default shell for new users"
+                type: str
+                default: /bin/bash
+            access_user_create_home_default:
+                description: "Create home directory by default for new users"
+                type: bool
+                default: true
+            access_user_update_password_default:
+                description: "Default password update policy for users"
+                type: str
+                default: on_create
 
     groups:
         short_description: "Group management entry point"
@@ -253,7 +527,24 @@ argument_specs:
                 description: "List of groups to manage"
                 type: list
                 elements: dict
-                required: true
+                default: []
+                options:
+                    name:
+                        description: "Group name"
+                        type: str
+                        required: true
+                    gid:
+                        description: "Group ID"
+                        type: int
+                    state:
+                        description: "Group state"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+                    system:
+                        description: "System group"
+                        type: bool
+                        default: false
 
     sudoers:
         short_description: "Sudoers management entry point"
@@ -265,9 +556,61 @@ argument_specs:
                 description: "List of sudoers entries"
                 type: list
                 elements: dict
-                required: true
+                default: []
+                options:
+                    name:
+                        description: "Entry name (for filename)"
+                        type: str
+                        required: true
+                    user:
+                        description: "User to grant sudo access"
+                        type: str
+                    group:
+                        description: "Group to grant sudo access"
+                        type: str
+                    commands:
+                        description: "Commands allowed"
+                        type: str
+                        default: ALL
+                    hosts:
+                        description: "Hosts where rule applies"
+                        type: str
+                        default: ALL
+                    runas:
+                        description: "Users to run commands as"
+                        type: str
+                        default: ALL
+                    nopasswd:
+                        description: "Allow without password"
+                        type: bool
+                        default: false
+                    setenv:
+                        description: "Allow setting environment"
+                        type: bool
+                        default: false
+                    state:
+                        description: "Sudoers entry state"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+            access_sudoers_file_owner:
+                description: "Owner of sudoers files"
+                type: str
+                default: root
+            access_sudoers_file_group:
+                description: "Group of sudoers files"
+                type: str
+                default: root
+            access_sudoers_file_mode:
+                description: "File mode for sudoers files"
+                type: str
+                default: "0440"
+            access_sudoers_validate:
+                description: "Validate sudoers syntax with visudo"
+                type: bool
+                default: true
             access_validate_sudoers:
-                description: "Validate sudoers files"
+                description: "Validate sudoers files before applying"
                 type: bool
                 default: true
 
@@ -281,16 +624,147 @@ argument_specs:
                 description: "SSH port"
                 type: int
                 default: 22
+            access_ssh_listen_addresses:
+                description: "List of addresses for SSH to listen on"
+                type: list
+                elements: str
+                default: []
             access_ssh_permit_root_login:
                 description: "Permit root login"
                 type: str
                 default: prohibit-password
+                choices: ["yes", "no", prohibit-password, forced-commands-only]
+            access_ssh_pubkey_authentication:
+                description: "Enable public key authentication"
+                type: bool
+                default: true
             access_ssh_password_authentication:
                 description: "Enable password authentication"
                 type: bool
                 default: false
+            access_ssh_challenge_response_authentication:
+                description: "Enable challenge-response authentication"
+                type: bool
+                default: false
+            access_ssh_gssapi_authentication:
+                description: "Enable GSSAPI authentication"
+                type: bool
+                default: false
+            access_ssh_kerberos_authentication:
+                description: "Enable Kerberos authentication"
+                type: bool
+                default: false
+            access_ssh_permit_empty_passwords:
+                description: "Permit empty passwords"
+                type: bool
+                default: false
+            access_ssh_permit_user_environment:
+                description: "Allow users to set environment variables"
+                type: bool
+                default: false
+            access_ssh_max_auth_tries:
+                description: "Maximum authentication attempts per connection"
+                type: int
+                default: 3
+            access_ssh_max_sessions:
+                description: "Maximum number of open sessions per connection"
+                type: int
+                default: 10
+            access_ssh_max_startups:
+                description: "Maximum concurrent unauthenticated connections"
+                type: str
+                default: "10:30:60"
+            access_ssh_login_grace_time:
+                description: "Time in seconds to authenticate before disconnecting"
+                type: int
+                default: 60
+            access_ssh_x11_forwarding:
+                description: "Enable X11 forwarding"
+                type: bool
+                default: false
+            access_ssh_tcp_forwarding:
+                description: "Enable TCP forwarding"
+                type: bool
+                default: true
+            access_ssh_agent_forwarding:
+                description: "Enable SSH agent forwarding"
+                type: bool
+                default: false
+            access_ssh_gateway_ports:
+                description: "Allow remote hosts to connect to forwarded ports"
+                type: bool
+                default: false
+            access_ssh_permit_tunnel:
+                description: "Allow tunnel device forwarding"
+                type: bool
+                default: false
+            access_ssh_log_level:
+                description: "SSH daemon log level"
+                type: str
+                default: INFO
+            access_ssh_syslog_facility:
+                description: "Syslog facility for SSH daemon"
+                type: str
+                default: AUTH
+            access_ssh_client_alive_interval:
+                description: "Interval in seconds for client alive messages"
+                type: int
+                default: 300
+            access_ssh_client_alive_count_max:
+                description: "Maximum client alive messages without response"
+                type: int
+                default: 3
+            access_ssh_tcp_keep_alive:
+                description: "Enable TCP keepalive messages"
+                type: bool
+                default: true
+            access_ssh_compression:
+                description: "Enable SSH compression"
+                type: bool
+                default: false
+            access_ssh_allow_users:
+                description: "List of users allowed to connect via SSH"
+                type: list
+                elements: str
+                default: []
+            access_ssh_allow_groups:
+                description: "List of groups allowed to connect via SSH"
+                type: list
+                elements: str
+                default: []
+            access_ssh_deny_users:
+                description: "List of users denied SSH access"
+                type: list
+                elements: str
+                default: []
+            access_ssh_deny_groups:
+                description: "List of groups denied SSH access"
+                type: list
+                elements: str
+                default: []
+            access_ssh_subsystem_sftp:
+                description: "Path to SFTP server binary"
+                type: str
+                default: /usr/lib/openssh/sftp-server
+            access_ssh_config_extra:
+                description: "Extra SSH configuration options as key-value pairs"
+                type: dict
+                default: {}
             access_ssh_service_enabled:
                 description: "Enable SSH service"
+                type: bool
+                default: true
+            access_ssh_service_state:
+                description: "SSH service state"
+                type: str
+                default: started
+                choices: [started, stopped, restarted, reloaded]
+            access_ssh_restart_on_change:
+                description: "Restart SSH service when configuration changes"
+                type: bool
+                default: true
+            access_validate_ssh_config:
+                description: "Validate SSH config before applying"
                 type: bool
                 default: true
 
@@ -304,4 +778,25 @@ argument_specs:
                 description: "List of SSH keys to manage"
                 type: list
                 elements: dict
-                required: true
+                default: []
+                options:
+                    user:
+                        description: "Username"
+                        type: str
+                        required: true
+                    key:
+                        description: "SSH public key"
+                        type: str
+                        required: true
+                    key_options:
+                        description: "SSH key options"
+                        type: str
+                    state:
+                        description: "Key state"
+                        type: str
+                        default: present
+                        choices: [present, absent]
+                    exclusive:
+                        description: "Remove all other keys"
+                        type: bool
+                        default: false

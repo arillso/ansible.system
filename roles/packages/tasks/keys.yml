@@ -69,7 +69,7 @@
       - _pkg_key_item.dearmor | default(false)
       - not (_pkg_key_item.keyring |
         default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
-                '-keyring.gpg')) is file or packages_keys_force_update
+        '-keyring.gpg')) is file or packages_keys_force_update
   register: _packages_keys_downloaded_url_keyring_dearmor
   become: true
 
@@ -267,7 +267,7 @@
       - _pkg_key_item.state | default('present') == 'present'
       - not (_pkg_key_item.keyring |
         default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom-data')) +
-                '-keyring.gpg')) is file or packages_keys_force_update
+        '-keyring.gpg')) is file or packages_keys_force_update
   register: _packages_keys_data_written
   become: true
 

@@ -40,7 +40,7 @@
       mode: "0644"
       owner: root
       group: root
-      force: "{{ packages_keys_force_update }}"
+      force: "{{ packages_keys_force_update | bool }}"
       timeout: 30
   loop: "{{ packages_keys }}"
   loop_control:
@@ -130,7 +130,7 @@
       mode: "0644"
       owner: root
       group: root
-      force: "{{ packages_keys_force_update }}"
+      force: "{{ packages_keys_force_update | bool }}"
       timeout: 30
   loop: "{{ packages_keys }}"
   loop_control:

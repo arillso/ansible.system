@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-03-10
+
+### Added
+
+- Comprehensive argument specs with full option definitions for all roles: access (SSH,
+  sudoers, users, groups with nested dict specs), ansible (pipx, timer, retry, debug options),
+  bitwarden_secrets (download, retry options), facts (granular collection flags for hardware,
+  network, storage, containers), logging (logrotate entries/globals, rsyslog entries/remote
+  servers/globals), network (DNS, systemd-resolved, netplan options), packages (proxy, mirror,
+  periodic, acquire, pinning, unattended upgrades), python (virtualenv, requirements, dev
+  packages), shell (MOTD, prompt, aliases, history, caching options), systemd (unit file
+  paths, journald rate limits/forwarding/runtime), thermal, tuning
+- Key rotation support for packages role via `packages_keys_force_update` option that
+  removes existing keyrings before re-downloading
+- New facts collection granularity variables (`facts_system_collect_hardware`,
+  `facts_network_collect_interfaces`, `facts_container_collect_inventory`, etc.)
+- Explicit key removal task for `state: absent` in packages keys management
+
+### Changed
+
+- Migrate all `apt_key` usage (URL, keyserver, data) to modern `signed-by` keyring approach
+  using `get_url`, `gpg --dearmor`, and shell-based keyserver fetching instead of deprecated
+  `ansible.builtin.apt_key` module
+- Split dearmor operations into separate download and dearmor steps with proper temp file
+  cleanup (trap-based)
+- Change `packages_apt_force_confdef` default from `true` to `false`
+- Update `arillso/.github` reusable workflows to v2026-03-09
+- Claude workflow now only triggers on `@claude` mentions in comments (removed
+  `pull_request_review` and `issues` triggers)
+- Update workflow permissions: `pull-requests` and `issues` changed from `read` to `write`
+
+### Fixed
+
+- Limit Claude AI review to PR creation event only (avoid duplicate reviews)
+- Clean up Claude workflow triggers and permissions
+- Add privilege check with clear error message for cache update in `apt_update_info` module
+- Fix formatting in AGENTS.md, renovate.json, and PR template
+
 ## [1.1.0] - 2026-03-09
 
 ### Added
@@ -174,7 +212,8 @@ Users need to migrate to the new role structure. See role documentation for migr
 
 For releases prior to this changelog format change, see: <https://github.com/arillso/ansible.system/releases>
 
-[Unreleased]: https://github.com/arillso/ansible.system/compare/1.1.0...HEAD
+[Unreleased]: https://github.com/arillso/ansible.system/compare/1.1.1...HEAD
+[1.1.1]: https://github.com/arillso/ansible.system/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/arillso/ansible.system/compare/1.0.5...1.1.0
 [1.0.5]: https://github.com/arillso/ansible.system/compare/1.0.4...1.0.5
 [1.0.4]: https://github.com/arillso/ansible.system/compare/1.0.3...1.0.4

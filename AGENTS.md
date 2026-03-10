@@ -81,29 +81,29 @@ Key roles:
 **IMPORTANT: Always update CHANGELOG.md before releasing!**
 
 1. **Update CHANGELOG.md** (REQUIRED - DO NOT SKIP!)
-   - Add new version section (e.g., `## [1.0.1] - 2026-01-14`)
-   - Document all changes under appropriate sections:
-     - Added - new features
-     - Changed - changes in existing functionality
-     - Deprecated - soon-to-be removed features
-     - Removed - removed features
-     - Fixed - bug fixes
-     - Security - security fixes
-   - Move items from `## [Unreleased]` to the new version section
+    - Add new version section (e.g., `## [1.0.1] - 2026-01-14`)
+    - Document all changes under appropriate sections:
+        - Added - new features
+        - Changed - changes in existing functionality
+        - Deprecated - soon-to-be removed features
+        - Removed - removed features
+        - Fixed - bug fixes
+        - Security - security fixes
+    - Move items from `## [Unreleased]` to the new version section
 
 2. **Update galaxy.yml version**
-   - Change `version:` field to match the new release version
+    - Change `version:` field to match the new release version
 
 3. **Create and push git tag**
-   - Use version without 'v' prefix (e.g., `1.0.1` not `v1.0.1`)
-   - Follow Ansible Collections best practice (no v prefix)
-   - Command: `git tag 1.0.1 && git push origin 1.0.1`
+    - Use version without 'v' prefix (e.g., `1.0.1` not `v1.0.1`)
+    - Follow Ansible Collections best practice (no v prefix)
+    - Command: `git tag 1.0.1 && git push origin 1.0.1`
 
 4. **Automated workflow triggers**
-   - Tag push automatically triggers `publish.yml` workflow
-   - Workflow extracts changelog for the version
-   - Publishes to Ansible Galaxy
-   - Creates GitHub Release with changelog notes
+    - Tag push automatically triggers `publish.yml` workflow
+    - Workflow extracts changelog for the version
+    - Publishes to Ansible Galaxy
+    - Creates GitHub Release with changelog notes
 
 **Release Checklist:**
 

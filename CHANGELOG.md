@@ -40,8 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Limit Claude AI review to PR creation event only (avoid duplicate reviews)
-- Clean up Claude workflow triggers and permissions
 - Add privilege check with clear error message for cache update in `apt_update_info` module
 - Fix formatting in AGENTS.md, renovate.json, and PR template
 

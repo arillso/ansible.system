@@ -1,6 +1,6 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": ["github>arillso/.github:renovate-ansible#2026-03-09"],
+    "extends": ["github>arillso/.github:renovate-ansible#2026-03-11"],
     "packageRules": [
         {
             "matchPackageNames": ["ansible-core"],

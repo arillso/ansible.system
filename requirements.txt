@@ -4,15 +4,15 @@ ansible-lint>=26.3.0
 
 # Linting and Formatting
 yamllint>=1.38.0
-ruff>=0.15.5
-black>=26.3.0
+ruff>=0.15.7
+black>=26.3.1
 
 # Testing
 molecule>=26.3.0
 molecule-plugins[docker]>=25.8.12
 pytest>=9.0.2
 pytest-ansible>=26.2.0
-pytest-cov>=7.0.0
+pytest-cov>=7.1.0
 
 # Documentation
 sphinx>=9.1.0

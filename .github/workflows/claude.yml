@@ -19,6 +19,6 @@ jobs:
         if: |
             (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
             (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
-        uses: arillso/.github/.github/workflows/ai-claude.yml@2026-03-11
+        uses: arillso/.github/.github/workflows/ai-claude.yml@2026-03-25
         secrets:
             CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

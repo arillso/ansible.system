@@ -4,7 +4,7 @@ ansible-lint>=26.4.0
 
 # Linting and Formatting
 yamllint>=1.38.0
-ruff>=0.15.8
+ruff>=0.15.9
 black>=26.3.1
 
 # Testing

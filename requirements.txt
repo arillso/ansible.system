@@ -8,7 +8,7 @@ ruff>=0.15.9
 black>=26.3.1
 
 # Testing
-molecule>=26.3.0
+molecule>=26.4.0
 molecule-plugins[docker]>=25.8.12
 pytest>=9.0.2
 pytest-ansible>=26.4.0

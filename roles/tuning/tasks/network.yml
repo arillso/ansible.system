@@ -76,8 +76,8 @@
             group: root
         become: true
         notify:
-            - reload systemd
-            - enable network tuning service
+            - Reload systemd
+            - Enable network tuning service
         when: valid_network_buffers is defined and valid_network_buffers | length > 0
 
 - name: Configure network interface specific settings

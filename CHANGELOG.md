@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-05-02
+
+### Changed
+
+- Update `arillso/.github` reusable workflows and Renovate preset to v2026-03-25
+- Update Python dev dependencies: ansible-lint v26.4.0, ruff v0.15.12, black v26.3.1,
+  molecule v26.4.0, pytest v9.0.3, pytest-ansible v26.4.0, pytest-cov v7.1.0
+
+### Fixed
+
+- Align handler notify names in tuning role with handler definitions; the lowercase
+  notify entries (`reload systemd`, `enable network tuning service`,
+  `enable disable-thp service`) silently never matched the capitalized handlers,
+  so the systemd daemon-reload and the network-tuning/disable-thp service activations
+  never ran when their templates changed
+
 ## [1.1.1] - 2026-03-18
 
 ### Added
@@ -210,7 +226,8 @@ Users need to migrate to the new role structure. See role documentation for migr
 
 For releases prior to this changelog format change, see: <https://github.com/arillso/ansible.system/releases>
 
-[Unreleased]: https://github.com/arillso/ansible.system/compare/1.1.1...HEAD
+[Unreleased]: https://github.com/arillso/ansible.system/compare/1.1.2...HEAD
+[1.1.2]: https://github.com/arillso/ansible.system/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/arillso/ansible.system/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/arillso/ansible.system/compare/1.0.5...1.1.0
 [1.0.5]: https://github.com/arillso/ansible.system/compare/1.0.4...1.0.5

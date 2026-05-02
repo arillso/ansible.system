@@ -72,7 +72,6 @@
       - _pkg_key_item.dearmor | default(false)
   register: _packages_keys_target_stat_url_keyring
   changed_when: false
-  become: true
 
 - name: Download APT signing keys for dearmoring (URL with keyring)
   ansible.builtin.get_url:
@@ -106,8 +105,9 @@
   ansible.builtin.shell:
       cmd: |
           set -e
-          trap "rm -f {{ _pkg_key_armored_path | quote }}" EXIT
-          gpg --dearmor -o {{ _pkg_key_keyring_path | quote }} < {{ _pkg_key_armored_path | quote }}
+          _tmp={{ _pkg_key_armored_path | quote }}
+          trap 'rm -f "$_tmp"' EXIT
+          gpg --dearmor -o {{ _pkg_key_keyring_path | quote }} < "$_tmp"
       executable: /bin/bash
       creates: "{{ _pkg_key_keyring_path }}"
   loop: "{{ packages_keys }}"
@@ -179,7 +179,6 @@
       - _pkg_key_item.dearmor | default(false)
   register: _packages_keys_target_stat_url
   changed_when: false
-  become: true
 
 - name: Download APT signing keys for dearmoring (URL without keyring)
   ansible.builtin.get_url:
@@ -210,8 +209,9 @@
   ansible.builtin.shell:
       cmd: |
           set -e
-          trap "rm -f {{ _pkg_key_armored_path | quote }}" EXIT
-          gpg --dearmor -o {{ _pkg_key_keyring_path | quote }} < {{ _pkg_key_armored_path | quote }}
+          _tmp={{ _pkg_key_armored_path | quote }}
+          trap 'rm -f "$_tmp"' EXIT
+          gpg --dearmor -o {{ _pkg_key_keyring_path | quote }} < "$_tmp"
       executable: /bin/bash
       creates: "{{ _pkg_key_keyring_path }}"
   loop: "{{ packages_keys }}"
@@ -306,7 +306,6 @@
       - _pkg_key_item.state | default('present') == 'present'
   register: _packages_keys_target_stat_data
   changed_when: false
-  become: true
 
 - name: Write APT signing key data to temp file
   ansible.builtin.copy:
@@ -337,8 +336,9 @@
   ansible.builtin.shell:
       cmd: |
           set -e
-          trap "rm -f {{ _pkg_key_armored_path | quote }}" EXIT
-          gpg --dearmor -o {{ _pkg_key_keyring_path | quote }} < {{ _pkg_key_armored_path | quote }}
+          _tmp={{ _pkg_key_armored_path | quote }}
+          trap 'rm -f "$_tmp"' EXIT
+          gpg --dearmor -o {{ _pkg_key_keyring_path | quote }} < "$_tmp"
       executable: /bin/bash
       creates: "{{ _pkg_key_keyring_path }}"
   loop: "{{ packages_keys }}"

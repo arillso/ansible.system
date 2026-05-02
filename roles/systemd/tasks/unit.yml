@@ -1,4 +1,14 @@
 ---
+- name: Ensure systemd unit destination directory exists
+  ansible.builtin.file:
+      path: "{{ systemd_unit_path }}"
+      state: directory
+      owner: "{{ systemd_unit_owner }}"
+      group: "{{ systemd_unit_group }}"
+      mode: "{{ systemd_unit_dir_mode }}"
+  become: true
+  when: systemd_units | length > 0
+
 - name: Deploy systemd unit files (raw content)
   ansible.builtin.copy:
       content: "{{ _systemd_unit_item.content }}"

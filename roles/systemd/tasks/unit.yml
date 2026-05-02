@@ -5,7 +5,7 @@
       state: directory
       owner: "{{ systemd_unit_owner }}"
       group: "{{ systemd_unit_group }}"
-      mode: "0755"
+      mode: "{{ systemd_unit_dir_mode }}"
   become: true
   when: systemd_units | length > 0
 

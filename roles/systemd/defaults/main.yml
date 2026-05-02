@@ -37,6 +37,7 @@ systemd_unit_path: /etc/systemd/system
 systemd_unit_owner: root
 systemd_unit_group: root
 systemd_unit_mode: "0644"
+systemd_unit_dir_mode: "0755"
 
 # Journald Configuration
 systemd_journald_storage: auto

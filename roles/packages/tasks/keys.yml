@@ -54,6 +54,25 @@
   register: _packages_keys_added_url_keyring
   become: true
 
+- name: Stat target keyrings on the host (URL with keyring)
+  ansible.builtin.stat:
+      path: >-
+          {{ _pkg_key_item.keyring |
+             default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
+                     '-keyring.gpg') }}
+  loop: "{{ packages_keys }}"
+  loop_control:
+      loop_var: _pkg_key_item
+      label: "{{ _pkg_key_item.name | default(_pkg_key_item.id | default('custom')) }}"
+  when:
+      - packages_keys | length > 0
+      - _pkg_key_item.url is defined
+      - _pkg_key_item.keyring is defined
+      - _pkg_key_item.state | default('present') == 'present'
+      - _pkg_key_item.dearmor | default(false)
+  register: _packages_keys_target_stat_url_keyring
+  changed_when: false
+
 - name: Download APT signing keys for dearmoring (URL with keyring)
   ansible.builtin.get_url:
       url: "{{ _pkg_key_item.url }}"
@@ -63,37 +82,38 @@
   loop: "{{ packages_keys }}"
   loop_control:
       loop_var: _pkg_key_item
+      extended: true
+      label: "{{ _pkg_key_item.name | default('custom') }}"
   when:
       - packages_keys | length > 0
       - _pkg_key_item.url is defined
       - _pkg_key_item.keyring is defined
       - _pkg_key_item.state | default('present') == 'present'
       - _pkg_key_item.dearmor | default(false)
-      - not (_pkg_key_item.keyring |
-        default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
-        '-keyring.gpg')) is file or packages_keys_force_update
+      - not (_packages_keys_target_stat_url_keyring.results[ansible_loop.index0].stat.exists | default(false))
+        or packages_keys_force_update
   register: _packages_keys_downloaded_url_keyring_dearmor
   become: true
 
 - name: Dearmor APT signing keys (URL with keyring)
-  ansible.builtin.shell:
-      cmd: >-
-          set -o pipefail &&
-          _tmp="/tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc" &&
-          trap 'rm -f "$_tmp"' EXIT &&
-          gpg --dearmor -o
-          {{ _pkg_key_item.keyring |
-             default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
-                     '-keyring.gpg') | quote }}
-          < "$_tmp"
-      executable: /bin/bash
-      creates: >-
+  vars:
+      _pkg_key_keyring_path: >-
           {{ _pkg_key_item.keyring |
              default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
                      '-keyring.gpg') }}
+      _pkg_key_armored_path: "/tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc"
+  ansible.builtin.shell:
+      cmd: |
+          set -e
+          _tmp={{ _pkg_key_armored_path | quote }}
+          trap 'rm -f "$_tmp"' EXIT
+          gpg --dearmor -o {{ _pkg_key_keyring_path | quote }} < "$_tmp"
+      executable: /bin/bash
+      creates: "{{ _pkg_key_keyring_path }}"
   loop: "{{ packages_keys }}"
   loop_control:
       loop_var: _pkg_key_item
+      label: "{{ _pkg_key_item.name | default('custom') }}"
   when:
       - packages_keys | length > 0
       - _pkg_key_item.url is defined
@@ -144,6 +164,22 @@
   register: _packages_keys_added_url
   become: true
 
+- name: Stat target keyrings on the host (URL without keyring)
+  ansible.builtin.stat:
+      path: "/usr/share/keyrings/{{ _pkg_key_item.name | default('custom') }}-keyring.gpg"
+  loop: "{{ packages_keys }}"
+  loop_control:
+      loop_var: _pkg_key_item
+      label: "{{ _pkg_key_item.name | default('custom') }}"
+  when:
+      - packages_keys | length > 0
+      - _pkg_key_item.url is defined
+      - _pkg_key_item.keyring is not defined
+      - _pkg_key_item.state | default('present') == 'present'
+      - _pkg_key_item.dearmor | default(false)
+  register: _packages_keys_target_stat_url
+  changed_when: false
+
 - name: Download APT signing keys for dearmoring (URL without keyring)
   ansible.builtin.get_url:
       url: "{{ _pkg_key_item.url }}"
@@ -153,32 +189,35 @@
   loop: "{{ packages_keys }}"
   loop_control:
       loop_var: _pkg_key_item
+      extended: true
+      label: "{{ _pkg_key_item.name | default('custom') }}"
   when:
       - packages_keys | length > 0
       - _pkg_key_item.url is defined
       - _pkg_key_item.keyring is not defined
       - _pkg_key_item.state | default('present') == 'present'
       - _pkg_key_item.dearmor | default(false)
-      - not ('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
-        '-keyring.gpg') is file or packages_keys_force_update
+      - not (_packages_keys_target_stat_url.results[ansible_loop.index0].stat.exists | default(false))
+        or packages_keys_force_update
   register: _packages_keys_downloaded_url_dearmor
   become: true
 
 - name: Dearmor APT signing keys (URL without keyring)
+  vars:
+      _pkg_key_keyring_path: "/usr/share/keyrings/{{ _pkg_key_item.name | default('custom') }}-keyring.gpg"
+      _pkg_key_armored_path: "/tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc"
   ansible.builtin.shell:
-      cmd: >-
-          set -o pipefail &&
-          _tmp="/tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc" &&
-          trap 'rm -f "$_tmp"' EXIT &&
-          gpg --dearmor -o
-          {{ ('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
-              '-keyring.gpg') | quote }}
-          < "$_tmp"
+      cmd: |
+          set -e
+          _tmp={{ _pkg_key_armored_path | quote }}
+          trap 'rm -f "$_tmp"' EXIT
+          gpg --dearmor -o {{ _pkg_key_keyring_path | quote }} < "$_tmp"
       executable: /bin/bash
-      creates: "/usr/share/keyrings/{{ _pkg_key_item.name | default('custom') }}-keyring.gpg"
+      creates: "{{ _pkg_key_keyring_path }}"
   loop: "{{ packages_keys }}"
   loop_control:
       loop_var: _pkg_key_item
+      label: "{{ _pkg_key_item.name | default('custom') }}"
   when:
       - packages_keys | length > 0
       - _pkg_key_item.url is defined
@@ -206,27 +245,24 @@
   become: true
 
 - name: Fetch APT signing keys from keyserver
-  ansible.builtin.shell:
-      cmd: >-
-          set -o pipefail &&
-          _tmpfile=$(mktemp --suffix=.gpg) &&
-          trap 'rm -f "$_tmpfile" "${_tmpfile}~"' EXIT &&
-          gpg --no-default-keyring --keyring "$_tmpfile"
-          --keyserver {{ _pkg_key_item.keyserver | quote }}
-          --recv-keys {{ _pkg_key_item.id | quote }} &&
-          gpg --no-default-keyring --keyring "$_tmpfile"
-          --export {{ _pkg_key_item.id | quote }} >
-          {{ (_pkg_key_item.keyring |
-              default('/usr/share/keyrings/' + (_pkg_key_item.name | default(_pkg_key_item.id)) +
-                      '-keyring.gpg')) | quote }}
-      executable: /bin/bash
-      creates: >-
+  vars:
+      _pkg_key_keyring_path: >-
           {{ _pkg_key_item.keyring |
              default('/usr/share/keyrings/' + (_pkg_key_item.name | default(_pkg_key_item.id)) +
                      '-keyring.gpg') }}
+  ansible.builtin.shell:
+      cmd: |
+          set -e
+          _tmpfile=$(mktemp --suffix=.gpg)
+          trap 'rm -f "$_tmpfile" "${_tmpfile}~"' EXIT
+          gpg --no-default-keyring --keyring "$_tmpfile" --keyserver {{ _pkg_key_item.keyserver | quote }} --recv-keys {{ _pkg_key_item.id | quote }}
+          gpg --no-default-keyring --keyring "$_tmpfile" --export {{ _pkg_key_item.id | quote }} > {{ _pkg_key_keyring_path | quote }}
+      executable: /bin/bash
+      creates: "{{ _pkg_key_keyring_path }}"
   loop: "{{ packages_keys }}"
   loop_control:
       loop_var: _pkg_key_item
+      label: "{{ _pkg_key_item.name | default(_pkg_key_item.id) }}"
   when:
       - packages_keys | length > 0
       - _pkg_key_item.keyserver is defined
@@ -254,6 +290,23 @@
       - _pkg_key_item.state | default('present') == 'present'
   become: true
 
+- name: Stat target keyrings on the host (data)
+  ansible.builtin.stat:
+      path: >-
+          {{ _pkg_key_item.keyring |
+             default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom-data')) +
+                     '-keyring.gpg') }}
+  loop: "{{ packages_keys }}"
+  loop_control:
+      loop_var: _pkg_key_item
+      label: "{{ _pkg_key_item.name | default('custom-data') }}"
+  when:
+      - packages_keys | length > 0
+      - _pkg_key_item.data is defined
+      - _pkg_key_item.state | default('present') == 'present'
+  register: _packages_keys_target_stat_data
+  changed_when: false
+
 - name: Write APT signing key data to temp file
   ansible.builtin.copy:
       content: "{{ _pkg_key_item.data }}"
@@ -262,35 +315,36 @@
   loop: "{{ packages_keys }}"
   loop_control:
       loop_var: _pkg_key_item
+      extended: true
+      label: "{{ _pkg_key_item.name | default('custom-data') }}"
   when:
       - packages_keys | length > 0
       - _pkg_key_item.data is defined
       - _pkg_key_item.state | default('present') == 'present'
-      - not (_pkg_key_item.keyring |
-        default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom-data')) +
-        '-keyring.gpg')) is file or packages_keys_force_update
+      - not (_packages_keys_target_stat_data.results[ansible_loop.index0].stat.exists | default(false))
+        or packages_keys_force_update
   register: _packages_keys_data_written
   become: true
 
 - name: Dearmor APT signing keys from data
-  ansible.builtin.shell:
-      cmd: >-
-          set -o pipefail &&
-          _tmp="/tmp/{{ _pkg_key_item.name | default('custom-data') }}-armored.asc" &&
-          trap 'rm -f "$_tmp"' EXIT &&
-          gpg --dearmor -o
-          {{ (_pkg_key_item.keyring |
-              default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom-data')) +
-                      '-keyring.gpg')) | quote }}
-          < "$_tmp"
-      executable: /bin/bash
-      creates: >-
+  vars:
+      _pkg_key_keyring_path: >-
           {{ _pkg_key_item.keyring |
              default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom-data')) +
                      '-keyring.gpg') }}
+      _pkg_key_armored_path: "/tmp/{{ _pkg_key_item.name | default('custom-data') }}-armored.asc"
+  ansible.builtin.shell:
+      cmd: |
+          set -e
+          _tmp={{ _pkg_key_armored_path | quote }}
+          trap 'rm -f "$_tmp"' EXIT
+          gpg --dearmor -o {{ _pkg_key_keyring_path | quote }} < "$_tmp"
+      executable: /bin/bash
+      creates: "{{ _pkg_key_keyring_path }}"
   loop: "{{ packages_keys }}"
   loop_control:
       loop_var: _pkg_key_item
+      label: "{{ _pkg_key_item.name | default('custom-data') }}"
   when:
       - packages_keys | length > 0
       - _pkg_key_item.data is defined

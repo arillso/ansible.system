@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-05-02
+
+### Fixed
+
+- `packages` role now stats the target keyring on the host before deciding
+  whether to (re-)download armored key material to `/tmp`. The previous
+  `is file` Jinja test ran on the controller, so a controller that already
+  had the keyring cached would skip the download even when the target was
+  fresh, leaving the host without a keyring and the dearmor task without
+  its source file
+- `packages` role dearmor and keyserver shell tasks no longer use a folded
+  scalar (`>-`) with multi-line Jinja path expressions in `cmd:`. The
+  more-indented Jinja continuation lines preserved their newlines through
+  YAML folding, which split the rendered command into two shell statements
+  — `gpg --dearmor -o <path>` (with no stdin redirect, producing an empty
+  keyring at exit 0 because of `-o`) and an orphan `< "$_tmp"` redirect.
+  The result was a 0-byte keyring file that apt rejected with `NO_PUBKEY`,
+  silently breaking package installs (e.g. `alloy` from the Grafana repo).
+  Paths are now precomputed via task-level `vars:` and the command body is
+  written as a literal block (`|`) with one shell statement per line
+
 ## [1.1.3] - 2026-05-02
 
 ### Fixed
@@ -236,7 +257,8 @@ Users need to migrate to the new role structure. See role documentation for migr
 
 For releases prior to this changelog format change, see: <https://github.com/arillso/ansible.system/releases>
 
-[Unreleased]: https://github.com/arillso/ansible.system/compare/1.1.3...HEAD
+[Unreleased]: https://github.com/arillso/ansible.system/compare/1.1.4...HEAD
+[1.1.4]: https://github.com/arillso/ansible.system/compare/1.1.3...1.1.4
 [1.1.3]: https://github.com/arillso/ansible.system/compare/1.1.2...1.1.3
 [1.1.2]: https://github.com/arillso/ansible.system/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/arillso/ansible.system/compare/1.1.0...1.1.1

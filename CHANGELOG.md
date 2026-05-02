@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-05-02
+
+### Fixed
+
+- Ensure the destination directory exists before deploying systemd unit files in the
+  `systemd` role; previously `unit.yml` only worked when `systemd_unit_path` was the
+  default `/etc/systemd/system`. Callers passing a drop-in directory such as
+  `/etc/systemd/system/<unit>.d` (e.g. the `firewall` role for `nftables.service.d`)
+  failed on hosts where the directory did not yet exist
+
 ## [1.1.2] - 2026-05-02
 
 ### Changed
@@ -226,7 +236,8 @@ Users need to migrate to the new role structure. See role documentation for migr
 
 For releases prior to this changelog format change, see: <https://github.com/arillso/ansible.system/releases>
 
-[Unreleased]: https://github.com/arillso/ansible.system/compare/1.1.2...HEAD
+[Unreleased]: https://github.com/arillso/ansible.system/compare/1.1.3...HEAD
+[1.1.3]: https://github.com/arillso/ansible.system/compare/1.1.2...1.1.3
 [1.1.2]: https://github.com/arillso/ansible.system/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/arillso/ansible.system/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/arillso/ansible.system/compare/1.0.5...1.1.0

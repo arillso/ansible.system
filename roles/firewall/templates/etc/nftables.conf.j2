@@ -4,7 +4,14 @@
 # Host: {{ inventory_hostname }}
 # Groups: {{ group_names | join(', ') }}
 
-flush ruleset
+{# Scoped flush: nur die Tables, die diese Rolle managed. Vorher stand
+   hier `flush ruleset`, was alle Tables anderer Quellen (Docker
+   iptables-nft, kube-proxy, manuelle Entries) bei jedem Config-Reload
+   mit-wipet — sichtbar z. B. wenn ein Container-Recreate danach mit
+   "iptables: No chain/target/match by that name" failed. #}
+{% for firewall_table in _firewall | default([]) %}
+flush table {{ firewall_table.table.family }} {{ firewall_table.table.name }}
+{% endfor %}
 
 {% for firewall_table in _firewall | default([]) %}
 table {{ firewall_table.table.family }} {{ firewall_table.table.name }} {

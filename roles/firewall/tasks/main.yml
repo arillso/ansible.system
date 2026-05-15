@@ -66,7 +66,18 @@
                         - ""
                         - /usr/sbin/nft -f /etc/nftables.conf
                     ExecReload: /usr/sbin/nft -f /etc/nftables.conf
-                    ExecStop: /usr/sbin/nft flush ruleset
+                    # Scoped flush statt `nft flush ruleset` — sonst wipet
+                    # der systemd-Stop (auch ueber Restart-Pfad ausgeloest)
+                    # alle Tables anderer Quellen mit, inkl. Docker's
+                    # ip nat / ip filter Chains, was Container-Recreates
+                    # mit "iptables: No chain/target/match by that name"
+                    # fail-en laesst. Leading "" resettet die upstream-
+                    # ExecStop-Zeile (sonst wuerde unsere additiv angehaengt).
+                    ExecStop: >-
+                        {{ [''] + ['/usr/sbin/nft flush table '
+                                  ~ t.table.family ~ ' '
+                                  ~ t.table.name
+                                  for t in (_firewall | default([]))] }}
                 Install:
                     WantedBy: multi-user.target
   when: _firewall_tailscale_exists | bool
@@ -91,7 +102,18 @@
                         - ""
                         - /usr/sbin/nft -f /etc/nftables.conf
                     ExecReload: /usr/sbin/nft -f /etc/nftables.conf
-                    ExecStop: /usr/sbin/nft flush ruleset
+                    # Scoped flush statt `nft flush ruleset` — sonst wipet
+                    # der systemd-Stop (auch ueber Restart-Pfad ausgeloest)
+                    # alle Tables anderer Quellen mit, inkl. Docker's
+                    # ip nat / ip filter Chains, was Container-Recreates
+                    # mit "iptables: No chain/target/match by that name"
+                    # fail-en laesst. Leading "" resettet die upstream-
+                    # ExecStop-Zeile (sonst wuerde unsere additiv angehaengt).
+                    ExecStop: >-
+                        {{ [''] + ['/usr/sbin/nft flush table '
+                                  ~ t.table.family ~ ' '
+                                  ~ t.table.name
+                                  for t in (_firewall | default([]))] }}
                 Install:
                     WantedBy: multi-user.target
   when: not (_firewall_tailscale_exists | bool)

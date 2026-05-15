@@ -49,6 +49,21 @@
       name: arillso.system.systemd
       tasks_from: unit
   vars:
+      # Scoped flush statt `nft flush ruleset` — sonst wipet der
+      # systemd-Stop (auch ueber Restart-Pfad ausgeloest) alle Tables
+      # anderer Quellen mit, inkl. Docker's ip nat / ip filter Chains,
+      # was Container-Recreates mit "iptables: No chain/target/match by
+      # that name" fail-en laesst. Leading "" resettet die upstream-
+      # ExecStop-Zeile (sonst wuerde unsere additiv angehaengt), und
+      # das "-"-Prefix laesst systemd den Stop bei nicht existenter
+      # Table (Fresh-Boot, Service-Start vor erstem Apply) ignorieren.
+      _firewall_execstop_cmds: >-
+          {{ [''] + (_firewall | default([])
+                     | map(attribute='table.family')
+                     | zip(_firewall | default([]) | map(attribute='table.name'))
+                     | map('join', ' ')
+                     | map('regex_replace', '^', '-/usr/sbin/nft flush table ')
+                     | list) }}
       systemd_unit_path: /etc/systemd/system/nftables.service.d
       systemd_units:
           - name: override.conf
@@ -66,18 +81,7 @@
                         - ""
                         - /usr/sbin/nft -f /etc/nftables.conf
                     ExecReload: /usr/sbin/nft -f /etc/nftables.conf
-                    # Scoped flush statt `nft flush ruleset` — sonst wipet
-                    # der systemd-Stop (auch ueber Restart-Pfad ausgeloest)
-                    # alle Tables anderer Quellen mit, inkl. Docker's
-                    # ip nat / ip filter Chains, was Container-Recreates
-                    # mit "iptables: No chain/target/match by that name"
-                    # fail-en laesst. Leading "" resettet die upstream-
-                    # ExecStop-Zeile (sonst wuerde unsere additiv angehaengt).
-                    ExecStop: >-
-                        {{ [''] + ['/usr/sbin/nft flush table '
-                                  ~ t.table.family ~ ' '
-                                  ~ t.table.name
-                                  for t in (_firewall | default([]))] }}
+                    ExecStop: "{{ _firewall_execstop_cmds }}"
                 Install:
                     WantedBy: multi-user.target
   when: _firewall_tailscale_exists | bool
@@ -87,6 +91,13 @@
       name: arillso.system.systemd
       tasks_from: unit
   vars:
+      _firewall_execstop_cmds: >-
+          {{ [''] + (_firewall | default([])
+                     | map(attribute='table.family')
+                     | zip(_firewall | default([]) | map(attribute='table.name'))
+                     | map('join', ' ')
+                     | map('regex_replace', '^', '-/usr/sbin/nft flush table ')
+                     | list) }}
       systemd_unit_path: /etc/systemd/system/nftables.service.d
       systemd_units:
           - name: override.conf
@@ -102,18 +113,8 @@
                         - ""
                         - /usr/sbin/nft -f /etc/nftables.conf
                     ExecReload: /usr/sbin/nft -f /etc/nftables.conf
-                    # Scoped flush statt `nft flush ruleset` — sonst wipet
-                    # der systemd-Stop (auch ueber Restart-Pfad ausgeloest)
-                    # alle Tables anderer Quellen mit, inkl. Docker's
-                    # ip nat / ip filter Chains, was Container-Recreates
-                    # mit "iptables: No chain/target/match by that name"
-                    # fail-en laesst. Leading "" resettet die upstream-
-                    # ExecStop-Zeile (sonst wuerde unsere additiv angehaengt).
-                    ExecStop: >-
-                        {{ [''] + ['/usr/sbin/nft flush table '
-                                  ~ t.table.family ~ ' '
-                                  ~ t.table.name
-                                  for t in (_firewall | default([]))] }}
+                    # Begruendung siehe oberer Task; identische Logik.
+                    ExecStop: "{{ _firewall_execstop_cmds }}"
                 Install:
                     WantedBy: multi-user.target
   when: not (_firewall_tailscale_exists | bool)

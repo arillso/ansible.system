@@ -8,8 +8,13 @@
    hier `flush ruleset`, was alle Tables anderer Quellen (Docker
    iptables-nft, kube-proxy, manuelle Entries) bei jedem Config-Reload
    mit-wipet — sichtbar z. B. wenn ein Container-Recreate danach mit
-   "iptables: No chain/target/match by that name" failed. #}
+   "iptables: No chain/target/match by that name" failed. Der leere
+   `table { }`-Stub vor dem Flush ist ein No-op wenn die Table bereits
+   existiert, legt sie auf Fresh-Hosts an und macht `flush table` damit
+   beim ersten Apply nicht-failable. #}
 {% for firewall_table in _firewall | default([]) %}
+table {{ firewall_table.table.family }} {{ firewall_table.table.name }} {
+}
 flush table {{ firewall_table.table.family }} {{ firewall_table.table.name }}
 {% endfor %}
 

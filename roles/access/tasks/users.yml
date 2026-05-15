@@ -6,7 +6,13 @@
       uid: "{{ _access_user_item.uid | default(omit) }}"
       group: "{{ _access_user_item.group | default(omit) }}"
       groups: "{{ _access_user_item.groups | default(omit) }}"
-      append: "{{ _access_user_item.append | default(true) }}"
+      # append nur setzen wenn auch groups uebergeben wurde — sonst warnt
+      # Ansible "'append' is set, but no 'groups' are specified" (wird in
+      # Ansible 2.14 zum Fehler).
+      append: >-
+          {{ _access_user_item.append | default(true)
+             if _access_user_item.groups is defined
+             else omit }}
       shell: "{{ _access_user_item.shell | default(access_user_shell_default) }}"
       home: "{{ _access_user_item.home | default(omit) }}"
       create_home: "{{ _access_user_item.create_home | default(access_user_create_home_default) }}"

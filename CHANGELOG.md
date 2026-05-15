@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.5] - 2026-05-15
+
+### Fixed
+
+- `firewall` role: scope nftables flush to managed tables instead of running
+  a global `flush ruleset`. Both the rendered `/etc/nftables.conf` and the
+  systemd-override `ExecStop` previously wiped *all* nftables state on each
+  reload/restart, including tables managed by other sources (Docker's
+  iptables-nft `ip nat` / `ip filter` chains, kube-proxy, manually added
+  entries). Container recreates after a firewall handler run failed with
+  `iptables: No chain/target/match by that name`. The template now emits an
+  empty `table <family> <name> { }` stub before each `flush table` so the
+  first apply on a fresh host succeeds, and the systemd `ExecStop` flush
+  commands are prefixed with `-` so systemd treats a missing table on stop
+  as non-fatal
+- `access` role: only set `append` on the `ansible.builtin.user` module when
+  `groups` is also defined for the entry. The previous unconditional
+  `append` emitted the warning `'append' is set, but no 'groups' are
+  specified` and would have failed hard once that warning is promoted to an
+  error in `ansible-core` 2.14
+- All `include_role` calls to the `systemd` role now pass `become: true`
+  through `apply:` (in `access/ssh_server`, `logging/rsyslog`,
+  `network/resolv`, and both `packages/unattended_upgrades` branches).
+  `become` directly on `ansible.builtin.include_role` only escalates the
+  include itself, not the tasks inside the included role, so `systemctl`
+  tasks ran unprivileged and failed on hosts where the play did not
+  globally `become`
+
 ## [1.1.4] - 2026-05-02
 
 ### Fixed

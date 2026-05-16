@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `=({{ runas | default('ALL') }})`, so existing example configs like
   `runas: ALL` produce valid syntax without changes. The bug was
   introduced in the access-role rewrite (`ab1b3be`, 2026-01-14) and
-  affects all 1.1.x releases up to and including 1.1.5
+  affects all 1.1.x releases up to and including 1.1.5.
 
 ## [1.1.5] - 2026-05-15
 

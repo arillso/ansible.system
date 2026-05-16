@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.6] - 2026-05-17
+
+### Fixed
+
+- `access` role: wrap the `runas` field in the rendered sudoers file in
+  parentheses, as required by the sudoers(5) grammar
+  (`Runas_Spec ::= '(' Runas_List? (':' Runas_List)? ')'`). The
+  `sudoer.j2` template emitted `host=runas` instead of `host=(runas)`,
+  so every entry created from `access_sudoers` was syntactically
+  invalid: `visudo -cf` rejected the file and the templating task
+  failed at deploy time (`access_validate_sudoers` defaults to `true`).
+  Hosts that disabled the validate hook would have silently shipped a
+  broken sudoers drop-in. Both the user and group branches now render
+  `=({{ runas | default('ALL') }})`, so existing example configs like
+  `runas: ALL` produce valid syntax without changes. The bug was
+  introduced in the access-role rewrite (`ab1b3be`, 2026-01-14) and
+  affects all 1.1.x releases up to and including 1.1.5
+
 ## [1.1.5] - 2026-05-15
 
 ### Fixed

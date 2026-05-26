@@ -60,10 +60,9 @@
         ansible.builtin.set_fact:
             swap_file_active: "{{ tuning_swap_file_path in active_swaps.stdout }}"
             current_swap_size: >-
-                {%- for line in active_swaps.stdout_lines -%}
-                {%- if tuning_swap_file_path in line -%}
-                {{ (line.split()[1] | int / 1024 / 1024) | int }}{%- endif -%}
-                {%- endfor -%}
+                {%- if swap_file_stat.stat.exists -%}
+                {{ (swap_file_stat.stat.size / 1024 / 1024) | int }}
+                {%- endif -%}
 
 - name: Create or resize swap file
   block:

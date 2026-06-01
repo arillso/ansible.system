@@ -1,0 +1,16 @@
+---
+# Wird vom Syntax-only test_sequence nicht aufgerufen, dient aber als
+# Referenz fuer manuelle Vagrant/VM-Runs.
+
+- name: Converge — arillso.system.thermal (VM-only, do not run in container)
+  hosts: all
+  become: true
+
+  vars:
+      thermal_enabled: true
+      thermal_run_sensors_detect: false
+
+  tasks:
+      - name: Apply thermal role
+        ansible.builtin.include_role:
+            name: arillso.system.thermal

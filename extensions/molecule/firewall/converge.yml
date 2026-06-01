@@ -1,0 +1,56 @@
+---
+# Container-sicherer Converge: rendert die Konfiguration und prueft die nftables
+# Syntax, ohne sie wirklich in den Kernel zu laden (das schlaegt im Container
+# je nach Host-Kernel/Netfilter-Module fehl). Dafuer wird der notify-Restart
+# explizit unterdrueckt und stattdessen ein nft-Syntax-Check ausgefuehrt.
+
+- name: Converge — arillso.system.firewall (syntax-mode)
+  hosts: all
+  become: true
+
+  vars:
+      _molecule_firewall_syntax_only: true
+      firewall:
+          - table:
+                name: filter
+                family: inet
+                chains:
+                    - name: input
+                      type: filter
+                      hook: input
+                      priority: 0
+                      policy: drop
+                      rules:
+                          - comment: "Accept loopback"
+                            iifname: "lo"
+                            action: accept
+                          - comment: "Accept established"
+                            ct_state: ["established", "related"]
+                            action: accept
+                          - comment: "Accept SSH"
+                            tcp_dport: 22
+                            action: accept
+
+  tasks:
+      - name: Render hierarchical firewall payload only
+        ansible.builtin.set_fact:
+            _firewall: >-
+                {{ {
+                    'firewall': firewall | default([]),
+                    'firewall_global': firewall_global | default([]),
+                    'firewall_group': firewall_group | default([]),
+                    'firewall_host': firewall_host | default([])
+                } | arillso.system.to_nftables_hierarchy }}
+
+      - name: Generate nftables.conf from template (controller-side render only)
+        ansible.builtin.template:
+            src: "{{ playbook_dir }}/../../../roles/firewall/templates/etc/nftables.conf.j2"
+            dest: /etc/nftables.conf
+            mode: "0644"
+
+      - name: Syntax-check the rendered ruleset with nft -c
+        ansible.builtin.command:
+            cmd: nft -c -f /etc/nftables.conf
+        changed_when: false
+        register: _nft_check
+        failed_when: _nft_check.rc != 0

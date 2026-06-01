@@ -1,0 +1,19 @@
+---
+- name: Converge — arillso.system.python
+  hosts: all
+  become: true
+
+  vars:
+      python_install_packages: true
+      python_packages:
+          - name: requests
+            state: present
+            virtualenv: /opt/molecule-venv
+            virtualenv_command: python3 -m venv
+            virtualenv_python: python3
+            executable: pip3
+
+  tasks:
+      - name: Apply python role
+        ansible.builtin.include_role:
+            name: arillso.system.python

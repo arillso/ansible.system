@@ -1,0 +1,39 @@
+---
+- name: Verify — arillso.system.ansible
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+      - name: Stat pipx home
+        ansible.builtin.stat:
+            path: /opt/pipx
+        register: _pipx_home
+
+      - name: Assert pipx home is a directory
+        ansible.builtin.assert:
+            that:
+                - _pipx_home.stat.exists
+                - _pipx_home.stat.isdir
+
+      - name: Stat checkout directory
+        ansible.builtin.stat:
+            path: /var/lib/ansible-automation
+        register: _checkout
+
+      - name: Assert checkout directory exists
+        ansible.builtin.assert:
+            that:
+                - _checkout.stat.exists
+                - _checkout.stat.isdir
+
+      - name: Confirm ansible binary is installed via pipx
+        ansible.builtin.command:
+            cmd: /opt/pipx/bin/ansible --version
+        changed_when: false
+        register: _ansible_version
+
+      - name: Assert ansible-core is callable
+        ansible.builtin.assert:
+            that:
+                - "'ansible' in _ansible_version.stdout"

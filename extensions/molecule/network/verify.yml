@@ -1,0 +1,22 @@
+---
+- name: Verify — arillso.system.network
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+      - name: Stat systemd-resolved drop-in
+        ansible.builtin.stat:
+            path: /etc/systemd/resolved.conf.d/00-ansible.conf
+        register: _resolved
+
+      - name: Stat resolved.conf
+        ansible.builtin.stat:
+            path: /etc/systemd/resolved.conf
+        register: _resolved_root
+
+      - name: Assert at least one resolved configuration file is present
+        ansible.builtin.assert:
+            that:
+                - _resolved.stat.exists or _resolved_root.stat.exists
+            success_msg: "resolved configuration was rendered"

@@ -1,0 +1,61 @@
+---
+dependency:
+    name: galaxy
+    options:
+        requirements-file: ../.config/requirements.yml
+
+driver:
+    name: docker
+
+platforms:
+    - name: facts-debian-bookworm
+      image: geerlingguy/docker-debian12-ansible:latest
+      command: /usr/lib/systemd/systemd
+      privileged: true
+      pre_build_image: true
+      cgroupns_mode: host
+      volumes:
+          - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      tmpfs:
+          - /run
+          - /run/lock
+
+    - name: facts-ubuntu-noble
+      image: geerlingguy/docker-ubuntu2404-ansible:latest
+      command: /usr/lib/systemd/systemd
+      privileged: true
+      pre_build_image: true
+      cgroupns_mode: host
+      volumes:
+          - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      tmpfs:
+          - /run
+          - /run/lock
+
+    - name: facts-rocky-9
+      image: geerlingguy/docker-rockylinux9-ansible:latest
+      command: /usr/lib/systemd/systemd
+      privileged: true
+      pre_build_image: true
+      cgroupns_mode: host
+      volumes:
+          - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      tmpfs:
+          - /run
+          - /run/lock
+
+provisioner:
+    name: ansible
+    config_options:
+        defaults:
+            interpreter_python: auto_silent
+            stdout_callback: yaml
+        ssh_connection:
+            pipelining: true
+    inventory:
+        group_vars:
+            all:
+                ansible_user: root
+
+verifier:
+    name: ansible

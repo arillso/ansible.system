@@ -1,0 +1,22 @@
+---
+- name: Verify — arillso.system.firewall (syntax-mode)
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+      - name: Confirm rendered ruleset exists and is non-empty
+        ansible.builtin.stat:
+            path: /etc/nftables.conf
+        register: _nft
+
+      - name: Assert nftables.conf was rendered
+        ansible.builtin.assert:
+            that:
+                - _nft.stat.exists
+                - _nft.stat.size > 0
+
+      - name: Re-run nft syntax check
+        ansible.builtin.command:
+            cmd: nft -c -f /etc/nftables.conf
+        changed_when: false

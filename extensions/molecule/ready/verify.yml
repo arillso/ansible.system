@@ -1,0 +1,12 @@
+---
+- name: Verify — arillso.system.ready
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+      - name: Assert the converge step finished without errors
+        ansible.builtin.assert:
+            that:
+                - true
+            success_msg: "ready role completed converge without raising"

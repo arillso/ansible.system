@@ -1,0 +1,28 @@
+---
+- name: Verify — arillso.system.packages
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+      - name: Confirm htop is installed
+        ansible.builtin.command:
+            cmd: htop --version
+        changed_when: false
+        register: _htop
+
+      - name: Assert htop is installed
+        ansible.builtin.assert:
+            that:
+                - _htop.rc == 0
+
+      - name: Confirm jq is installed
+        ansible.builtin.command:
+            cmd: jq --version
+        changed_when: false
+        register: _jq
+
+      - name: Assert jq is installed
+        ansible.builtin.assert:
+            that:
+                - _jq.rc == 0

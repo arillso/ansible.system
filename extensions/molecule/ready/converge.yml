@@ -1,0 +1,20 @@
+---
+- name: Converge — arillso.system.ready
+  hosts: all
+  become: true
+
+  vars:
+      ready_ssh_delay: 0
+      ready_ssh_timeout: 30
+      ready_check_retries: 5
+      ready_check_delay: 1
+      ready_gather_facts: false
+
+  tasks:
+      - name: Apply ready role
+        ansible.builtin.include_role:
+            name: arillso.system.ready
+
+      - name: Mark ready role as completed
+        ansible.builtin.set_fact:
+            _ready_marker: true

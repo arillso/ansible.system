@@ -1,0 +1,11 @@
+---
+- name: Prepare — install nftables userspace tools
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+      - name: Install nftables binary so template + syntax-check work
+        ansible.builtin.package:
+            name: nftables
+            state: present

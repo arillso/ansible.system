@@ -1,0 +1,54 @@
+---
+- name: Verify — arillso.system.access
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+      - name: Look up deploy user
+        ansible.builtin.getent:
+            database: passwd
+            key: deploy
+
+      - name: Assert deploy user exists with expected shell
+        ansible.builtin.assert:
+            that:
+                - ansible_facts.getent_passwd['deploy'] is defined
+                - ansible_facts.getent_passwd['deploy'][5] == '/bin/bash'
+
+      - name: Look up deploy group
+        ansible.builtin.getent:
+            database: group
+            key: deploy
+
+      - name: Assert deploy group has expected GID
+        ansible.builtin.assert:
+            that:
+                - ansible_facts.getent_group['deploy'] is defined
+                - (ansible_facts.getent_group['deploy'][1] | int) == 4242
+
+      - name: Stat deploy sudoers drop-in
+        ansible.builtin.stat:
+            path: /etc/sudoers.d/deploy-nopasswd
+        register: _sudoers_stat
+
+      - name: Assert sudoers drop-in exists and is mode 0440
+        ansible.builtin.assert:
+            that:
+                - _sudoers_stat.stat.exists
+                - _sudoers_stat.stat.mode == '0440'
+
+      - name: Validate sudoers drop-in with visudo
+        ansible.builtin.command:
+            cmd: visudo -cf /etc/sudoers.d/deploy-nopasswd
+        changed_when: false
+
+      - name: Read authorized_keys for deploy user
+        ansible.builtin.slurp:
+            src: /home/deploy/.ssh/authorized_keys
+        register: _authkeys
+
+      - name: Assert authorized_keys contains the molecule test key
+        ansible.builtin.assert:
+            that:
+                - "'molecule-test' in (_authkeys.content | b64decode)"

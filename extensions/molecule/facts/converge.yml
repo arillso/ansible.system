@@ -1,0 +1,15 @@
+---
+- name: Converge — arillso.system.facts
+  hosts: all
+  become: true
+
+  vars:
+      facts_enable_cloud_metadata: false
+      facts_enable_security_updates: false
+      facts_enable_container_detection: true
+      facts_enable_static_cache: true
+
+  tasks:
+      - name: Apply facts role
+        ansible.builtin.include_role:
+            name: arillso.system.facts

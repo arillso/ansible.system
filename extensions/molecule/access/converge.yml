@@ -1,0 +1,32 @@
+---
+- name: Converge — arillso.system.access
+  hosts: all
+  become: true
+
+  vars:
+      access_groups:
+          - name: deploy
+            state: present
+            gid: 4242
+      access_users:
+          - name: deploy
+            state: present
+            groups: [deploy]
+            shell: /bin/bash
+            create_home: true
+      access_ssh_keys:
+          - user: deploy
+            key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINxIyJ2+QwxJ+9w+1ZuZRxjT4ePMOhM3uOpPNkfqWnMM molecule-test"
+            state: present
+      access_sudoers:
+          - name: deploy-nopasswd
+            users: [deploy]
+            commands: ["ALL"]
+            nopasswd: true
+            runas: ALL
+      access_ssh_server_enabled: false
+
+  tasks:
+      - name: Apply access role
+        ansible.builtin.include_role:
+            name: arillso.system.access

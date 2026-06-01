@@ -1,0 +1,29 @@
+---
+- name: Converge — arillso.system.logging
+  hosts: all
+  become: true
+
+  vars:
+      logging_logrotate_enabled: true
+      logging_rsyslog_enabled: true
+      logging_logrotate_entries:
+          - name: molecule-app
+            path: /var/log/molecule-app/*.log
+            options:
+                - daily
+                - rotate 7
+                - compress
+                - missingok
+                - notifempty
+                - create 0640 root root
+      logging_rsyslog_entries:
+          - name: 50-molecule-app
+            priority: 50
+            content: |
+                if $programname == 'molecule-app' then /var/log/molecule-app/molecule-app.log
+                & stop
+
+  tasks:
+      - name: Apply logging role
+        ansible.builtin.include_role:
+            name: arillso.system.logging

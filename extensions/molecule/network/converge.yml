@@ -1,0 +1,21 @@
+---
+- name: Converge — arillso.system.network (resolv path only)
+  hosts: all
+  become: true
+
+  vars:
+      network_resolv_enabled: true
+      network_netplan_enabled: false
+      network_netplan_apply: false
+      network_systemd_resolved_restart: false
+      network_use_systemd_resolved: true
+      network_resolved_fallback_dns:
+          - 1.1.1.1
+          - 9.9.9.9
+      network_resolved_dnssec: "no"
+      network_resolved_dns_over_tls: "no"
+
+  tasks:
+      - name: Apply network role
+        ansible.builtin.include_role:
+            name: arillso.system.network

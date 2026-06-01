@@ -1,0 +1,13 @@
+---
+- name: Converge — arillso.system.bitwarden_secrets
+  hosts: all
+  become: true
+
+  vars:
+      bitwarden_secrets_state: present
+      bitwarden_secrets_force_install: false
+
+  tasks:
+      - name: Apply bitwarden_secrets role
+        ansible.builtin.include_role:
+            name: arillso.system.bitwarden_secrets

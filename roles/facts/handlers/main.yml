@@ -4,6 +4,7 @@
   ansible.builtin.setup:
       gather_subset:
           - all
+  listen: "Refresh facts"
   tags:
       - facts
 
@@ -20,8 +21,12 @@
   listen: "Restart ssh service"
 
 - name: Update motd
+  # `update-motd` refreshes /run/motd.dynamic from /etc/update-motd.d
+  # scripts. A handler only fires when something upstream notified it,
+  # so reporting the run as changed (the default) matches reality.
   ansible.builtin.command: update-motd
   when: ansible_os_family == "Debian"
-  changed_when: false
+  changed_when: true
+  listen: "Update motd"
   tags:
       - motd

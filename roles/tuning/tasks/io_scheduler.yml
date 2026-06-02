@@ -32,6 +32,10 @@
         failed_when: false
         loop: "{{ optimized_storage_devices }}"
 
+      # Best-effort immediate apply. Persistence comes from the udev
+      # rule rendered above (60-io-scheduler.rules); this write only
+      # avoids the reboot. Some devices (loop, virtual disks) reject
+      # arbitrary scheduler writes and we'd rather not abort the role.
       - name: Set I/O scheduler immediately
         ansible.builtin.shell: |
             echo "{{ item.item.scheduler }}" > /sys/block/{{ item.item.name }}/queue/scheduler

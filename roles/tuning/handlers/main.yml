@@ -5,6 +5,7 @@
   register: sysctl_reload_result
   changed_when: true
   failed_when: sysctl_reload_result.rc != 0
+  listen: "Reload sysctl"
 
 - name: Update grub
   ansible.builtin.command: "{{ _grub_update_commands[ansible_os_family] }}"
@@ -12,19 +13,21 @@
   changed_when: true
   failed_when: grub_update_result.rc != 0
   when: ansible_os_family in _grub_update_commands
+  listen: "Update grub"
 
 - name: Reload udev
   ansible.builtin.systemd:
       name: systemd-udevd
       state: reloaded
   register: udev_reload_result
-  failed_when: false
+  listen: "Reload udev"
 
 - name: Reload systemd
   ansible.builtin.systemd:
       daemon_reload: true
   register: systemd_reload_result
   failed_when: systemd_reload_result.failed
+  listen: "Reload systemd"
 
 - name: Enable network tuning service
   ansible.builtin.systemd:
@@ -33,7 +36,7 @@
       state: started
       daemon_reload: true
   register: network_service_result
-  failed_when: false
+  listen: "Enable network tuning service"
 
 - name: Enable disable-thp service
   ansible.builtin.systemd:
@@ -42,23 +45,23 @@
       state: started
       daemon_reload: true
   register: thp_service_result
-  failed_when: false
+  listen: "Enable disable-thp service"
 
 - name: Restart cpufrequtils
   ansible.builtin.systemd:
       name: cpufrequtils
       state: restarted
   register: cpufreq_restart_result
-  failed_when: false
   when: ansible_os_family == "Debian"
+  listen: "Restart cpufrequtils"
 
 - name: Restart cpupower
   ansible.builtin.systemd:
       name: cpupower
       state: restarted
   register: cpupower_restart_result
-  failed_when: false
   when: ansible_os_family in ["RedHat", "Suse"]
+  listen: "Restart cpupower"
 
 - name: Validate grub update
   when: grub_update_result is defined and grub_update_result.rc == 0
@@ -80,6 +83,9 @@
 
 - name: Validate service states
   block:
+      # Read-only status probes — `failed_when: false` lets the report
+      # task render gracefully when the unit is absent (e.g. the host
+      # never had the corresponding write handler fire).
       - name: Check network tuning service status
         ansible.builtin.systemd:
             name: network-tuning

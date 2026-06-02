@@ -17,6 +17,9 @@
   tags: ["bitwarden_secrets"]
 
 - name: Get installed bws version
+  # Read-only probe; an existing binary that errors on --version is
+  # equivalent to "version unknown" and the install-needed check below
+  # will reinstall it.
   ansible.builtin.command:
       cmd: "{{ bitwarden_secrets_install_path }}/{{ bitwarden_secrets_binary_name }} --version"
   register: _bitwarden_secrets_current_version

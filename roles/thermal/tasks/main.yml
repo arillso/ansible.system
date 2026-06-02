@@ -16,6 +16,9 @@
       - thermal_enabled
       - thermal_run_sensors_detect
   register: sensors_detect_result
+  # sensors-detect is interactive by default; running non-interactively
+  # the success is host-dependent (no sensors found is rc != 0). Probe
+  # task only — actual fan/thermal config is written by templates below.
   changed_when: false
   failed_when: false
 

@@ -31,20 +31,56 @@
       group: root
   become: true
 
-- name: Configure sysctl parameters
+# Sysctls are split into required vs optional so failure attribution
+# is unambiguous in the loop. The previous single task self-referenced
+# `sysctl_result.failed` from inside `failed_when`, which is the same
+# Audit M3 anti-pattern that was fixed in network.yml.
+
+- name: Configure required sysctl parameters
   ansible.posix.sysctl:
-      name: "{{ item.key }}"
-      value: "{{ item.value }}"
+      name: "{{ _sysctl_item.key }}"
+      value: "{{ _sysctl_item.value }}"
       state: present
       reload: true
       sysctl_file: "{{ tuning_sysctl_file }}"
   become: true
   loop: "{{ tuning_sysctl_config | dict2items }}"
+  loop_control:
+      loop_var: _sysctl_item
+      label: "{{ _sysctl_item.key }}"
+  when: _sysctl_item.key not in (tuning_optional_sysctl_params | default([]))
   notify: Reload sysctl
-  register: sysctl_result
-  failed_when:
-      - sysctl_result.failed
-      - not (item.key in tuning_optional_sysctl_params | default([]))
+  register: _tuning_sysctl_required
+
+- name: Configure optional sysctl parameters
+  ansible.posix.sysctl:
+      name: "{{ _sysctl_item.key }}"
+      value: "{{ _sysctl_item.value }}"
+      state: present
+      reload: true
+      sysctl_file: "{{ tuning_sysctl_file }}"
+  become: true
+  loop: "{{ tuning_sysctl_config | dict2items }}"
+  loop_control:
+      loop_var: _sysctl_item
+      label: "{{ _sysctl_item.key }}"
+  when: _sysctl_item.key in (tuning_optional_sysctl_params | default([]))
+  notify: Reload sysctl
+  register: _tuning_sysctl_optional
+  ignore_errors: true
+
+- name: Report optional sysctl parameters that could not be applied
+  ansible.builtin.debug:
+      msg: >-
+          Optional sysctl '{{ _sysctl_item.item.key }}' could not be applied
+          on this host: {{ _sysctl_item.msg | default('see previous error') }}
+  loop: "{{ _tuning_sysctl_optional.results | default([]) }}"
+  loop_control:
+      loop_var: _sysctl_item
+      label: "{{ _sysctl_item.item.key | default('(skipped)') }}"
+  when:
+      - _sysctl_item.failed | default(false)
+      - not _sysctl_item.skipped | default(false)
 
 - name: Configure kernel parameters in GRUB
   when: tuning_grub_cmdline_linux_append is defined
@@ -106,6 +142,12 @@
             msg: "Invalid transparent_hugepages setting: {{ tuning_transparent_hugepages }}"
         when: tuning_transparent_hugepages not in ['always', 'madvise', 'never']
 
+      # Best-effort immediate apply: containers and minimal kernels can
+      # have transparent_hugepage disabled at compile time (sysfs entry
+      # missing) or read-only. The disable-thp.service rendered below is
+      # the persistent path of record — failing here would prevent the
+      # systemd unit from being deployed on hosts that just happen not
+      # to expose the sysfs knob, which is the opposite of what we want.
       - name: Set transparent huge pages immediately
         ansible.builtin.copy:
             content: "{{ tuning_transparent_hugepages }}"

@@ -33,7 +33,7 @@ jobs:
         # Scenarios are auto-discovered from extensions/molecule/ by the
         # reusable workflow (every subdir not starting with `.`). To pin
         # the matrix explicitly, pass scenarios: '["access", ...]'.
-        uses: arillso/.github/.github/workflows/ci-ansible-molecule.yml@chore/port-workflows-from-sbaerlocher
+        uses: arillso/.github/.github/workflows/ci-ansible-molecule.yml@chore/expand-reusable-workflows
         with:
             collection_namespace: arillso
             collection_name: system

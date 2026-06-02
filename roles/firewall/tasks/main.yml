@@ -44,7 +44,7 @@
       _firewall_tailscale_exists: >-
           {{ 'tailscaled.service' in ansible_facts.get('services', {}) }}
 
-- name: Deploy nftables systemd override via systemd role (with Tailscale dependency)
+- name: Deploy nftables systemd override via systemd role
   ansible.builtin.include_role:
       name: arillso.system.systemd
       tasks_from: unit
@@ -64,60 +64,38 @@
                      | map('join', ' ')
                      | map('regex_replace', '^', '-/usr/sbin/nft flush table ')
                      | list) }}
+      # Unit dict is built from a static base plus the Tailscale
+      # ordering deps if and only if the service is present. Keeps
+      # the include_role single (Audit M5) and avoids the 50-line
+      # copy/paste of the previous two branches.
+      _firewall_unit_base:
+          Unit:
+              Description: nftables firewall with enhanced configuration
+              Documentation: https://wiki.nftables.org/
+          Service:
+              Type: oneshot
+              RemainAfterExit: "yes"
+              ExecStart:
+                  - ""
+                  - /usr/sbin/nft -f /etc/nftables.conf
+              ExecReload: /usr/sbin/nft -f /etc/nftables.conf
+              ExecStop: "{{ _firewall_execstop_cmds }}"
+          Install:
+              WantedBy: multi-user.target
+      _firewall_unit_tailscale_overlay:
+          Unit:
+              After: ["tailscaled.service"]
+              Wants: ["tailscaled.service"]
+      _firewall_unit: >-
+          {{ _firewall_unit_base | combine(
+                 _firewall_tailscale_exists | bool
+                 | ternary(_firewall_unit_tailscale_overlay, {}),
+                 recursive=true) }}
       systemd_unit_path: /etc/systemd/system/nftables.service.d
       systemd_units:
           - name: override.conf
             state: present
-            unit:
-                Unit:
-                    Description: nftables firewall with enhanced configuration
-                    Documentation: https://wiki.nftables.org/
-                    After: "{{ ['tailscaled.service'] }}"
-                    Wants: "{{ ['tailscaled.service'] }}"
-                Service:
-                    Type: oneshot
-                    RemainAfterExit: "yes"
-                    ExecStart:
-                        - ""
-                        - /usr/sbin/nft -f /etc/nftables.conf
-                    ExecReload: /usr/sbin/nft -f /etc/nftables.conf
-                    ExecStop: "{{ _firewall_execstop_cmds }}"
-                Install:
-                    WantedBy: multi-user.target
-  when: _firewall_tailscale_exists | bool
-
-- name: Deploy nftables systemd override via systemd role (without Tailscale dependency)
-  ansible.builtin.include_role:
-      name: arillso.system.systemd
-      tasks_from: unit
-  vars:
-      _firewall_execstop_cmds: >-
-          {{ [''] + (_firewall | default([])
-                     | map(attribute='table.family')
-                     | zip(_firewall | default([]) | map(attribute='table.name'))
-                     | map('join', ' ')
-                     | map('regex_replace', '^', '-/usr/sbin/nft flush table ')
-                     | list) }}
-      systemd_unit_path: /etc/systemd/system/nftables.service.d
-      systemd_units:
-          - name: override.conf
-            state: present
-            unit:
-                Unit:
-                    Description: nftables firewall with enhanced configuration
-                    Documentation: https://wiki.nftables.org/
-                Service:
-                    Type: oneshot
-                    RemainAfterExit: "yes"
-                    ExecStart:
-                        - ""
-                        - /usr/sbin/nft -f /etc/nftables.conf
-                    ExecReload: /usr/sbin/nft -f /etc/nftables.conf
-                    # Begruendung siehe oberer Task; identische Logik.
-                    ExecStop: "{{ _firewall_execstop_cmds }}"
-                Install:
-                    WantedBy: multi-user.target
-  when: not (_firewall_tailscale_exists | bool)
+            unit: "{{ _firewall_unit }}"
 
 - name: Enable and start nftables service via systemd role
   ansible.builtin.include_role:

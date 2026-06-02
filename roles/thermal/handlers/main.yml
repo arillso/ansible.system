@@ -6,9 +6,11 @@
       name: thermald
       state: restarted
   become: true
+  listen: "Restart thermald"
 
 - name: Restart cpufrequtils
   ansible.builtin.systemd:
       name: cpufrequtils
       state: restarted
   become: true
+  listen: "Restart cpufrequtils"

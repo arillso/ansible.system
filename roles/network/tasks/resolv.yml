@@ -11,7 +11,7 @@
             mode: "0644"
             backup: "{{ network_backup_configs }}"
         become: true
-        notify: "Network restart resolved"
+        notify: "network: restart resolved"
         retries: "{{ network_retry_count }}"
         delay: "{{ network_retry_delay }}"
         register: _network_resolved_config

@@ -40,7 +40,7 @@
       - _ssh_config_result.failed is defined
       - _ssh_config_result.failed
       - not shell_ignore_template_errors
-  notify: Restart ssh service
+  notify: "shell: restart ssh"
   tags:
       - ssh
       - config

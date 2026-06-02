@@ -9,7 +9,7 @@
       validate: "{{ 'sshd -t -f %s' if access_validate_ssh_config else omit }}"
       backup: "{{ access_backup_configs }}"
   become: true
-  notify: "Access restart sshd"
+  notify: "access: restart sshd"
   retries: "{{ access_retry_count }}"
   delay: "{{ access_retry_delay }}"
   register: _access_sshd_config_result

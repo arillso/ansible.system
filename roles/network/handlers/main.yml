@@ -1,14 +1,14 @@
 ---
-- name: Network restart resolved
+- name: Restart systemd-resolved to apply DNS resolver changes
   ansible.builtin.systemd:
       name: systemd-resolved
       state: restarted
   when: network_systemd_resolved_restart | default(true)
-  listen: "Network restart resolved"
+  listen: "network: restart resolved"
 
-- name: Network restart networkd
+- name: Restart systemd-networkd to apply network interface changes
   ansible.builtin.systemd:
       name: systemd-networkd
       state: restarted
   when: network_systemd_networkd_restart | default(false)
-  listen: "Network restart networkd"
+  listen: "network: restart networkd"

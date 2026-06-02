@@ -19,7 +19,7 @@
             group: root
             backup: true
         become: true
-        notify: Restart cpufrequtils
+        notify: "tuning: restart cpufrequtils"
         when: ansible_os_family == "Debian"
 
       - name: Create cpupower configuration (RedHat/CentOS)
@@ -31,7 +31,7 @@
             group: root
             backup: true
         become: true
-        notify: Restart cpupower
+        notify: "tuning: restart cpupower"
         when: ansible_os_family in ["RedHat", "Suse"]
 
 - name: Apply CPU governor immediately

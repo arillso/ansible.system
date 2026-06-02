@@ -20,7 +20,7 @@
       group: root
       backup: true
   become: true
-  notify: Reload udev
+  notify: "tuning: reload udev"
   when: optimized_storage_devices is defined and optimized_storage_devices | length > 0
 
 - name: Apply I/O scheduler immediately for each device

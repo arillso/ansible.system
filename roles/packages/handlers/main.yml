@@ -1,19 +1,19 @@
 ---
-- name: Update apt cache
+- name: Update apt cache after repository or signing key changes
   ansible.builtin.apt:
       update_cache: true
       cache_valid_time: 0
-  listen: "packages update cache"
+  listen: "packages: update cache"
   changed_when: false
 
-- name: Restart services
+- name: Restart services listed in packages_services_to_restart
   ansible.builtin.systemd:
       name: "{{ item }}"
       state: restarted
   loop: "{{ packages_services_to_restart | default([]) }}"
-  listen: "packages restart services"
+  listen: "packages: restart services"
 
-- name: Reload systemd daemon
+- name: Reload systemd manager configuration after package unit changes
   ansible.builtin.systemd:
       daemon_reload: true
-  listen: "packages daemon-reload"
+  listen: "packages: daemon-reload"

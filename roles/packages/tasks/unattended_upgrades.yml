@@ -39,7 +39,7 @@
             mode: "0644"
             backup: true
         become: true
-        notify: packages update cache
+        notify: "packages: update cache"
 
       - name: Configure auto-updates settings
         ansible.builtin.template:
@@ -68,7 +68,7 @@
             group: root
             mode: "0644"
         become: true
-        notify: packages daemon-reload
+        notify: "packages: daemon-reload"
         when: packages_unattended_upgrades_timer_enabled
 
       - name: Remove timer override if disabled
@@ -76,7 +76,7 @@
             path: /etc/systemd/system/apt-daily-upgrade.timer.d/override.conf
             state: absent
         become: true
-        notify: packages daemon-reload
+        notify: "packages: daemon-reload"
         when: not packages_unattended_upgrades_timer_enabled
 
       - name: Enable and start unattended-upgrades services via systemd role

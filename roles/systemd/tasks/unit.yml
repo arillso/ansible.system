@@ -25,7 +25,7 @@
   when:
       - _systemd_unit_item.state | default('present') == 'present'
       - _systemd_unit_item.content is defined
-  notify: "Systemd daemon-reload"
+  notify: "systemd: daemon-reload"
   retries: "{{ systemd_retry_count }}"
   delay: "{{ systemd_retry_delay }}"
   register: _systemd_unit_copy_result
@@ -47,7 +47,7 @@
   when:
       - _systemd_unit_item.state | default('present') == 'present'
       - _systemd_unit_item.unit is defined
-  notify: "Systemd daemon-reload"
+  notify: "systemd: daemon-reload"
   retries: "{{ systemd_retry_count }}"
   delay: "{{ systemd_retry_delay }}"
   register: _systemd_unit_template_result
@@ -63,4 +63,4 @@
       loop_var: _systemd_unit_item
       label: "{{ _systemd_unit_item.name }}"
   when: _systemd_unit_item.state | default('present') == 'absent'
-  notify: "Systemd daemon-reload"
+  notify: "systemd: daemon-reload"

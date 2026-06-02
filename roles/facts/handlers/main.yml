@@ -1,14 +1,14 @@
 ---
 # Facts role handlers
-- name: Refresh facts
+- name: Re-gather all Ansible facts after role applied changes
   ansible.builtin.setup:
       gather_subset:
           - all
-  listen: "Refresh facts"
+  listen: "facts: refresh"
   tags:
       - facts
 
-- name: "Restart ssh service"
+- name: Restart ssh service to apply facts-driven configuration changes
   ansible.builtin.systemd_service:
       name: "{{ _ssh_service_name }}"
       state: restarted
@@ -18,15 +18,15 @@
              default(facts_ssh_service_names['default']) }}
   when:
       - ansible_facts['service_mgr'] == 'systemd'
-  listen: "Restart ssh service"
+  listen: "facts: restart ssh"
 
-- name: Update motd
+- name: Refresh dynamic MOTD via /etc/update-motd.d scripts (Debian family)
   # `update-motd` refreshes /run/motd.dynamic from /etc/update-motd.d
   # scripts. A handler only fires when something upstream notified it,
   # so reporting the run as changed (the default) matches reality.
   ansible.builtin.command: update-motd
   when: ansible_os_family == "Debian"
   changed_when: true
-  listen: "Update motd"
+  listen: "facts: update motd"
   tags:
       - motd

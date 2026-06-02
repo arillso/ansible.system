@@ -57,7 +57,7 @@
       group: root
   become: true
   when: thermal_enabled
-  notify: Restart thermald
+  notify: "thermal: restart thermald"
 
 - name: Manage thermal services via systemd role
   ansible.builtin.include_role:

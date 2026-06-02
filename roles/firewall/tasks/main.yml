@@ -33,7 +33,7 @@
       group: root
       backup: true
   become: true
-  notify: Restart nftables
+  notify: "firewall: restart"
 
 - name: Gather service facts to check for tailscaled
   ansible.builtin.service_facts:

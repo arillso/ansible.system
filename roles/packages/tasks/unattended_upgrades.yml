@@ -106,6 +106,9 @@
                 - name: unattended-upgrades
                   enabled: false
                   state: stopped
+        # The role disables unattended-upgrades from any prior state.
+        # The unit may not exist (fresh install never had it) or may
+        # already be stopped; either is acceptable here.
         failed_when: false
 
       - name: Remove unattended-upgrades configuration files

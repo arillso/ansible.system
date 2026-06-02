@@ -1,0 +1,119 @@
+---
+# Applies one entry from `packages_keys` to the host. The caller has
+# already populated _pkg_key_item (the raw entry from packages_keys)
+# and the normalised fields in _pkg_key (computed in keys.yml):
+#
+#   _pkg_key.dispatch    one of: url-direct, url-dearmor, keyserver, data
+#   _pkg_key.keyring     absolute keyring path on the host
+#   _pkg_key.armored     /tmp staging path (only used for dearmor flows)
+#   _pkg_key.label       short identifier for loop labels
+#
+# Each branch sets _pkg_key_changed: true when the host saw a write,
+# so the caller can fold the flag back into packages_keys_changed.
+#
+# Container coverage is partial — the molecule packages scenario
+# installs packages but does not exercise key import. Audit M4 was
+# explicit that this refactor removes 7 duplicate task definitions
+# at the cost of harder-to-test indirection.
+
+- name: "Download key directly to host keyring ({{ _pkg_key.label }})"
+  ansible.builtin.get_url:
+      url: "{{ _pkg_key_item.url }}"
+      dest: "{{ _pkg_key.keyring }}"
+      mode: "0644"
+      owner: root
+      group: root
+      force: "{{ packages_keys_force_update | bool }}"
+      timeout: 30
+  become: true
+  when: _pkg_key.dispatch == 'url-direct'
+  register: _pkg_key_apply_get
+
+- name: "Stat target keyring before staging ({{ _pkg_key.label }})"
+  ansible.builtin.stat:
+      path: "{{ _pkg_key.keyring }}"
+  when: _pkg_key.dispatch in ['url-dearmor', 'data']
+  register: _pkg_key_target_stat
+  changed_when: false
+
+- name: "Stage armored key from URL into /tmp ({{ _pkg_key.label }})"
+  ansible.builtin.get_url:
+      url: "{{ _pkg_key_item.url }}"
+      dest: "{{ _pkg_key.armored }}"
+      mode: "0600"
+      timeout: 30
+  become: true
+  when:
+      - _pkg_key.dispatch == 'url-dearmor'
+      - (not (_pkg_key_target_stat.stat.exists | default(false)))
+        or packages_keys_force_update
+
+- name: "Stage armored key from data into /tmp ({{ _pkg_key.label }})"
+  ansible.builtin.copy:
+      content: "{{ _pkg_key_item.data | default('') }}"
+      dest: "{{ _pkg_key.armored }}"
+      mode: "0600"
+  become: true
+  when:
+      - _pkg_key.dispatch == 'data'
+      - (not (_pkg_key_target_stat.stat.exists | default(false)))
+        or packages_keys_force_update
+
+- name: "Dearmor staged key into host keyring ({{ _pkg_key.label }})"
+  vars:
+      _keyring: "{{ _pkg_key.keyring }}"
+      _armored: "{{ _pkg_key.armored }}"
+  ansible.builtin.shell:
+      # Block-literal (`|`) keeps each shell statement on its own line
+      # so a folded scalar can't merge the redirection into the next
+      # command — this was the regression behind 1.1.4's empty keyring.
+      cmd: |
+          set -e
+          _tmp={{ _armored | quote }}
+          trap 'rm -f "$_tmp"' EXIT
+          gpg --dearmor -o {{ _keyring | quote }} < "$_tmp"
+      executable: /bin/bash
+      creates: "{{ _keyring }}"
+  become: true
+  when: _pkg_key.dispatch in ['url-dearmor', 'data']
+  register: _pkg_key_apply_dearmor
+
+- name: "Fetch key from keyserver into host keyring ({{ _pkg_key.label }})"
+  vars:
+      _keyring: "{{ _pkg_key.keyring }}"
+  ansible.builtin.shell:
+      cmd: |
+          set -e
+          _tmpfile=$(mktemp --suffix=.gpg)
+          trap 'rm -f "$_tmpfile" "${_tmpfile}~"' EXIT
+          gpg --no-default-keyring --keyring "$_tmpfile" \
+              --keyserver {{ _pkg_key_item.keyserver | quote }} \
+              --recv-keys {{ _pkg_key_item.id | quote }}
+          gpg --no-default-keyring --keyring "$_tmpfile" \
+              --export {{ _pkg_key_item.id | quote }} > {{ _keyring | quote }}
+      executable: /bin/bash
+      creates: "{{ _keyring }}"
+  become: true
+  when: _pkg_key.dispatch == 'keyserver'
+  register: _pkg_key_apply_keyserver
+
+- name: "Normalise keyring permissions ({{ _pkg_key.label }})"
+  ansible.builtin.file:
+      path: "{{ _pkg_key.keyring }}"
+      mode: "0644"
+      owner: root
+      group: root
+  become: true
+  when:
+      - _pkg_key.dispatch in ['url-direct', 'url-dearmor', 'keyserver', 'data']
+      - (_pkg_key_apply_get is changed | default(false))
+        or (_pkg_key_apply_dearmor is changed | default(false))
+        or (_pkg_key_apply_keyserver is changed | default(false))
+
+- name: "Track that a key was applied ({{ _pkg_key.label }})"
+  ansible.builtin.set_fact:
+      packages_keys_changed: true
+  when:
+      - (_pkg_key_apply_get is changed | default(false))
+        or (_pkg_key_apply_dearmor is changed | default(false))
+        or (_pkg_key_apply_keyserver is changed | default(false))

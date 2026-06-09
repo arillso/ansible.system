@@ -4,20 +4,25 @@
 
 - name: Validate swap configuration
   block:
-      - name: Check if swap file path is valid
-        ansible.builtin.fail:
-            msg: "Invalid swap file path: {{ tuning_swap_file_path }}"
-        when:
-            - tuning_swap_file_path is not defined
-            - tuning_swap_file_path == ""
-            - not tuning_swap_file_path.startswith("/")
+      # Eine YAML-Liste unter `when:` wird AND-verknuepft — die drei
+      # Bedingungen schliessen sich aber gegenseitig aus (undefined kann
+      # nicht gleichzeitig `== ""` sein), sodass kein fail je feuern
+      # wuerde. `assert` macht die OR-Semantik explizit und liest sich
+      # gleichzeitig als Pre-Condition statt als if-then-fail.
+      - name: Assert swap file path is valid
+        ansible.builtin.assert:
+            that:
+                - tuning_swap_file_path is defined
+                - tuning_swap_file_path | string | length > 0
+                - tuning_swap_file_path is string and tuning_swap_file_path.startswith("/")
+            fail_msg: "Invalid swap file path: {{ tuning_swap_file_path | default('<undefined>') }}"
 
-      - name: Validate swap file size
-        ansible.builtin.fail:
-            msg: "Invalid swap file size: {{ tuning_swap_file_size_mb }}MB (minimum 64MB)"
-        when:
-            - tuning_swap_file_size_mb is not defined
-            - tuning_swap_file_size_mb | int < 64
+      - name: Assert swap file size is valid
+        ansible.builtin.assert:
+            that:
+                - tuning_swap_file_size_mb is defined
+                - tuning_swap_file_size_mb | int >= 64
+            fail_msg: "Invalid swap file size: {{ tuning_swap_file_size_mb | default('<undefined>') }}MB (minimum 64MB)"
 
 - name: Check available disk space using facts
   block:
@@ -56,32 +61,51 @@
         changed_when: false
         failed_when: false
 
+      # Rundungs-Trick: swapon meldet die Swap-Datei-Grösse abzüglich des mkswap-Header-
+      # Overheads (~4 KB). Eine reine Trunkierung würde z. B. 2048 MiB als 2047 MiB
+      # zurückgeben und einen Recreate-Loop jeder Idempotenz verletzen.
+      # Addieren von 524288 Bytes (= 0.5 MiB) vor der Division emuliert round() und
+      # fängt den Header-Verlust ab.
       - name: Parse active swap information
         ansible.builtin.set_fact:
             swap_file_active: "{{ tuning_swap_file_path in active_swaps.stdout }}"
             current_swap_size: >-
                 {%- for line in active_swaps.stdout_lines -%}
                 {%- if tuning_swap_file_path in line -%}
-                {{ (line.split()[1] | int / 1024 / 1024) | int }}{%- endif -%}
+                {{ ((line.split()[1] | int + 524288) / 1024 / 1024) | int }}{%- endif -%}
                 {%- endfor -%}
 
 - name: Create or resize swap file
   block:
-      - name: Backup existing swap file
-        ansible.builtin.copy:
-            src: "{{ tuning_swap_file_path }}"
-            dest: "{{ tuning_swap_file_path }}.backup.{{ ansible_date_time.epoch }}"
-            remote_src: true
-            mode: preserve
-        become: true
+      # Kein Backup der Swap-Datei: Swap enthält nur flüchtige Pages, eine Kopie
+      # sichert nichts Verwertbares. Der frühere Backup-Task legte bei jedem
+      # Resize eine 2-GB-Kopie an (.backup.<epoch>) — auf der kleinen code-01-
+      # Disk füllte das die Partition, bis die "Ensure sufficient disk space"-
+      # Assertion oben den ganzen Lauf failte. Die Resize-Sequenz unten
+      # (swapoff → remove → fallocate) braucht kein Backup.
+      - name: Refuse to shrink existing swap file
+        ansible.builtin.fail:
+            msg: >-
+                Refusing to shrink swap file {{ tuning_swap_file_path }} from
+                {{ current_swap_size }}MB to {{ tuning_swap_file_size_mb }}MB.
+                Disable explicitly via tuning_swap_file_enabled=false and rerun,
+                then re-enable.
         when:
             - swap_file_stat.stat.exists
-            - current_swap_size != (tuning_swap_file_size_mb | string)
+            - current_swap_size != ""
+            - (current_swap_size | int) > (tuning_swap_file_size_mb | int)
 
       - name: Disable existing swap file if resizing
         ansible.builtin.command: swapoff {{ tuning_swap_file_path }}
         become: true
         changed_when: true
+        when:
+            - swap_file_active
+            - current_swap_size != (tuning_swap_file_size_mb | string)
+
+      - name: Refresh swap_file_active fact after swapoff
+        ansible.builtin.set_fact:
+            swap_file_active: false
         when:
             - swap_file_active
             - current_swap_size != (tuning_swap_file_size_mb | string)
@@ -153,7 +177,7 @@
         when: not swap_file_active or current_swap_size != (tuning_swap_file_size_mb | string)
 
       - name: Enable swap file
-        ansible.builtin.command: swapon {{ tuning_swap_file_path }}
+        ansible.builtin.command: swapon -p {{ tuning_swap_priority }} {{ tuning_swap_file_path }}
         become: true
         register: swapon_result
         changed_when: swapon_result.rc == 0
@@ -182,7 +206,7 @@
             path: none
             src: "{{ tuning_swap_file_path }}"
             fstype: swap
-            opts: sw
+            opts: "sw,pri={{ tuning_swap_priority }}"
             passno: 0
             dump: 0
             state: present

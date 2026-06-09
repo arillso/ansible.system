@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New `zram` role: compressed RAM swap via the Debian/Ubuntu `zram-tools`
+  package. Bootstraps the zram kernel module (incl.
+  `linux-modules-extra-<kernel>` on cloud images), validates the
+  requested compression algorithm against the kernel, deploys
+  `/etc/default/zramswap`, and manages the `zramswap` service.
+  Configurable via `zram_percent`, `zram_algorithm`, `zram_priority`,
+  `zram_packages`, and `zram_kernel_module_package`. Pairs with the
+  `tuning` role for a zram-first layout (set `zram_priority` higher than
+  `tuning_swap_priority` so disk swap is the fallback).
+- `tuning` role: new `tuning_swap_priority` variable (default `0`,
+  backward-compatible) to set the Linux swap priority. The swap file is
+  now activated with `swapon -p <priority>` and the `/etc/fstab` entry
+  carries `pri=<priority>`, enabling multi-backend layouts such as
+  zram-first with disk-swap as a lower-priority fallback.
+
+### Fixed
+
+- `tuning` role: replace the two swap-validation `fail` tasks with
+  `assert`. The previous `when:` lists were AND-joined, but the
+  conditions were mutually exclusive (a variable cannot be both
+  undefined and `== ""`), so the guards never fired. `assert` makes the
+  OR-semantics explicit and reads as a pre-condition.
+- `tuning` role: round `current_swap_size` up by 0.5 MiB before the
+  byte→MiB conversion. `swapon` reports the swap size minus the mkswap
+  header overhead (~4 KB), so a 2048 MiB file read back as 2047 MiB and
+  triggered a recreate loop on every run, breaking idempotency.
+- `tuning` role: stop backing up the swap file before a resize. Swap
+  holds only volatile pages, so the copy preserved nothing usable, while
+  each resize wrote a multi-GB `.backup.<epoch>` file that could fill
+  small disks and fail the disk-space assertion. Replaced with an
+  explicit refusal to shrink an existing swap file.
+- `tuning` role: refresh the `swap_file_active` fact to `false` after
+  `swapoff` so downstream tasks see the swap as disabled during a
+  resize.
+
 ### Changed
 
 - All roles: consolidate privilege escalation on the principle of least

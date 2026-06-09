@@ -1,0 +1,35 @@
+---
+# Compressed RAM swap (zram) defaults
+#
+# zram_enabled: master switch for the role. Default true configures zram;
+# set to false to make every task in the role a no-op.
+zram_enabled: true
+
+# zram_percent: percentage of physical RAM to allocate as zram swap device.
+# Default 50 means a 16 GB host gets an 8 GB zram device. With typical
+# zstd compression ratios on JS/TS/text workloads (~3x), this yields
+# ~24 GB of effectively usable memory.
+zram_percent: 50
+
+# zram_algorithm: kernel compression algorithm. zstd is the best balance
+# of speed and compression ratio on modern kernels. Available algorithms
+# are validated against /sys/block/zram0/comp_algorithm at role runtime.
+zram_algorithm: zstd
+
+# zram_priority: Linux swap priority for the zram device. Higher than
+# any disk-based swap so the kernel fills zram first. The role's tuning
+# expects this to remain >= disk swap priorities (typically tuning_swap_priority).
+zram_priority: 100
+
+# zram_packages: distro packages to install. zram-tools ships a deployable
+# /etc/default/zramswap config and a zramswap.service systemd unit.
+zram_packages:
+    - zram-tools
+
+# zram_kernel_module_package: Paket, das das zram-Kernel-Modul liefert.
+# Auf Hetzner-Cloud-Ubuntu mit linux-image-virtual ist das zram-Modul NICHT
+# im Standard-Image enthalten — es lebt in linux-modules-extra-<kernel-version>.
+# Die Variable wird zur Laufzeit gegen den aktuellen Kernel resolved (ansible_kernel),
+# sodass Kernel-Upgrades automatisch das passende neue Paket ziehen.
+# Siehe .kiro/specs/code-server-swap/research.md I6/D6.
+zram_kernel_module_package: "linux-modules-extra-{{ ansible_kernel }}"

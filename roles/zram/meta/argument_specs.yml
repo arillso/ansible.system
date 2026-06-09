@@ -1,0 +1,56 @@
+---
+argument_specs:
+    main:
+        short_description: "Configure compressed RAM swap (zram) on Linux systems"
+        description:
+            - "Installs the zram-tools package and the kernel module that provides zram"
+            - "Validates the requested compression algorithm against kernel capabilities"
+            - "Deploys /etc/default/zramswap and enables the zramswap service"
+            - "Arillso"
+        options:
+            zram_enabled:
+                description: "Enable or disable the zram role; false makes every task a no-op"
+                type: "bool"
+                required: false
+                default: true
+
+            zram_percent:
+                description:
+                    - "Percentage of physical RAM to allocate as the zram swap device"
+                    - "50 means a 16 GB host gets an 8 GB zram device"
+                type: "int"
+                required: false
+                default: 50
+
+            zram_algorithm:
+                description:
+                    - "Kernel compression algorithm for the zram device"
+                    - "Validated at runtime against /sys/block/zram0/comp_algorithm"
+                type: "str"
+                required: false
+                default: "zstd"
+
+            zram_priority:
+                description:
+                    - "Linux swap priority for the zram device (higher wins)"
+                    - "Should be greater than any disk-based swap priority so the kernel fills zram first"
+                type: "int"
+                required: false
+                default: 100
+
+            zram_packages:
+                description: "Distribution packages to install that provide zram userspace tooling"
+                type: "list"
+                elements: "str"
+                required: false
+                default:
+                    - "zram-tools"
+
+            zram_kernel_module_package:
+                description:
+                    - "Package that provides the zram kernel module"
+                    - "Resolved at runtime against the running kernel (ansible_kernel) so kernel upgrades pull the matching package"
+                    - "On Ubuntu cloud images with linux-image-virtual the zram module lives in linux-modules-extra-<kernel>"
+                type: "str"
+                required: false
+                default: "linux-modules-extra-{{ ansible_kernel }}"

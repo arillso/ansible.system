@@ -1,0 +1,22 @@
+---
+- name: Slurp available zram compression algorithms from kernel
+  ansible.builtin.slurp:
+      src: /sys/block/zram0/comp_algorithm
+  register: zram_comp_algorithm_raw
+  changed_when: false
+
+- name: Parse available zram compression algorithms
+  ansible.builtin.set_fact:
+      zram_available_algorithms: >-
+          {{ (zram_comp_algorithm_raw.content | b64decode | trim).split()
+             | map('regex_replace', '^\[|\]$', '')
+             | list }}
+
+- name: Assert the requested zram algorithm is available in this kernel
+  ansible.builtin.assert:
+      that:
+          - zram_algorithm in zram_available_algorithms
+      fail_msg: >-
+          zram_algorithm '{{ zram_algorithm }}' is not available in this kernel.
+          Available algorithms: {{ zram_available_algorithms | join(', ') }}.
+          Choose one of the listed values or load the required compression module.

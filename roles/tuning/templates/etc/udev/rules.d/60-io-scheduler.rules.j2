@@ -8,7 +8,7 @@
 
 {% if optimized_storage_devices is defined %}
 {% for device in optimized_storage_devices %}
-# {{ device.name }} ({{ device.type }}): {{ device.scheduler }}
+# {{ device.name }}: {{ device.scheduler }}
 ACTION=="add|change", KERNEL=="{{ device.name }}", ATTR{queue/scheduler}="{{ device.scheduler }}"
 {% endfor %}
 {% endif %}

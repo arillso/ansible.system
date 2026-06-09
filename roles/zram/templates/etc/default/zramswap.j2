@@ -1,0 +1,11 @@
+# Managed by Ansible role: zram
+# Source variables: zram_algorithm, zram_percent, zram_priority
+
+# Compression algorithm. Must be available in /sys/block/zram0/comp_algorithm.
+ALGO={{ zram_algorithm }}
+
+# Percentage of total RAM to allocate as zram swap.
+PERCENT={{ zram_percent }}
+
+# Linux swap priority (higher wins). zram should be > any disk swap priority.
+PRIORITY={{ zram_priority }}

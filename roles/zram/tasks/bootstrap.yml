@@ -1,0 +1,15 @@
+---
+- name: Install kernel module package providing zram
+  ansible.builtin.include_role:
+      name: arillso.system.packages
+      tasks_from: packages
+  vars:
+      packages_list:
+          - name: "{{ zram_kernel_module_package }}"
+            state: present
+
+- name: Load zram kernel module
+  community.general.modprobe:
+      name: zram
+      state: present
+  become: true

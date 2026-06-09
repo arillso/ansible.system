@@ -83,8 +83,6 @@
         ansible.builtin.include_role:
             name: arillso.system.systemd
             tasks_from: service
-            apply:
-                become: true
         vars:
             systemd_services:
                 - name: unattended-upgrades
@@ -103,8 +101,6 @@
         ansible.builtin.include_role:
             name: arillso.system.systemd
             tasks_from: service
-            apply:
-                become: true
         vars:
             systemd_services:
                 - name: unattended-upgrades

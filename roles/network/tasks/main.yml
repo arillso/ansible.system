@@ -1,6 +1,5 @@
 ---
 - name: Manage network configuration
-  become: true
   block:
       - name: Manage DNS configuration
         ansible.builtin.include_tasks: resolv.yml

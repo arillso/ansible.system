@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- All roles: consolidate privilege escalation on the principle of least
+  privilege. `become` now lives on the single privileged task (the
+  `ansible.builtin.systemd` task inside the shared `systemd` sub-role),
+  and callers no longer re-declare it. Removed six redundant escalation
+  declarations that broadened the `become` surface without effect: five
+  `apply: become: true` blocks on the `systemd` includes (one each in
+  the `access`, `logging` and `network` roles, and two in the
+  `packages` role — the included task already escalates), plus the
+  `block`-level `become: true` in the `network` role (every task in
+  `resolv.yml`/`netplan.yml` escalates on its own). `apply:`/`block:` escalation applies `become` to *every*
+  task in scope; task-level escalation applies it only where it is
+  needed. No functional change — the privileged tasks still run as root.
+
 ## [1.1.6] - 2026-05-17
 
 ### Fixed

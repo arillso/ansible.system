@@ -48,9 +48,8 @@ argument_specs:
 
             zram_kernel_module_package:
                 description:
-                    - "Package that provides the zram kernel module"
-                    - "Resolved at runtime against the running kernel (ansible_kernel) so kernel upgrades pull the matching package"
-                    - "On Ubuntu cloud images with linux-image-virtual the zram module lives in linux-modules-extra-<kernel>"
+                    - "Package that provides the zram kernel module; empty value skips the install"
+                    - "On Ubuntu, resolved at runtime to linux-modules-extra-<kernel> so kernel upgrades pull the matching package"
+                    - "Empty on Debian, which ships the zram module in the stock kernel with no separate package"
                 type: "str"
                 required: false
-                default: "linux-modules-extra-{{ ansible_kernel }}"

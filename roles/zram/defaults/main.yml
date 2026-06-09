@@ -26,10 +26,13 @@ zram_priority: 100
 zram_packages:
     - zram-tools
 
-# zram_kernel_module_package: Paket, das das zram-Kernel-Modul liefert.
-# Auf Hetzner-Cloud-Ubuntu mit linux-image-virtual ist das zram-Modul NICHT
-# im Standard-Image enthalten — es lebt in linux-modules-extra-<kernel-version>.
-# Die Variable wird zur Laufzeit gegen den aktuellen Kernel resolved (ansible_kernel),
-# sodass Kernel-Upgrades automatisch das passende neue Paket ziehen.
-# Siehe .kiro/specs/code-server-swap/research.md I6/D6.
-zram_kernel_module_package: "linux-modules-extra-{{ ansible_kernel }}"
+# zram_kernel_module_package: package that provides the zram kernel module.
+# On Ubuntu cloud images with linux-image-virtual the module is not part of
+# the base image — it lives in linux-modules-extra-<kernel>, resolved against
+# the running kernel (ansible_kernel) so kernel upgrades pull the matching
+# package automatically. Debian ships the module in the stock kernel and has
+# no linux-modules-extra-* package, so the default is empty there and the
+# install step is skipped. Set explicitly to override per host.
+zram_kernel_module_package: >-
+    {{ 'linux-modules-extra-' ~ ansible_kernel
+       if ansible_distribution == 'Ubuntu' else '' }}

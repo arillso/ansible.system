@@ -43,6 +43,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tuning` role: refresh the `swap_file_active` fact to `false` after
   `swapoff` so downstream tasks see the swap as disabled during a
   resize.
+- `tuning` role: write the fstab swap entry unconditionally so the
+  `pri=` option is reconciled on hosts that already had an `sw 0 0`
+  entry. Previously the entry was only added when absent, so the swap
+  priority never survived a reboot on the upgrade path.
+- `tuning` role: reapply the swap priority at runtime (via
+  `swapoff`/`swapon -p`) when it drifts from `tuning_swap_priority` on
+  an already-active, correctly-sized swap; a bare `swapon -p` does not
+  change the priority of an active device.
+- `tuning` role: skip the remove/recreate sequence for an existing but
+  inactive swap file (`current_swap_size == ""`), which previously
+  rebuilt a correctly-sized file on every run, and only re-run `mkswap`
+  on a freshly created file.
+- `zram` role: update the apt cache before installing packages (via the
+  `packages` role `cache` task), so installs on a freshly provisioned
+  host or right after a kernel upgrade no longer fail on a stale index.
+- `zram` role: leave `zram_kernel_module_package` empty on Debian, which
+  ships the zram module in the stock kernel and has no
+  `linux-modules-extra-*` package; the module install is skipped there
+  instead of failing with "Unable to locate package".
+- `zram` role: load the kernel module with `num_devices=1` so
+  `/sys/block/zram0` is guaranteed to exist for the algorithm
+  validation, even on hosts that override the modprobe default.
 
 ### Changed
 

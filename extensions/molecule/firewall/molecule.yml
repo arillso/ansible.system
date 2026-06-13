@@ -1,7 +1,8 @@
 ---
 # nftables-Tasks brauchen einen funktionierenden netfilter-Stack im Kernel,
-# der in Containern nicht zuverlaessig verfuegbar ist. Dieses Szenario faehrt
-# deshalb nur Syntax-, Lint- und Dry-Run-Check ohne echten Converge.
+# der in Containern nicht zuverlaessig verfuegbar ist. Das Szenario rendert
+# die Ruleset-Templates und prueft sie mit `nft -c` in verify.yml — kein
+# Kernel-Load, also keine Abhaengigkeit vom Container-Netfilter-Stack.
 
 dependency:
     name: galaxy

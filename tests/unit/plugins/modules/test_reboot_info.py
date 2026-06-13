@@ -2,8 +2,10 @@
 
 The module's main() instantiates AnsibleModule(), which makes
 black-box testing of main() brittle across ansible-core versions
-(load_params changed multiple times). Instead we test the
-business logic — the marker-file check — directly.
+(load_params changed multiple times). Until the marker check is
+extracted into a standalone helper, the only assertion that touches
+real module state is the marker-path constant — a regression guard
+against an accidental rename of the Debian-family marker path.
 """
 
 from __future__ import annotations
@@ -18,20 +20,3 @@ def test_marker_path_constant_matches_debian_default():
     assert '"/var/run/reboot-required"' in body, (
         "module should still probe the Debian-family reboot marker path"
     )
-
-
-def test_marker_present_logic(monkeypatch):
-    seen: list[str] = []
-
-    def fake_isfile(path: str) -> bool:
-        seen.append(path)
-        return path == "/var/run/reboot-required"
-
-    monkeypatch.setattr(reboot_info.os.path, "isfile", fake_isfile)
-    assert reboot_info.os.path.isfile("/var/run/reboot-required") is True
-    assert seen == ["/var/run/reboot-required"]
-
-
-def test_marker_absent_logic(monkeypatch):
-    monkeypatch.setattr(reboot_info.os.path, "isfile", lambda path: False)
-    assert reboot_info.os.path.isfile("/var/run/reboot-required") is False

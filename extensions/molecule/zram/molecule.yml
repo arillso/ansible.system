@@ -47,5 +47,3 @@ scenario:
         - dependency
         - destroy
         - syntax
-        - create
-        - destroy

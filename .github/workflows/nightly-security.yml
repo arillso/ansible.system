@@ -1,0 +1,22 @@
+---
+name: Nightly Security Scan
+run-name: |
+    Security Scan by @${{ github.actor }}
+
+on:
+    schedule:
+        - cron: "0 2 * * 1"
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: false
+
+permissions:
+    contents: read
+    actions: read
+    pull-requests: read
+
+jobs:
+    security-secrets:
+        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-06-02

@@ -20,7 +20,7 @@ permissions:
 
 jobs:
     ci:
-        uses: arillso/.github/.github/workflows/ci-ansible-collection.yml@2026-06-02
+        uses: arillso/.github/.github/workflows/ci-ansible-collection.yml@2026-06-12
         with:
             collection_namespace: arillso
             collection_name: system
@@ -28,4 +28,4 @@ jobs:
             enable_unit_tests: true
 
     security-secrets:
-        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-06-02
+        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-06-12

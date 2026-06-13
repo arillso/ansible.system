@@ -1,0 +1,32 @@
+---
+# Role metadata for compressed RAM swap (zram)
+
+galaxy_info:
+    role_name: zram
+    namespace: arillso
+    author: sbaerlocher
+    description: >-
+        Compressed RAM swap (zram) backend via the Debian/Ubuntu zram-tools package.
+    license: MIT
+    min_ansible_version: "2.15"
+
+    platforms:
+        - name: Debian
+          versions:
+              - bookworm
+              - trixie
+        - name: Ubuntu
+          versions:
+              - jammy
+              - noble
+
+    galaxy_tags:
+        - swap
+        - zram
+        - memory
+        - system
+
+dependencies: []
+
+collections:
+    - community.general

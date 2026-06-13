@@ -1,0 +1,43 @@
+---
+- name: Bootstrap zram kernel module on host
+  ansible.builtin.include_tasks: bootstrap.yml
+  when: zram_enabled
+
+- name: Validate zram configuration against kernel capabilities
+  ansible.builtin.include_tasks: validate.yml
+  when: zram_enabled
+
+- name: Install zram tools package via packages role
+  ansible.builtin.include_role:
+      name: arillso.system.packages
+      tasks_from: packages
+  vars:
+      packages_list: >-
+          {{ zram_packages
+             | map('community.general.dict_kv', 'name')
+             | map('combine', {'state': 'present'})
+             | list }}
+  when: zram_enabled
+
+- name: Deploy zramswap configuration
+  ansible.builtin.template:
+      src: etc/default/zramswap.j2
+      dest: /etc/default/zramswap
+      owner: root
+      group: root
+      mode: "0644"
+  become: true
+  notify: Restart zramswap
+  when: zram_enabled
+
+- name: Manage zramswap service via systemd role
+  ansible.builtin.include_role:
+      name: arillso.system.systemd
+      tasks_from: service
+  vars:
+      systemd_services:
+          - name: zramswap
+            enabled: true
+            state: started
+            daemon_reload: true
+  when: zram_enabled

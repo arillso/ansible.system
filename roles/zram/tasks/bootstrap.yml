@@ -1,0 +1,33 @@
+---
+- name: Cache update via packages role
+  ansible.builtin.include_role:
+      name: arillso.system.packages
+      tasks_from: cache
+  vars:
+      packages_update_cache: true
+      packages_cache_valid_time: 3600
+
+# Debian ships the zram module in the stock kernel (linux-image-*) and has no
+# linux-modules-extra-* package, so the install only runs where the resolved
+# package name is non-empty — i.e. on distributions that actually split the
+# module out (Ubuntu cloud images with linux-image-virtual).
+- name: Install kernel module package providing zram
+  ansible.builtin.include_role:
+      name: arillso.system.packages
+      tasks_from: packages
+  vars:
+      packages_list:
+          - name: "{{ zram_kernel_module_package }}"
+            state: present
+  when: zram_kernel_module_package | length > 0
+
+# num_devices=1 is the kernel default, but stating it explicitly guarantees
+# /sys/block/zram0 exists for the algorithm validation in validate.yml — a host
+# with `options zram num_devices=0` in /etc/modprobe.d/ would otherwise leave no
+# device node and fail the slurp with an opaque "file not found".
+- name: Load zram kernel module
+  community.general.modprobe:
+      name: zram
+      params: num_devices=1
+      state: present
+  become: true

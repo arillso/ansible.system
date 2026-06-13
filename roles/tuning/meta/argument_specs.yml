@@ -60,6 +60,16 @@ argument_specs:
                 default: 2048
                 description: "Swap file size in megabytes"
 
+            tuning_swap_priority:
+                type: "int"
+                required: false
+                default: 0
+                description: |
+                    Linux swap priority for /etc/fstab opts (pri=N).
+                    Default 0 is backward-compatible (single backend).
+                    Set >0 for multi-backend layouts (e.g. zram-first with
+                    disk-swap as fallback at lower priority).
+
             tuning_io_scheduler:
                 type: "str"
                 required: false

@@ -1,0 +1,38 @@
+---
+# Compressed RAM swap (zram) defaults
+#
+# zram_enabled: master switch for the role. Default true configures zram;
+# set to false to make every task in the role a no-op.
+zram_enabled: true
+
+# zram_percent: percentage of physical RAM to allocate as zram swap device.
+# Default 50 means a 16 GB host gets an 8 GB zram device. With typical
+# zstd compression ratios on JS/TS/text workloads (~3x), this yields
+# ~24 GB of effectively usable memory.
+zram_percent: 50
+
+# zram_algorithm: kernel compression algorithm. zstd is the best balance
+# of speed and compression ratio on modern kernels. Available algorithms
+# are validated against /sys/block/zram0/comp_algorithm at role runtime.
+zram_algorithm: zstd
+
+# zram_priority: Linux swap priority for the zram device. Higher than
+# any disk-based swap so the kernel fills zram first. The role's tuning
+# expects this to remain >= disk swap priorities (typically tuning_swap_priority).
+zram_priority: 100
+
+# zram_packages: distro packages to install. zram-tools ships a deployable
+# /etc/default/zramswap config and a zramswap.service systemd unit.
+zram_packages:
+    - zram-tools
+
+# zram_kernel_module_package: package that provides the zram kernel module.
+# On Ubuntu cloud images with linux-image-virtual the module is not part of
+# the base image — it lives in linux-modules-extra-<kernel>, resolved against
+# the running kernel (ansible_kernel) so kernel upgrades pull the matching
+# package automatically. Debian ships the module in the stock kernel and has
+# no linux-modules-extra-* package, so the default is empty there and the
+# install step is skipped. Set explicitly to override per host.
+zram_kernel_module_package: >-
+    {{ 'linux-modules-extra-' ~ ansible_kernel
+       if ansible_distribution == 'Ubuntu' else '' }}

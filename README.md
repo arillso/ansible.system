@@ -38,6 +38,7 @@ package management, network configuration, firewall setup, logging, and system t
 - **[bitwarden_secrets](roles/bitwarden_secrets)** - Bitwarden CLI secret management
 - **[thermal](roles/thermal)** - CPU thermal management
 - **[tuning](roles/tuning)** - System performance tuning (CPU, IO, network, swap)
+- **[zram](roles/zram)** - Compressed RAM swap (zram) via zram-tools
 
 ## Plugins
 

@@ -42,6 +42,11 @@ tuning_swap_swappiness: 10
 tuning_swap_file_enabled: false
 tuning_swap_file_path: /swapfile
 tuning_swap_file_size_mb: 2048
+# Linux swap priority for /etc/fstab opts (pri=N). Default 0 = backward-compatible
+# (Linux uses round-robin among equal priorities with a single backend, so this
+# is functionally identical to the previous default). Set >0 for multi-backend
+# layouts (e.g. zram-first with disk-swap as fallback at lower priority).
+tuning_swap_priority: 0
 
 # I/O Scheduler
 tuning_io_scheduler: auto

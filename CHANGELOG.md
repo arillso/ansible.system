@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Test infrastructure: 14 molecule scenarios (one per role) under
+  `extensions/molecule/`, plus a `pytest` unit suite under `tests/unit/`
+  covering the filter, lookup, and module plugins. Scenarios that touch
+  the kernel (sysctl, swap, ethtool, zram, nftables) use a syntax-only
+  `test_sequence` since the docker driver cannot exercise those
+  reliably; shared collection requirements live in
+  `extensions/molecule/.config/requirements.yml`.
 - New `zram` role: compressed RAM swap via the Debian/Ubuntu `zram-tools`
   package. Bootstraps the zram kernel module (incl.
   `linux-modules-extra-<kernel>` on cloud images), validates the
@@ -65,6 +72,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `zram` role: load the kernel module with `num_devices=1` so
   `/sys/block/zram0` is guaranteed to exist for the algorithm
   validation, even on hosts that override the modprobe default.
+- `tuning` role: split the network sysctl loop into a required and an
+  optional task, gated by `_net_sysctl_item.key in
+  tuning_optional_network_sysctl_params`. The previous single task
+  self-referenced its own `register` result inside `failed_when`, which
+  relies on subtle ansible-core semantics and was brittle to refactor.
+  Optional sysctl misses are now reported via a follow-up debug task.
+  Same audit class applied to ethtool, splitting it into required +
+  best-effort branches with explicit `failed_when:` semantics.
+- `facts` role: report the `Update motd` handler as `changed: true`
+  instead of `false`. Handlers only fire when something upstream
+  notified them, so the run is by definition not a no-op — the prior
+  configuration triggered an update of `/run/motd.dynamic`. Marking the
+  run as unchanged hid real configuration drift from the play recap.
+- Audit `failed_when: false` across all roles and remove or justify per
+  call. Removed from write operations that must fail loudly
+  (`tuning/handlers/main.yml`: Reload udev, Enable network tuning
+  service, Enable disable-thp service, Restart cpufrequtils, Restart
+  cpupower; `tuning/tasks/cpu_governor.yml`: Enable CPU frequency
+  service). Kept with explanatory comments on read-only probes,
+  best-effort sysfs writes paired with persistent service config, and
+  opt-in features (THP sysfs write, fallocate fast-path, I/O scheduler
+  sysfs write).
 
 ### Changed
 
@@ -80,6 +109,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `resolv.yml`/`netplan.yml` escalates on its own). `apply:`/`block:` escalation applies `become` to *every*
   task in scope; task-level escalation applies it only where it is
   needed. No functional change — the privileged tasks still run as root.
+- All roles: rework handlers into a `<role>: <action>` event-bus
+  schema. `listen:` becomes the stable contract used by `notify:`
+  callers, `name:` becomes a human-readable description of what the
+  handler does. The `listen:` namespace (e.g. `access: restart sshd`,
+  `facts: restart ssh`, `zram: restart zramswap`) prevents
+  cross-role name collisions — previously `Restart ssh service` was
+  defined identically in both `facts` and `shell`, and the dispatch
+  was ambiguous. Includes the `zram` role's handler so it follows the
+  same schema as the rest of the collection.
+- `firewall` role: collapse the two near-identical 50-line
+  `include_role` blocks in `main.yml` (Tailscale-aware and
+  Tailscale-less) into a single block parameterised over the systemd
+  unit's `After:`/`Wants:`. Bug fixes previously had to be applied
+  twice — and one of them had drifted between branches.
+- `packages` role: dispatch repository-key handling per entry via
+  `include_tasks`. The old monolithic `keys.yml` (~400 lines, ~10
+  shells of nested logic per key type) was refactored into per-key-type
+  files (`_keys_normalise.yml`, `_key_apply.yml`) called once per key
+  in the list. Per-key includes mean a key-type addition is a new
+  file, not another branch in a 400-line conditional.
+- CI: switch the molecule job from an in-repo workflow to the reusable
+  `arillso/.github/.github/workflows/ci-ansible-molecule.yml` (auto-
+  discovers scenarios from `extensions/molecule/`) and pin all four
+  reusable workflows (ci, molecule, security-secrets, claude-review)
+  to the same `2026-06-12` tag.
 
 ## [1.1.6] - 2026-05-17
 

@@ -1,0 +1,18 @@
+---
+# Wird vom Syntax-only test_sequence nicht aufgerufen, dient aber als
+# Referenz fuer manuelle Vagrant/VM-Runs (`molecule converge -s zram`).
+
+- name: Converge — arillso.system.zram (VM-only, do not run in container)
+  hosts: all
+  become: true
+
+  vars:
+      zram_enabled: true
+      zram_percent: 50
+      zram_algorithm: zstd
+      zram_priority: 100
+
+  tasks:
+      - name: Apply zram role
+        ansible.builtin.include_role:
+            name: arillso.system.zram

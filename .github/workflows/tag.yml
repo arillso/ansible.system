@@ -17,7 +17,7 @@ permissions:
 
 jobs:
     publish:
-        uses: arillso/.github/.github/workflows/release-ansible-collection.yml@2026-06-02
+        uses: arillso/.github/.github/workflows/release-ansible-collection.yml@2026-06-12
         with:
             collection_namespace: arillso
             collection_name: system

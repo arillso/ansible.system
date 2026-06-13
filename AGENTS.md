@@ -44,8 +44,11 @@ Key roles:
 
 - `galaxy.yml` - Ansible Galaxy collection metadata
 - `.ansible-lint` - Ansible lint configuration
-- `.mega-linter.yml` - MegaLinter configuration
-- `.yamllint.yml` - YAML linting rules
+- `.yamllint` - YAML linting rules
+- `lefthook.yml` - Local git hooks (prettier, yamllint, markdownlint, ansible-lint, actionlint, gitleaks)
+- `REVIEW.md` - Code review guidelines (read by the `ai-claude-review` workflow)
+- `.python-version` - Pinned Python version for plugin development (3.12)
+- `Makefile` - Convenience targets (`lint`, `format`, `test`, `build`)
 
 ## Conventions
 
@@ -59,8 +62,9 @@ Key roles:
 
 ### Testing
 
-- Roles should be linted with ansible-lint
-- MegaLinter runs on push and pull requests
+- Roles should be linted with ansible-lint (`--profile=production`)
+- Install hooks locally with `lefthook install`; they run on commit and push
+- Reusable CI (`arillso/.github`) runs lint, unit tests, and molecule on pull requests
 - Test roles in molecule when available
 
 ### Documentation
@@ -73,8 +77,12 @@ Key roles:
 
 ### CI/CD
 
-- **ci.yml** - Runs MegaLinter on all commits
-- **publish.yml** - Publishes to Ansible Galaxy and creates GitHub Release on tag push
+Event-focused workflows calling reusables from `arillso/.github`:
+
+- **pull-request.yml** - Lint, unit tests, molecule, secret scan, and Claude review on PRs
+- **merge.yml** - Same CI plus secret scan on push to `main`
+- **nightly-security.yml** - Scheduled weekly secret scan
+- **tag.yml** - Publishes to Ansible Galaxy on tag push (e.g. `1.0.1`)
 
 ### Release Process
 
@@ -100,7 +108,7 @@ Key roles:
     - Command: `git tag 1.0.1 && git push origin 1.0.1`
 
 4. **Automated workflow triggers**
-    - Tag push automatically triggers `publish.yml` workflow
+    - Tag push automatically triggers `tag.yml` workflow
     - Workflow extracts changelog for the version
     - Publishes to Ansible Galaxy
     - Creates GitHub Release with changelog notes

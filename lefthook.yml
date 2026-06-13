@@ -1,0 +1,43 @@
+---
+# Lefthook git hooks — run `lefthook install` once after cloning.
+# Tools without a system binary are installed on-demand via `npx --yes`.
+# System binaries: yamllint, gitleaks (>= v8.18 for `git --staged` subcommand),
+# ansible-lint, actionlint.
+#
+# Stack: Ansible Collection. Adapted from sbaerlocher/infrastructure
+# (prettier+yamllint+markdownlint+ansible-lint+gitleaks+actionlint).
+#
+# Files in .ansible/ are excluded everywhere — that directory holds local
+# galaxy/fact caches and is git-ignored anyway, but staged files from it
+# (e.g. via accidental `git add -f`) should not block commits.
+
+pre-commit:
+    parallel: true
+    commands:
+        prettier:
+            glob: "*.{json,yml,yaml,md}"
+            exclude: "(^\\.ansible/)"
+            run: npx --yes -- prettier --check {staged_files}
+        yamllint:
+            glob: "*.{yml,yaml}"
+            exclude: "(^\\.ansible/)"
+            run: yamllint -c .yamllint {staged_files}
+        markdownlint:
+            glob: "*.md"
+            exclude: "(^\\.ansible/)"
+            run: npx --yes -- markdownlint-cli2 {staged_files}
+        ansible-lint:
+            glob: "{roles,plugins,tests,meta}/**/*.{yml,yaml}"
+            exclude: "(^\\.ansible/)"
+            run: ansible-lint --profile=production {staged_files}
+        actionlint:
+            glob: ".github/workflows/*.{yml,yaml}"
+            run: actionlint {staged_files}
+        gitleaks:
+            run: gitleaks git --staged --redact --no-banner
+
+pre-push:
+    parallel: true
+    commands:
+        gitleaks-full:
+            run: gitleaks git --redact --no-banner

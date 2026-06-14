@@ -1,6 +1,0 @@
----
-# Debian/Ubuntu split the venv module into a separate python3-venv package.
-_python_system_packages:
-    - python3
-    - python3-pip
-    - python3-venv

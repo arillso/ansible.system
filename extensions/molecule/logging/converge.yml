@@ -16,8 +16,11 @@
                 - missingok
                 - notifempty
                 - create 0640 root root
+      # The role builds the filename as "{{ priority }}-{{ name }}.conf",
+      # so name must NOT repeat the priority prefix — otherwise the file
+      # lands at 50-50-molecule-app.conf. Resulting file: 50-molecule-app.conf.
       logging_rsyslog_entries:
-          - name: 50-molecule-app
+          - name: molecule-app
             priority: 50
             content: |
                 if $programname == 'molecule-app' then /var/log/molecule-app/molecule-app.log

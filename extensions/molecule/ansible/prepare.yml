@@ -6,8 +6,9 @@
 #
 # The distro pipx is also too old for community.general.pipx, which
 # requires pipx >= 1.7.0 (Debian bookworm ships 1.1.0, Ubuntu noble
-# 1.4.3). Upgrade pipx via pip before converge so the pipx install path
-# the role drives is exercisable.
+# 1.4.3). pip cannot upgrade the dpkg-installed pipx in place ("Cannot
+# uninstall pipx X, RECORD file not found"), so remove the distro pipx
+# first, then install a modern one via pip.
 - name: Prepare — refresh package cache and modern pipx
   hosts: all
   become: true
@@ -24,14 +25,17 @@
             update_cache: true
         when: ansible_facts['os_family'] == "RedHat"
 
-      - name: Ensure pip and pipx are installed
+      - name: Remove the distro pipx so pip can own it
         ansible.builtin.package:
-            name:
-                - python3-pip
-                - pipx
+            name: pipx
+            state: absent
+
+      - name: Ensure pip is installed
+        ansible.builtin.package:
+            name: python3-pip
             state: present
 
-      - name: Upgrade pipx to a version community.general.pipx supports (>= 1.7.0)
+      - name: Install a pipx version community.general.pipx supports (>= 1.7.0)
         ansible.builtin.pip:
             name: pipx>=1.7.0
             state: present

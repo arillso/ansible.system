@@ -1,7 +1,0 @@
----
-# RedHat ships the venv module inside the python3 package; there is no
-# separate python3-venv package (installing it fails with "No package
-# python3-venv available").
-_python_system_packages:
-    - python3
-    - python3-pip

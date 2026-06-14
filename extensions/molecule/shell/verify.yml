@@ -5,18 +5,19 @@
   gather_facts: false
 
   tasks:
-      - name: Stat MOTD drop-in directory
+      # The role writes the SSH banner to /etc/issue.net (not
+      # /etc/ssh/banner) and only deploys the dynamic MOTD scripts on the
+      # Debian family. /etc/issue.net is rendered on every platform, so it
+      # is the cross-distro assertion that holds on Debian, Ubuntu and
+      # Rocky alike.
+      - name: Stat the SSH banner file
         ansible.builtin.stat:
-            path: /etc/update-motd.d
-        register: _motd_dir
-
-      - name: Stat SSH banner file
-        ansible.builtin.stat:
-            path: /etc/ssh/banner
+            path: /etc/issue.net
         register: _banner
 
-      - name: Assert at least one of MOTD or SSH banner was deployed
+      - name: Assert the SSH banner was deployed
         ansible.builtin.assert:
             that:
-                - _motd_dir.stat.exists or _banner.stat.exists
-            success_msg: "shell role deployed at least one of MOTD or SSH banner"
+                - _banner.stat.exists
+                - _banner.stat.size > 0
+            success_msg: "shell role rendered the /etc/issue.net banner"

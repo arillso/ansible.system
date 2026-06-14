@@ -28,8 +28,16 @@ python_install_packages: true
 # Distribution-specific by default: Debian/Ubuntu split the venv module
 # into python3-venv, RedHat ships it inside python3 and has no such
 # package (installing it fails with "No package python3-venv available").
-# Override python_system_packages to pin an explicit list per host.
-python_system_packages: "{{ _python_system_packages }}"
+# Resolved inline against ansible_facts so the value is defined at role
+# entry (the argument-spec validation evaluates this before any task
+# runs, so it cannot depend on an include_vars). Override
+# python_system_packages to pin an explicit list per host.
+python_system_packages: >-
+    {{
+      ['python3', 'python3-pip', 'python3-venv']
+      if ansible_facts['os_family'] | default('Debian') != 'RedHat'
+      else ['python3', 'python3-pip']
+    }}
 python_dev_packages: []
 # Example:
 # python_dev_packages:

@@ -74,7 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   validation, even on hosts that override the modprobe default.
 - `tuning` role: split the network sysctl loop into a required and an
   optional task, gated by `_net_sysctl_item.key in
-  tuning_optional_network_sysctl_params`. The previous single task
+tuning_optional_network_sysctl_params`. The previous single task
   self-referenced its own `register` result inside `failed_when`, which
   relies on subtle ansible-core semantics and was brittle to refactor.
   Optional sysctl misses are now reported via a follow-up debug task.
@@ -106,7 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the `access`, `logging` and `network` roles, and two in the
   `packages` role — the included task already escalates), plus the
   `block`-level `become: true` in the `network` role (every task in
-  `resolv.yml`/`netplan.yml` escalates on its own). `apply:`/`block:` escalation applies `become` to *every*
+  `resolv.yml`/`netplan.yml` escalates on its own). `apply:`/`block:` escalation applies `become` to _every_
   task in scope; task-level escalation applies it only where it is
   needed. No functional change — the privileged tasks still run as root.
 - All roles: rework handlers into a `<role>: <action>` event-bus
@@ -134,6 +134,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   discovers scenarios from `extensions/molecule/`) and pin all four
   reusable workflows (ci, molecule, security-secrets, claude-review)
   to the same `2026-06-12` tag.
+- CI/Renovate: close the remaining version-tracking gaps. All 15
+  molecule platform images (`geerlingguy/docker-*-ansible`) are pinned
+  to `latest@sha256:...` with a `# renovate: datasource=docker` marker
+  so Renovate keeps the digests fresh (the images publish only a
+  `latest` tag, so digest pinning is the only way to track them), and
+  each `python_version` CI input carries a
+  `# renovate: datasource=github-releases depName=python/cpython`
+  marker. Bumps the `arillso/.github` Renovate preset pin to
+  `2026-06-14`, whose comment manager splits an `@sha256:...` suffix
+  into `currentDigest` (required for the molecule digest pins to update
+  cleanly).
 
 ## [1.1.6] - 2026-05-17
 
@@ -159,7 +170,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `firewall` role: scope nftables flush to managed tables instead of running
   a global `flush ruleset`. Both the rendered `/etc/nftables.conf` and the
-  systemd-override `ExecStop` previously wiped *all* nftables state on each
+  systemd-override `ExecStop` previously wiped _all_ nftables state on each
   reload/restart, including tables managed by other sources (Docker's
   iptables-nft `ip nat` / `ip filter` chains, kube-proxy, manually added
   entries). Container recreates after a firewall handler run failed with
@@ -171,7 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `access` role: only set `append` on the `ansible.builtin.user` module when
   `groups` is also defined for the entry. The previous unconditional
   `append` emitted the warning `'append' is set, but no 'groups' are
-  specified` and would have failed hard once that warning is promoted to an
+specified` and would have failed hard once that warning is promoted to an
   error in `ansible-core` 2.14
 - All `include_role` calls to the `systemd` role now pass `become: true`
   through `apply:` (in `access/ssh_server`, `logging/rsyslog`,

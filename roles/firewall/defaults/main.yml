@@ -1,5 +1,5 @@
 ---
-firewall:
+firewall:  # noqa: argument-specs
     - table:
           name: filter
           family: inet

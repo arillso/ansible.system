@@ -1,6 +1,6 @@
 ---
 # Default sysctl parameters for performance tuning
-tuning_sysctl_config:
+tuning_sysctl_config:  # noqa: argument-specs
     vm.dirty_ratio: 10
     vm.dirty_background_ratio: 3
     vm.dirty_expire_centisecs: 12000
@@ -25,7 +25,7 @@ tuning_sysctl_config:
     kernel.threads-max: 4194304
 
 # Network specific sysctl
-tuning_network_sysctl_config:
+tuning_network_sysctl_config:  # noqa: argument-specs
     net.ipv4.tcp_window_scaling: 1
     net.ipv4.tcp_timestamps: 1
     net.ipv4.tcp_sack: 1
@@ -64,7 +64,7 @@ tuning_transparent_hugepages: madvise
 tuning_tuned_profile: balanced
 
 # Security limits
-tuning_security_limits:
+tuning_security_limits:  # noqa: argument-specs
     - domain: "*"
       type: soft
       item: nofile

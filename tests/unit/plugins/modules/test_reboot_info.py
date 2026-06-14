@@ -17,6 +17,6 @@ def test_marker_path_constant_matches_debian_default():
     source = reboot_info.__file__
     with open(source, encoding="utf-8") as fh:
         body = fh.read()
-    assert '"/var/run/reboot-required"' in body, (
-        "module should still probe the Debian-family reboot marker path"
-    )
+    assert (
+        '"/var/run/reboot-required"' in body
+    ), "module should still probe the Debian-family reboot marker path"

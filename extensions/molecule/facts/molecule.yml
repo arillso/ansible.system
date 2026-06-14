@@ -55,7 +55,7 @@ provisioner:
         # marker dir. MOLECULE_PROJECT_DIRECTORY is
         # extensions/molecule/<scenario>/; five levels up is the workspace
         # root (parent of ansible_collections/).
-        ANSIBLE_COLLECTIONS_PATH: ${MOLECULE_PROJECT_DIRECTORY}/../../../../..
+        ANSIBLE_COLLECTIONS_PATH: ${MOLECULE_PROJECT_DIRECTORY}/../../../../..:${HOME}/.ansible/collections:/usr/share/ansible/collections
     config_options:
         defaults:
             interpreter_python: auto_silent

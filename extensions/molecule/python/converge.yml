@@ -5,12 +5,15 @@
 
   vars:
       python_install_packages: true
+      # virtualenv_python must not be set together with the venv module
+      # (virtualenv_command: python3 -m venv) — pip rejects it with
+      # "virtualenv_python should not be used when using the venv module".
+      # The venv command already pins the interpreter.
       python_packages:
           - name: requests
             state: present
             virtualenv: /opt/molecule-venv
             virtualenv_command: python3 -m venv
-            virtualenv_python: python3
 
   tasks:
       - name: Apply python role

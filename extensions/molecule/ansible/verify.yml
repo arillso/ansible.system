@@ -16,17 +16,11 @@
                 - _pipx_home.stat.exists
                 - _pipx_home.stat.isdir
 
-      - name: Stat checkout directory
-        ansible.builtin.stat:
-            path: /var/lib/ansible-automation
-        register: _checkout
-
-      - name: Assert checkout directory exists
-        ansible.builtin.assert:
-            that:
-                - _checkout.stat.exists
-                - _checkout.stat.isdir
-
+      # The checkout directory (ansible_checkout_dir, /var/lib/ansible-
+      # automation) is only created by timer.yml, which the converge
+      # disables (ansible_timer_enabled: false) because the pull timer
+      # would try to clone the placeholder repo. It is intentionally
+      # absent here — the install path under test is pipx, asserted below.
       - name: Confirm ansible binary is installed via pipx
         ansible.builtin.command:
             cmd: /opt/pipx/bin/ansible --version

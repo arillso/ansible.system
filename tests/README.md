@@ -5,7 +5,7 @@ This collection ships two complementary test suites:
 | Layer                  | Path                               | What it verifies                                                    | When it runs                              |
 | ---------------------- | ---------------------------------- | ------------------------------------------------------------------- | ----------------------------------------- |
 | Unit tests             | `tests/unit/`                      | Plugin code in `plugins/{filter,lookup,modules}` (pure Python).     | Every push (`enable_unit_tests` in CI).   |
-| Molecule scenarios     | `extensions/molecule/<role>/`      | Role behaviour against real containers, one scenario per role.     | Manual locally, opt-in matrix in CI.      |
+| Molecule scenarios     | `extensions/molecule/<role>/`      | Role behaviour against real containers, one scenario per role.      | Manual locally, opt-in matrix in CI.      |
 
 The unit suite is the fast gate (sub-second). Molecule is the slow gate
 (minutes per scenario) and lives under `extensions/` so it ships inside

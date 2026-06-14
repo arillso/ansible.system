@@ -83,9 +83,7 @@ def main():
         try:
             cache.update(fetch_progress=apt.progress.base.AcquireProgress())
         except (PermissionError, OSError):
-            module.fail_json(
-                msg="This module requires root privileges (become: true)"
-            )
+            module.fail_json(msg="This module requires root privileges (become: true)")
         cache.open(None)
 
         for pkg in cache:

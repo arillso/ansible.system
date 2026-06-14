@@ -1,0 +1,19 @@
+[MAIN]
+# Ansible ships its runtime libraries as a collection that pylint cannot
+# resolve statically, so the import graph is incomplete during linting.
+ignored-modules=ansible.module_utils._text,
+                ansible.module_utils.basic,
+                ansible.module_utils.urls,
+                apt
+
+[MESSAGES CONTROL]
+disable=
+    # Ansible plugins place the DOCUMENTATION/EXAMPLES/RETURN string blocks
+    # before imports by convention, which pylint flags as misplaced imports.
+    wrong-import-position,
+    # `*_IMPORT_ERROR` module-level sentinels follow Ansible's own naming
+    # convention rather than pylint's UPPER_CASE-only constant rule.
+    invalid-name,
+    # black is the source of truth for line length; it intentionally leaves
+    # long string literals unwrapped, so a second pylint check just conflicts.
+    line-too-long,

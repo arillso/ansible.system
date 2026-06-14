@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pytest
 from ansible.errors import AnsibleError
-
 from ansible_collections.arillso.system.plugins.lookup.environment_files import LookupModule
 
 

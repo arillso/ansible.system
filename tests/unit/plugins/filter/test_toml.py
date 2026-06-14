@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pytest
 from ansible.errors import AnsibleFilterError
-
 from ansible_collections.arillso.system.plugins.filter.toml import (
     FilterModule,
     from_toml,

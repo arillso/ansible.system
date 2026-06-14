@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from ansible_collections.arillso.system.plugins.filter.nftables import FilterModule
 
 
@@ -111,8 +110,12 @@ class TestMergeNftablesStructure:
         assert fm.merge_nftables_structure(None) == []
 
     def test_missing_table_key_is_skipped(self, fm):
-        cfg = {"firewall": [{"not_a_table": True}], "firewall_global": [],
-               "firewall_group": [], "firewall_host": []}
+        cfg = {
+            "firewall": [{"not_a_table": True}],
+            "firewall_global": [],
+            "firewall_group": [],
+            "firewall_host": [],
+        }
         assert fm.merge_nftables_structure(cfg) == []
 
     def test_missing_name_or_family_is_skipped(self, fm):

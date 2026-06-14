@@ -8,8 +8,11 @@ _facts_required_packages:
         - curl
         - jq
         - bc
+    # RedHat ships curl-minimal preinstalled; pulling the full `curl`
+    # package conflicts with it ("curl-minimal conflicts with curl") and
+    # aborts the transaction. curl-minimal already provides the binary the
+    # fact scripts use, so it is omitted here.
     RedHat:
-        - curl
         - jq
         - bc
     Suse:

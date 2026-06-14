@@ -21,12 +21,12 @@
             cmd: systemd-analyze verify /etc/systemd/system/molecule-marker.service
         changed_when: false
 
-      - name: Stat the journald drop-in
+      - name: Stat the journald configuration file
         ansible.builtin.stat:
-            path: /etc/systemd/journald.conf.d/00-ansible.conf
+            path: /etc/systemd/journald.conf
         register: _journald
 
-      - name: Assert the journald drop-in was rendered
+      - name: Assert the journald configuration was rendered
         ansible.builtin.assert:
             that:
                 - _journald.stat.exists

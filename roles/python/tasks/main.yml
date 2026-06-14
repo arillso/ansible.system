@@ -1,4 +1,17 @@
 ---
+- name: Load distribution-specific system package list
+  ansible.builtin.include_vars: "{{ _python_vars_file }}"
+  vars:
+      _python_vars_file: >-
+          {{ lookup('ansible.builtin.first_found', {
+               'files': [
+                 ansible_facts['os_family'] ~ '.yml',
+                 'default.yml',
+               ],
+               'paths': ['vars'],
+             }) }}
+  tags: ["python", "packages"]
+
 - name: Install Python system packages
   ansible.builtin.package:
       name: "{{ python_system_packages + python_dev_packages }}"

@@ -1,0 +1,7 @@
+---
+# Fallback for distributions without a dedicated vars file: assume the
+# Debian-style split, which is the most common layout.
+_python_system_packages:
+    - python3
+    - python3-pip
+    - python3-venv

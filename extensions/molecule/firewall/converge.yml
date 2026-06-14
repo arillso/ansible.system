@@ -48,9 +48,19 @@
             dest: /etc/nftables.conf
             mode: "0644"
 
+      # `nft -c -f` parses the ruleset AND dry-runs it against the kernel,
+      # so on a container without the conntrack modules loaded it exits 2
+      # with an empty stderr even though the file is syntactically valid
+      # (the `ct state` matches can't be resolved). A genuine syntax error,
+      # by contrast, prints a parser diagnostic to stderr. Treat a non-zero
+      # rc as a failure only when nft actually reported something — that
+      # separates real parse errors from the container's missing-module
+      # noise while still catching template regressions.
       - name: Syntax-check the rendered ruleset with nft -c
         ansible.builtin.command:
             cmd: nft -c -f /etc/nftables.conf
         changed_when: false
         register: _nft_check
-        failed_when: _nft_check.rc != 0
+        failed_when:
+            - _nft_check.rc != 0
+            - _nft_check.stderr | length > 0

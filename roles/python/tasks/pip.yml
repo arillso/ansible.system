@@ -11,7 +11,14 @@
              default(python_virtualenv_site_packages) }}
       virtualenv_python: "{{ _python_package_item.virtualenv_python | default(python_virtualenv_python) }}"
       extra_args: "{{ _python_package_item.extra_args | default(python_pip_extra_args) | default(omit) }}"
-      executable: "{{ _python_package_item.executable | default(python_pip_executable) }}"
+      # executable and virtualenv are mutually exclusive in ansible.builtin.pip.
+      # When a virtualenv is requested, pip runs from that venv's interpreter,
+      # so an explicit executable must be omitted — otherwise the module fails
+      # with "parameters are mutually exclusive: executable|virtualenv".
+      executable: >-
+          {{ omit
+             if (_python_package_item.virtualenv | default(false))
+             else (_python_package_item.executable | default(python_pip_executable)) }}
   become: true
   loop: "{{ python_packages }}"
   loop_control:

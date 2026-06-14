@@ -29,6 +29,24 @@ jobs:
             python_version: "3.12"
             enable_unit_tests: true
 
+    molecule:
+        # Scenarios are auto-discovered from extensions/molecule/ by the
+        # reusable workflow (every subdir not starting with `.`). To pin
+        # the matrix explicitly, pass scenarios: '["access", ...]'.
+        #
+        # concurrency-suffix avoids a deadlock with the caller's
+        # concurrency: group: ${{ github.workflow }}-${{ github.ref }} —
+        # the reusable resolves github.workflow to the caller's name
+        # ("Pull Request"), so without the suffix both the top-level
+        # workflow and the nested molecule call would share the same
+        # group and GitHub would cancel the molecule run.
+        uses: arillso/.github/.github/workflows/ci-ansible-molecule.yml@2026-06-12
+        with:
+            collection_namespace: arillso
+            collection_name: system
+            python_version: "3.12"
+            concurrency-suffix: molecule
+
     security-secrets:
         uses: arillso/.github/.github/workflows/security-secrets.yml@2026-06-12
 

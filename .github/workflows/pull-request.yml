@@ -26,6 +26,7 @@ jobs:
         with:
             collection_namespace: arillso
             collection_name: system
+            # renovate: datasource=github-releases depName=python/cpython extractVersion=^v(?<version>3\.\d+)
             python_version: "3.12"
             enable_unit_tests: true
 
@@ -44,6 +45,7 @@ jobs:
         with:
             collection_namespace: arillso
             collection_name: system
+            # renovate: datasource=github-releases depName=python/cpython extractVersion=^v(?<version>3\.\d+)
             python_version: "3.12"
             concurrency-suffix: molecule
 

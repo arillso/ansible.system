@@ -48,14 +48,14 @@ provisioner:
     name: ansible
     env:
         # Point Ansible at the collections checkout the reusable workflow
-        # creates under ansible_collections/<ns>/<name>/. Without this,
-        # include_role on arillso.system.<role> fails to resolve because
-        # molecule changes into extensions/ before invoking ansible-
-        # playbook, which sits two levels below the ansible_collections/
-        # marker dir. MOLECULE_PROJECT_DIRECTORY is
-        # extensions/molecule/<scenario>/; six levels up is the workspace
-        # root (parent of ansible_collections/).
-        ANSIBLE_COLLECTIONS_PATH: ${MOLECULE_PROJECT_DIRECTORY}/../../../../../..:${HOME}/.ansible/collections:/usr/share/ansible/collections
+        # creates under ${GITHUB_WORKSPACE}/ansible_collections/<ns>/<name>/.
+        # Without this, include_role on arillso.system.<role> fails because
+        # molecule cd's into extensions/ before invoking ansible-playbook,
+        # which then doesn't auto-detect the ansible_collections/ marker
+        # two levels above. We also append the default user and system
+        # locations so the molecule docker driver's collections
+        # (community.docker, ansible.posix) stay resolvable.
+        ANSIBLE_COLLECTIONS_PATH: ${GITHUB_WORKSPACE}:${HOME}/.ansible/collections:/usr/share/ansible/collections
     config_options:
         defaults:
             interpreter_python: auto_silent

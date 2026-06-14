@@ -40,12 +40,15 @@
       - _ssh_config_result.failed is defined
       - _ssh_config_result.failed
       - not shell_ignore_template_errors
-  notify: Restart ssh service
+  notify: "shell: restart ssh"
   tags:
       - ssh
       - config
 
 - name: "Verify SSH configuration is valid"
+  # Best-effort post-check. The `validate: sshd -t -f %s` on the
+  # lineinfile task above is the actual gate — this run is informational
+  # only and should not abort the role if sshd is somehow unavailable.
   ansible.builtin.command:
       cmd: sshd -t
   register: _ssh_validation_result

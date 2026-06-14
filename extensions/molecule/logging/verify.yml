@@ -1,0 +1,35 @@
+---
+- name: Verify — arillso.system.logging
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+      - name: Stat logrotate drop-in
+        ansible.builtin.stat:
+            path: /etc/logrotate.d/molecule-app
+        register: _logrotate
+
+      - name: Assert logrotate drop-in exists
+        ansible.builtin.assert:
+            that:
+                - _logrotate.stat.exists
+                - _logrotate.stat.size > 0
+
+      - name: Stat rsyslog drop-in
+        ansible.builtin.stat:
+            path: /etc/rsyslog.d/50-molecule-app.conf
+        register: _rsyslog
+
+      - name: Assert rsyslog drop-in exists
+        ansible.builtin.assert:
+            that:
+                - _rsyslog.stat.exists
+                - _rsyslog.stat.size > 0
+
+      - name: Verify logrotate syntax
+        ansible.builtin.command:
+            cmd: logrotate -d /etc/logrotate.d/molecule-app
+        changed_when: false
+        register: _logrotate_check
+        failed_when: _logrotate_check.rc not in [0, 1]

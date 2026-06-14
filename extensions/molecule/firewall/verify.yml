@@ -1,0 +1,30 @@
+---
+- name: Verify — arillso.system.firewall (syntax-mode)
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+      - name: Confirm rendered ruleset exists and is non-empty
+        ansible.builtin.stat:
+            path: /etc/nftables.conf
+        register: _nft
+
+      - name: Assert nftables.conf was rendered
+        ansible.builtin.assert:
+            that:
+                - _nft.stat.exists
+                - _nft.stat.size > 0
+
+      # See converge.yml: `nft -c -f` dry-runs against the kernel and exits
+      # 2 with an empty stderr on a container missing conntrack modules,
+      # even for a syntactically valid ruleset. Fail only when nft wrote a
+      # real parser diagnostic to stderr.
+      - name: Re-run nft syntax check
+        ansible.builtin.command:
+            cmd: nft -c -f /etc/nftables.conf
+        changed_when: false
+        register: _nft_verify
+        failed_when:
+            - _nft_verify.rc != 0
+            - _nft_verify.stderr | length > 0

@@ -1,64 +1,76 @@
 # File: roles/system_tuning/handlers/main.yml
 ---
-- name: Reload sysctl
+- name: Reload kernel sysctl parameters from /etc/sysctl.d/
   ansible.builtin.command: sysctl --system
   register: sysctl_reload_result
   changed_when: true
   failed_when: sysctl_reload_result.rc != 0
+  listen: "tuning: reload sysctl"
 
-- name: Update grub
+- name: Regenerate GRUB configuration after kernel command-line change
   ansible.builtin.command: "{{ _grub_update_commands[ansible_os_family] }}"
   register: grub_update_result
   changed_when: true
   failed_when: grub_update_result.rc != 0
   when: ansible_os_family in _grub_update_commands
+  listen: "tuning: update grub"
 
-- name: Reload udev
+- name: Reload udev to apply new device rules
   ansible.builtin.systemd:
       name: systemd-udevd
       state: reloaded
   register: udev_reload_result
-  failed_when: false
+  listen: "tuning: reload udev"
 
-- name: Reload systemd
+- name: Reload systemd manager configuration after tuning unit changes
   ansible.builtin.systemd:
       daemon_reload: true
   register: systemd_reload_result
   failed_when: systemd_reload_result.failed
+  listen: "tuning: reload systemd"
 
-- name: Enable network tuning service
+# `tuning: apply` is a bundle event that triggers both the network-tuning
+# and disable-thp service handlers. Individual events
+# (`tuning: apply network`, `tuning: apply thp`) remain available for
+# callers that only need one of them.
+
+- name: Enable and start network-tuning systemd service
   ansible.builtin.systemd:
       name: network-tuning
       enabled: true
       state: started
       daemon_reload: true
   register: network_service_result
-  failed_when: false
+  listen:
+      - "tuning: apply"
+      - "tuning: apply network"
 
-- name: Enable disable-thp service
+- name: Enable and start disable-thp systemd service
   ansible.builtin.systemd:
       name: disable-thp
       enabled: true
       state: started
       daemon_reload: true
   register: thp_service_result
-  failed_when: false
+  listen:
+      - "tuning: apply"
+      - "tuning: apply thp"
 
-- name: Restart cpufrequtils
+- name: Restart cpufrequtils to apply tuning-driven CPU governor changes (Debian)
   ansible.builtin.systemd:
       name: cpufrequtils
       state: restarted
   register: cpufreq_restart_result
-  failed_when: false
   when: ansible_os_family == "Debian"
+  listen: "tuning: restart cpufrequtils"
 
-- name: Restart cpupower
+- name: Restart cpupower to apply CPU governor changes (RedHat/Suse)
   ansible.builtin.systemd:
       name: cpupower
       state: restarted
   register: cpupower_restart_result
-  failed_when: false
   when: ansible_os_family in ["RedHat", "Suse"]
+  listen: "tuning: restart cpupower"
 
 - name: Validate grub update
   when: grub_update_result is defined and grub_update_result.rc == 0
@@ -80,6 +92,9 @@
 
 - name: Validate service states
   block:
+      # Read-only status probes — `failed_when: false` lets the report
+      # task render gracefully when the unit is absent (e.g. the host
+      # never had the corresponding write handler fire).
       - name: Check network tuning service status
         ansible.builtin.systemd:
             name: network-tuning

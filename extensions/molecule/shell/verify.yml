@@ -1,0 +1,23 @@
+---
+- name: Verify — arillso.system.shell
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+      # The role writes the SSH banner to /etc/issue.net (not
+      # /etc/ssh/banner) and only deploys the dynamic MOTD scripts on the
+      # Debian family. /etc/issue.net is rendered on every platform, so it
+      # is the cross-distro assertion that holds on Debian, Ubuntu and
+      # Rocky alike.
+      - name: Stat the SSH banner file
+        ansible.builtin.stat:
+            path: /etc/issue.net
+        register: _banner
+
+      - name: Assert the SSH banner was deployed
+        ansible.builtin.assert:
+            that:
+                - _banner.stat.exists
+                - _banner.stat.size > 0
+            success_msg: "shell role rendered the /etc/issue.net banner"

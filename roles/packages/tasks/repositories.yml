@@ -12,7 +12,7 @@
       loop_var: _pkg_repo_item
   when: packages_repositories | length > 0
   register: _packages_repos_added
-  notify: "packages update cache"
+  notify: "packages: update cache"
 
 - name: Set repository change flag
   ansible.builtin.set_fact:

@@ -1,10 +1,19 @@
 # {{ ansible_managed }}
 # Sudoers configuration: {{ _access_sudoer_item.name }}
 
+{# commands may be a single string or a list; sudoers wants a comma-
+   separated command spec, so normalise a list via join. A bare list
+   rendered straight to the template produces Python's "['ALL']" repr,
+   which visudo rejects ("expected a fully-qualified path name"). #}
+{% if _access_sudoer_item.commands is string %}
+{%   set _sudoer_commands = _access_sudoer_item.commands %}
+{% else %}
+{%   set _sudoer_commands = _access_sudoer_item.commands | default(['ALL']) | join(', ') %}
+{% endif %}
 {% if _access_sudoer_item.user is defined %}
 # User: {{ _access_sudoer_item.user }}
-{{ _access_sudoer_item.user }} {{ _access_sudoer_item.hosts | default('ALL') }}=({{ _access_sudoer_item.runas | default('ALL') }}){% if _access_sudoer_item.nopasswd | default(false) %} NOPASSWD:{% endif %}{% if _access_sudoer_item.setenv | default(false) %} SETENV:{% endif %} {{ _access_sudoer_item.commands | default('ALL') }}
+{{ _access_sudoer_item.user }} {{ _access_sudoer_item.hosts | default('ALL') }}=({{ _access_sudoer_item.runas | default('ALL') }}){% if _access_sudoer_item.nopasswd | default(false) %} NOPASSWD:{% endif %}{% if _access_sudoer_item.setenv | default(false) %} SETENV:{% endif %} {{ _sudoer_commands }}
 {% elif _access_sudoer_item.group is defined %}
 # Group: {{ _access_sudoer_item.group }}
-%{{ _access_sudoer_item.group }} {{ _access_sudoer_item.hosts | default('ALL') }}=({{ _access_sudoer_item.runas | default('ALL') }}){% if _access_sudoer_item.nopasswd | default(false) %} NOPASSWD:{% endif %}{% if _access_sudoer_item.setenv | default(false) %} SETENV:{% endif %} {{ _access_sudoer_item.commands | default('ALL') }}
+%{{ _access_sudoer_item.group }} {{ _access_sudoer_item.hosts | default('ALL') }}=({{ _access_sudoer_item.runas | default('ALL') }}){% if _access_sudoer_item.nopasswd | default(false) %} NOPASSWD:{% endif %}{% if _access_sudoer_item.setenv | default(false) %} SETENV:{% endif %} {{ _sudoer_commands }}
 {% endif %}

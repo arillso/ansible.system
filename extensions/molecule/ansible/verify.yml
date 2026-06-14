@@ -1,0 +1,33 @@
+---
+- name: Verify — arillso.system.ansible
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+      - name: Stat pipx home
+        ansible.builtin.stat:
+            path: /opt/pipx
+        register: _pipx_home
+
+      - name: Assert pipx home is a directory
+        ansible.builtin.assert:
+            that:
+                - _pipx_home.stat.exists
+                - _pipx_home.stat.isdir
+
+      # The checkout directory (ansible_checkout_dir, /var/lib/ansible-
+      # automation) is only created by timer.yml, which the converge
+      # disables (ansible_timer_enabled: false) because the pull timer
+      # would try to clone the placeholder repo. It is intentionally
+      # absent here — the install path under test is pipx, asserted below.
+      - name: Confirm ansible binary is installed via pipx
+        ansible.builtin.command:
+            cmd: /opt/pipx/bin/ansible --version
+        changed_when: false
+        register: _ansible_version
+
+      - name: Assert ansible-core is callable
+        ansible.builtin.assert:
+            that:
+                - "'ansible' in _ansible_version.stdout"

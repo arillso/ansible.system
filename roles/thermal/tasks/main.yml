@@ -16,6 +16,9 @@
       - thermal_enabled
       - thermal_run_sensors_detect
   register: sensors_detect_result
+  # sensors-detect is interactive by default; running non-interactively
+  # the success is host-dependent (no sensors found is rc != 0). Probe
+  # task only — actual fan/thermal config is written by templates below.
   changed_when: false
   failed_when: false
 
@@ -54,7 +57,7 @@
       group: root
   become: true
   when: thermal_enabled
-  notify: Restart thermald
+  notify: "thermal: restart thermald"
 
 - name: Manage thermal services via systemd role
   ansible.builtin.include_role:

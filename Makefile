@@ -1,4 +1,4 @@
-.PHONY: help lint lint-ansible lint-yaml lint-python format test build clean install-dev
+.PHONY: help lint lint-ansible lint-yaml lint-python format test test-unit test-molecule test-molecule-% build clean install-dev
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -36,9 +36,22 @@ format: ## Auto-format Python code
 		echo "No Python plugins found, skipping..."; \
 	fi
 
-test: ## Run tests
+test: test-unit ## Run unit tests (alias for test-unit)
+
+test-unit: ## Run pytest unit suite
 	@echo "Running pytest..."
 	@pytest tests/unit/
+
+test-molecule: ## Run every molecule scenario (slow, needs docker)
+	@echo "Running every molecule scenario..."
+	@for s in $$(ls extensions/molecule | grep -v '^\.'); do \
+		echo "==> molecule test -s $$s"; \
+		(cd extensions && molecule test -s $$s) || exit $$?; \
+	done
+
+test-molecule-%: ## Run a single molecule scenario (e.g. make test-molecule-access)
+	@echo "Running molecule scenario: $*"
+	@cd extensions && molecule test -s $*
 
 build: ## Build collection
 	@echo "Building collection..."

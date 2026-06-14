@@ -9,6 +9,9 @@ shell_company_name: "Hetzner Cloud K3s Platform"
 shell_company_contact: "DevOps Team"
 shell_company_support_url: "https://github.com/sbaerlocher/devops"
 shell_environment: "production"
+# shell_node_type: free-form label rendered in the MOTD footer's "Node Type"
+# line (e.g. "k3s-worker", "bastion"). Defaults to "generic" in the template.
+shell_node_type: "generic"
 
 # MOTD configuration
 shell_motd_enabled: true

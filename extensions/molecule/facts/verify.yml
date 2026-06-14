@@ -1,0 +1,17 @@
+---
+- name: Verify — arillso.system.facts
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+      - name: Stat facts cache directory
+        ansible.builtin.stat:
+            path: /var/cache/ansible-facts
+        register: _facts_cache
+
+      - name: Assert facts cache directory exists
+        ansible.builtin.assert:
+            that:
+                - _facts_cache.stat.exists
+                - _facts_cache.stat.isdir

@@ -261,7 +261,7 @@ main() {
     local provider
     provider=$(get_json_value "$cloud_data" ".provider" "unknown")
     printf "Provider          : ${BLUE}%s${NC}\n" "$provider"
-    printf "Node Type         : ${BLUE}{% endraw %}{{ role }}{% raw %}${NC}\n"
+    printf "Node Type         : ${BLUE}{% endraw %}{{ shell_node_type | default('generic') }}{% raw %}${NC}\n"
     printf "Environment       : ${BLUE}{% endraw %}{{ shell_environment }}{% raw %}${NC}\n"
 
     # Enterprise compliance footer

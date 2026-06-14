@@ -28,6 +28,11 @@ argument_specs:
                 default: "production"
                 description: "Environment classification for MOTD display"
 
+            shell_node_type:
+                type: str
+                default: "generic"
+                description: "Free-form node label rendered in the MOTD footer's Node Type line"
+
             shell_motd_enabled:
                 type: bool
                 default: true

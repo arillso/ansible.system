@@ -11,7 +11,7 @@
             mode: "0644"
             backup: "{{ network_backup_configs }}"
         become: true
-        notify: "Network restart resolved"
+        notify: "network: restart resolved"
         retries: "{{ network_retry_count }}"
         delay: "{{ network_retry_delay }}"
         register: _network_resolved_config
@@ -47,6 +47,12 @@
             group: root
             mode: "0644"
             backup: "{{ network_backup_configs }}"
+            # /etc/resolv.conf is frequently a bind-mount (containers) or a
+            # symlink managed by another service, where Ansible's default
+            # atomic write (write temp file + rename) fails with "Device or
+            # resource busy". unsafe_writes falls back to an in-place write
+            # so the resolver config still lands on those hosts.
+            unsafe_writes: true
         become: true
         retries: "{{ network_retry_count }}"
         delay: "{{ network_retry_delay }}"

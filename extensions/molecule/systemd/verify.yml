@@ -1,0 +1,33 @@
+---
+- name: Verify — arillso.system.systemd
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+      - name: Stat the molecule-marker unit file
+        ansible.builtin.stat:
+            path: /etc/systemd/system/molecule-marker.service
+        register: _unit
+
+      - name: Assert the unit file was deployed
+        ansible.builtin.assert:
+            that:
+                - _unit.stat.exists
+                - _unit.stat.size > 0
+
+      - name: Verify the unit is parseable by systemd
+        ansible.builtin.command:
+            cmd: systemd-analyze verify /etc/systemd/system/molecule-marker.service
+        changed_when: false
+
+      - name: Stat the journald configuration file
+        ansible.builtin.stat:
+            path: /etc/systemd/journald.conf
+        register: _journald
+
+      - name: Assert the journald configuration was rendered
+        ansible.builtin.assert:
+            that:
+                - _journald.stat.exists
+                - _journald.stat.size > 0

@@ -1,0 +1,42 @@
+---
+# The geerlingguy/docker-*-ansible images ship with an empty apt cache
+# (apt-get clean is part of their build), so the role's package installs
+# fail with "No package matching '<pkg>' is available" until the index is
+# refreshed. Prime the cache here; the converge then installs cleanly.
+#
+# The distro pipx is also too old for community.general.pipx, which
+# requires pipx >= 1.7.0 (Debian bookworm ships 1.1.0, Ubuntu noble
+# 1.4.3). pip cannot upgrade the dpkg-installed pipx in place ("Cannot
+# uninstall pipx X, RECORD file not found"), so remove the distro pipx
+# first, then install a modern one via pip.
+- name: Prepare — refresh package cache and modern pipx
+  hosts: all
+  become: true
+
+  tasks:
+      - name: Update apt cache (Debian family)
+        ansible.builtin.apt:
+            update_cache: true
+            cache_valid_time: 3600
+        when: ansible_facts['os_family'] == "Debian"
+
+      - name: Update dnf cache (RedHat family)
+        ansible.builtin.dnf:
+            update_cache: true
+        when: ansible_facts['os_family'] == "RedHat"
+
+      - name: Remove the distro pipx so pip can own it
+        ansible.builtin.package:
+            name: pipx
+            state: absent
+
+      - name: Ensure pip is installed
+        ansible.builtin.package:
+            name: python3-pip
+            state: present
+
+      - name: Install a pipx version community.general.pipx supports (>= 1.7.0)
+        ansible.builtin.pip:
+            name: pipx>=1.7.0
+            state: present
+            extra_args: --break-system-packages

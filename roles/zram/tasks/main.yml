@@ -27,7 +27,7 @@
       group: root
       mode: "0644"
   become: true
-  notify: Restart zramswap
+  notify: "zram: restart zramswap"
   when: zram_enabled
 
 - name: Manage zramswap service via systemd role

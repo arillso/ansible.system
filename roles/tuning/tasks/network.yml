@@ -2,19 +2,57 @@
 # File: roles/system_tuning/tasks/network.yml
 # Advanced network performance tuning with validation
 
-- name: Configure network sysctl parameters
+# Split into required vs optional sysctls so failure attribution is
+# unambiguous in the loop. The previous combined task self-referenced
+# `network_sysctl_result.failed` inside `failed_when`, which is
+# dependent on ansible-core's per-iteration semantics and was brittle
+# to refactor (and Audit M3). Required sysctls fail loudly; optional
+# ones are tracked via a separate task that captures `ignore_errors`
+# and reports a list of misses for the report task below.
+
+- name: Configure required network sysctl parameters
   ansible.posix.sysctl:
-      name: "{{ item.key }}"
-      value: "{{ item.value }}"
+      name: "{{ _net_sysctl_item.key }}"
+      value: "{{ _net_sysctl_item.value }}"
       state: present
       reload: true
       sysctl_file: "{{ tuning_network_sysctl_file }}"
   become: true
   loop: "{{ tuning_network_sysctl_config | dict2items }}"
-  register: network_sysctl_result
-  failed_when:
-      - network_sysctl_result.failed
-      - item.key not in (tuning_optional_network_sysctl_params | default([]))
+  loop_control:
+      loop_var: _net_sysctl_item
+      label: "{{ _net_sysctl_item.key }}"
+  when: _net_sysctl_item.key not in (tuning_optional_network_sysctl_params | default([]))
+  register: _network_sysctl_required
+
+- name: Configure optional network sysctl parameters
+  ansible.posix.sysctl:
+      name: "{{ _net_sysctl_item.key }}"
+      value: "{{ _net_sysctl_item.value }}"
+      state: present
+      reload: true
+      sysctl_file: "{{ tuning_network_sysctl_file }}"
+  become: true
+  loop: "{{ tuning_network_sysctl_config | dict2items }}"
+  loop_control:
+      loop_var: _net_sysctl_item
+      label: "{{ _net_sysctl_item.key }}"
+  when: _net_sysctl_item.key in (tuning_optional_network_sysctl_params | default([]))
+  register: _network_sysctl_optional
+  ignore_errors: true
+
+- name: Report optional sysctl parameters that could not be applied
+  ansible.builtin.debug:
+      msg: >-
+          Optional sysctl '{{ _net_sysctl_item.item.key }}' could not be applied
+          on this host: {{ _net_sysctl_item.msg | default('see previous error') }}
+  loop: "{{ _network_sysctl_optional.results | default([]) }}"
+  loop_control:
+      loop_var: _net_sysctl_item
+      label: "{{ _net_sysctl_item.item.key | default('(skipped)') }}"
+  when:
+      - _net_sysctl_item.failed | default(false)
+      - not _net_sysctl_item.skipped | default(false)
 
 - name: Configure network ring buffers
   block:
@@ -47,7 +85,6 @@
             tx {{ item.item.tx_buffer }}
         become: true
         register: ethtool_result
-        failed_when: false
         changed_when: ethtool_result.rc == 0
         when:
             - item.rc == 0
@@ -76,8 +113,8 @@
             group: root
         become: true
         notify:
-            - Reload systemd
-            - Enable network tuning service
+            - "tuning: reload systemd"
+            - "tuning: apply network"
         when: valid_network_buffers is defined and valid_network_buffers | length > 0
 
 - name: Configure network interface specific settings
@@ -99,7 +136,6 @@
             {% if 'tx-checksumming: on' in item.stdout %}tx on{% endif %}
         become: true
         register: offload_result
-        failed_when: false
         changed_when: offload_result.rc == 0
         loop: "{{ network_offload_features.results }}"
         when:

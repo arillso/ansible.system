@@ -1,0 +1,29 @@
+---
+- name: Converge — arillso.system.systemd
+  hosts: all
+  become: true
+
+  vars:
+      systemd_units:
+          - name: molecule-marker.service
+            state: present
+            unit:
+                Unit:
+                    Description: Molecule marker unit
+                Service:
+                    Type: oneshot
+                    ExecStart: /bin/true
+                    RemainAfterExit: "yes"
+                Install:
+                    WantedBy: multi-user.target
+      systemd_services:
+          - name: molecule-marker
+            enabled: false
+            state: stopped
+            daemon_reload: true
+      systemd_journald_enabled: true
+
+  tasks:
+      - name: Apply systemd role
+        ansible.builtin.include_role:
+            name: arillso.system.systemd

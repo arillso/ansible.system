@@ -8,7 +8,7 @@
       mode: "0644"
       backup: true
   become: true
-  notify: packages update cache
+  notify: "packages: update cache"
 
 - name: Configure APT proxy
   ansible.builtin.template:
@@ -19,7 +19,7 @@
       mode: "0644"
   become: true
   when: packages_apt_proxy_enabled
-  notify: packages update cache
+  notify: "packages: update cache"
 
 - name: Remove APT proxy configuration
   ansible.builtin.file:
@@ -27,7 +27,7 @@
       state: absent
   become: true
   when: not packages_apt_proxy_enabled
-  notify: packages update cache
+  notify: "packages: update cache"
 
 - name: Configure APT periodic updates
   ansible.builtin.template:
@@ -55,7 +55,7 @@
       mode: "0644"
   become: true
   when: packages_apt_preferences | length > 0
-  notify: packages update cache
+  notify: "packages: update cache"
 
 - name: Remove APT preferences if not configured
   ansible.builtin.file:
@@ -74,7 +74,7 @@
       backup: true
   become: true
   when: packages_apt_mirror_enabled
-  notify: packages update cache
+  notify: "packages: update cache"
 
 - name: Clean APT lists if requested
   ansible.builtin.file:
@@ -82,4 +82,4 @@
       state: absent
   become: true
   when: packages_apt_clean_lists
-  notify: packages update cache
+  notify: "packages: update cache"

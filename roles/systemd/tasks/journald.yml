@@ -8,7 +8,7 @@
       mode: "0644"
       backup: "{{ systemd_backup_units }}"
   become: true
-  notify: "Systemd restart journald"
+  notify: "systemd: restart journald"
   retries: "{{ systemd_retry_count }}"
   delay: "{{ systemd_retry_delay }}"
   register: _systemd_journald_config_result

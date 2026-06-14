@@ -1,0 +1,20 @@
+---
+- name: Converge — arillso.system.packages
+  hosts: all
+  become: true
+
+  vars:
+      packages_cache_enabled: true
+      packages_list:
+          - name: htop
+            state: present
+          - name: jq
+            state: present
+      packages_keys: []
+      packages_repositories: []
+      packages_unattended_upgrades_enabled: false
+
+  tasks:
+      - name: Apply packages role
+        ansible.builtin.include_role:
+            name: arillso.system.packages

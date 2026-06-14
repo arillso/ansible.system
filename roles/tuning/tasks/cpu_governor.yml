@@ -19,7 +19,7 @@
             group: root
             backup: true
         become: true
-        notify: Restart cpufrequtils
+        notify: "tuning: restart cpufrequtils"
         when: ansible_os_family == "Debian"
 
       - name: Create cpupower configuration (RedHat/CentOS)
@@ -31,7 +31,7 @@
             group: root
             backup: true
         become: true
-        notify: Restart cpupower
+        notify: "tuning: restart cpupower"
         when: ansible_os_family in ["RedHat", "Suse"]
 
 - name: Apply CPU governor immediately
@@ -51,6 +51,11 @@
         loop: "{{ cpu_cores.files }}"
         when: cpu_cores.files is defined
 
+      # Best-effort immediate apply per CPU. Persistence comes from the
+      # cpufreq/cpupower service enabled below. The `Validate CPU
+      # governor was applied` assert in the verify block is the real
+      # gate — if both immediate apply and service failed, the assert
+      # fires and the role bails out.
       - name: Set CPU governor immediately
         ansible.builtin.copy:
             content: "{{ final_cpu_governor }}"
@@ -103,5 +108,4 @@
       enabled: true
       state: started
   become: true
-  failed_when: false
   when: ansible_os_family in _service_commands

@@ -18,7 +18,7 @@
       mode: "0644"
       backup: "{{ logging_backup_configs }}"
   become: true
-  notify: "Logging restart rsyslog"
+  notify: "logging: restart rsyslog"
   retries: "{{ logging_retry_count }}"
   delay: "{{ logging_retry_delay }}"
   register: _logging_rsyslog_config
@@ -40,7 +40,7 @@
   when:
       - logging_rsyslog_entries | length > 0
       - _logging_rsyslog_item.state | default('present') == 'present'
-  notify: "Logging restart rsyslog"
+  notify: "logging: restart rsyslog"
 
 - name: Remove rsyslog entries
   ansible.builtin.file:
@@ -54,7 +54,7 @@
   when:
       - logging_rsyslog_entries | length > 0
       - _logging_rsyslog_item.state | default('present') == 'absent'
-  notify: "Logging restart rsyslog"
+  notify: "logging: restart rsyslog"
 
 - name: Manage rsyslog service via systemd role
   ansible.builtin.include_role:

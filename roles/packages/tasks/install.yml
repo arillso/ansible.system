@@ -22,4 +22,4 @@
   retries: "{{ packages_retry_count }}"
   delay: "{{ packages_retry_delay }}"
   until: _packages_unified_installed is succeeded
-  notify: "packages restart services"
+  notify: "packages: restart services"

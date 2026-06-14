@@ -1,0 +1,27 @@
+---
+- name: Verify — arillso.system.network
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+      # The converge drives the traditional /etc/resolv.conf branch
+      # (network_use_systemd_resolved: false), which is the container-safe
+      # path, so verify the file the role actually rendered there.
+      - name: Stat /etc/resolv.conf
+        ansible.builtin.stat:
+            path: /etc/resolv.conf
+        register: _resolv
+
+      - name: Read /etc/resolv.conf
+        ansible.builtin.slurp:
+            src: /etc/resolv.conf
+        register: _resolv_content
+
+      - name: Assert resolv.conf was rendered with the configured nameserver
+        ansible.builtin.assert:
+            that:
+                - _resolv.stat.exists
+                - _resolv.stat.size > 0
+                - "'1.1.1.1' in (_resolv_content.content | b64decode)"
+            success_msg: "resolv.conf rendered with the configured nameservers"

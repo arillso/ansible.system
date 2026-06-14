@@ -21,6 +21,9 @@
       state: present
   become: true
   when: shell_motd_style == 'figlet'
+  # figlet/toilet etc. are optional cosmetic packages for the MOTD
+  # style. If the host's package repo doesn't carry them, the role
+  # falls back to the standard style rather than aborting.
   failed_when: false
   register: _shell_package_install
   tags:

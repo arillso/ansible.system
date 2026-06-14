@@ -1,4 +1,5 @@
 ---
-- name: Ansible daemon-reload
+- name: Reload systemd manager configuration after Ansible role changes
   ansible.builtin.systemd:
       daemon_reload: true
+  listen: "ansible: daemon-reload"

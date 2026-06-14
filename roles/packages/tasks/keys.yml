@@ -1,6 +1,16 @@
 ---
 # Entry point for APT key management
-# Modern implementation using keyring files instead of deprecated apt_key
+# Modern implementation using keyring files instead of deprecated apt_key.
+#
+# The previous layout had eight near-identical task definitions, one
+# per (source-type, keyring-defined) combination, and Audit M4 flagged
+# the matching bug surface every time something changed (e.g. the
+# 1.1.4 dearmor regression had to be fixed in four places). Now each
+# entry in `packages_keys` is dispatched through `_key_apply.yml` once
+# with normalised metadata pre-computed in `_pkg_keys_normalised`.
+
+- name: Normalise packages_keys for dispatch
+  ansible.builtin.include_tasks: _keys_normalise.yml
 
 - name: Create keyrings directory
   ansible.builtin.file:
@@ -12,389 +22,46 @@
   become: true
 
 # Note: This task removes keyring files before re-downloading, which naturally
-# bypasses the `creates:` guard on downstream dearmor and keyserver tasks.
+# bypasses the `creates:` guard on the dearmor and keyserver steps below.
 - name: Remove existing keyrings for force update
   ansible.builtin.file:
-      path: >-
-          {{ _pkg_key_item.keyring |
-             default('/usr/share/keyrings/' + (_pkg_key_item.name |
-                     default(_pkg_key_item.id | default('custom'))) +
-                     '-keyring.gpg') }}
+      path: "{{ _pkg_norm.keyring }}"
       state: absent
-  loop: "{{ packages_keys }}"
+  loop: "{{ _pkg_keys_present }}"
   loop_control:
-      loop_var: _pkg_key_item
-  when:
-      - packages_keys_force_update
-      - packages_keys | length > 0
-      - _pkg_key_item.state | default('present') == 'present'
+      loop_var: _pkg_norm
+      label: "{{ _pkg_norm.label }}"
+  when: packages_keys_force_update
   become: true
-
-- name: Download APT signing keys (URL with keyring)
-  ansible.builtin.get_url:
-      url: "{{ _pkg_key_item.url }}"
-      dest: >-
-          {{ _pkg_key_item.keyring |
-             default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
-                     '-keyring.gpg') }}
-      mode: "0644"
-      owner: root
-      group: root
-      force: "{{ packages_keys_force_update | bool }}"
-      timeout: 30
-  loop: "{{ packages_keys }}"
-  loop_control:
-      loop_var: _pkg_key_item
-  when:
-      - packages_keys | length > 0
-      - _pkg_key_item.url is defined
-      - _pkg_key_item.keyring is defined
-      - _pkg_key_item.state | default('present') == 'present'
-      - not (_pkg_key_item.dearmor | default(false))
-  register: _packages_keys_added_url_keyring
-  become: true
-
-- name: Stat target keyrings on the host (URL with keyring)
-  ansible.builtin.stat:
-      path: >-
-          {{ _pkg_key_item.keyring |
-             default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
-                     '-keyring.gpg') }}
-  loop: "{{ packages_keys }}"
-  loop_control:
-      loop_var: _pkg_key_item
-      label: "{{ _pkg_key_item.name | default(_pkg_key_item.id | default('custom')) }}"
-  when:
-      - packages_keys | length > 0
-      - _pkg_key_item.url is defined
-      - _pkg_key_item.keyring is defined
-      - _pkg_key_item.state | default('present') == 'present'
-      - _pkg_key_item.dearmor | default(false)
-  register: _packages_keys_target_stat_url_keyring
-  changed_when: false
-
-- name: Download APT signing keys for dearmoring (URL with keyring)
-  ansible.builtin.get_url:
-      url: "{{ _pkg_key_item.url }}"
-      dest: "/tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc"
-      mode: "0600"
-      timeout: 30
-  loop: "{{ packages_keys }}"
-  loop_control:
-      loop_var: _pkg_key_item
-      extended: true
-      label: "{{ _pkg_key_item.name | default('custom') }}"
-  when:
-      - packages_keys | length > 0
-      - _pkg_key_item.url is defined
-      - _pkg_key_item.keyring is defined
-      - _pkg_key_item.state | default('present') == 'present'
-      - _pkg_key_item.dearmor | default(false)
-      - not (_packages_keys_target_stat_url_keyring.results[ansible_loop.index0].stat.exists | default(false))
-        or packages_keys_force_update
-  register: _packages_keys_downloaded_url_keyring_dearmor
-  become: true
-
-- name: Dearmor APT signing keys (URL with keyring)
   vars:
-      _pkg_key_keyring_path: >-
-          {{ _pkg_key_item.keyring |
-             default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
-                     '-keyring.gpg') }}
-      _pkg_key_armored_path: "/tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc"
-  ansible.builtin.shell:
-      cmd: |
-          set -e
-          _tmp={{ _pkg_key_armored_path | quote }}
-          trap 'rm -f "$_tmp"' EXIT
-          gpg --dearmor -o {{ _pkg_key_keyring_path | quote }} < "$_tmp"
-      executable: /bin/bash
-      creates: "{{ _pkg_key_keyring_path }}"
-  loop: "{{ packages_keys }}"
-  loop_control:
-      loop_var: _pkg_key_item
-      label: "{{ _pkg_key_item.name | default('custom') }}"
-  when:
-      - packages_keys | length > 0
-      - _pkg_key_item.url is defined
-      - _pkg_key_item.keyring is defined
-      - _pkg_key_item.state | default('present') == 'present'
-      - _pkg_key_item.dearmor | default(false)
-  register: _packages_keys_added_url_keyring_dearmor
-  become: true
+      _pkg_keys_present: >-
+          {{ _pkg_keys_normalised | selectattr('state', 'equalto', 'present') | list }}
 
-- name: Set correct permissions for dearmored keys
-  ansible.builtin.file:
-      path: >-
-          {{ _pkg_key_item.keyring |
-             default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom')) +
-                     '-keyring.gpg') }}
-      mode: "0644"
-      owner: root
-      group: root
-  loop: "{{ packages_keys }}"
+- name: Apply each APT signing key from packages_keys
+  ansible.builtin.include_tasks: _key_apply.yml
+  loop: "{{ _pkg_keys_normalised }}"
   loop_control:
-      loop_var: _pkg_key_item
+      loop_var: _pkg_key
+      label: "{{ _pkg_key.label }}"
   when:
-      - _packages_keys_added_url_keyring_dearmor is changed
-      - _pkg_key_item.url is defined
-      - _pkg_key_item.keyring is defined
-      - _pkg_key_item.state | default('present') == 'present'
-      - _pkg_key_item.dearmor | default(false)
-  become: true
-
-- name: Download APT signing keys (URL without keyring)
-  ansible.builtin.get_url:
-      url: "{{ _pkg_key_item.url }}"
-      dest: "/usr/share/keyrings/{{ _pkg_key_item.name | default('custom') }}-keyring.gpg"
-      mode: "0644"
-      owner: root
-      group: root
-      force: "{{ packages_keys_force_update | bool }}"
-      timeout: 30
-  loop: "{{ packages_keys }}"
-  loop_control:
-      loop_var: _pkg_key_item
-  when:
-      - packages_keys | length > 0
-      - _pkg_key_item.url is defined
-      - _pkg_key_item.keyring is not defined
-      - _pkg_key_item.state | default('present') == 'present'
-      - not (_pkg_key_item.dearmor | default(false))
-  register: _packages_keys_added_url
-  become: true
-
-- name: Stat target keyrings on the host (URL without keyring)
-  ansible.builtin.stat:
-      path: "/usr/share/keyrings/{{ _pkg_key_item.name | default('custom') }}-keyring.gpg"
-  loop: "{{ packages_keys }}"
-  loop_control:
-      loop_var: _pkg_key_item
-      label: "{{ _pkg_key_item.name | default('custom') }}"
-  when:
-      - packages_keys | length > 0
-      - _pkg_key_item.url is defined
-      - _pkg_key_item.keyring is not defined
-      - _pkg_key_item.state | default('present') == 'present'
-      - _pkg_key_item.dearmor | default(false)
-  register: _packages_keys_target_stat_url
-  changed_when: false
-
-- name: Download APT signing keys for dearmoring (URL without keyring)
-  ansible.builtin.get_url:
-      url: "{{ _pkg_key_item.url }}"
-      dest: "/tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc"
-      mode: "0600"
-      timeout: 30
-  loop: "{{ packages_keys }}"
-  loop_control:
-      loop_var: _pkg_key_item
-      extended: true
-      label: "{{ _pkg_key_item.name | default('custom') }}"
-  when:
-      - packages_keys | length > 0
-      - _pkg_key_item.url is defined
-      - _pkg_key_item.keyring is not defined
-      - _pkg_key_item.state | default('present') == 'present'
-      - _pkg_key_item.dearmor | default(false)
-      - not (_packages_keys_target_stat_url.results[ansible_loop.index0].stat.exists | default(false))
-        or packages_keys_force_update
-  register: _packages_keys_downloaded_url_dearmor
-  become: true
-
-- name: Dearmor APT signing keys (URL without keyring)
+      - _pkg_key.state == 'present'
+      - _pkg_key.dispatch != 'unknown'
   vars:
-      _pkg_key_keyring_path: "/usr/share/keyrings/{{ _pkg_key_item.name | default('custom') }}-keyring.gpg"
-      _pkg_key_armored_path: "/tmp/{{ _pkg_key_item.name | default('custom') }}-armored.asc"
-  ansible.builtin.shell:
-      cmd: |
-          set -e
-          _tmp={{ _pkg_key_armored_path | quote }}
-          trap 'rm -f "$_tmp"' EXIT
-          gpg --dearmor -o {{ _pkg_key_keyring_path | quote }} < "$_tmp"
-      executable: /bin/bash
-      creates: "{{ _pkg_key_keyring_path }}"
-  loop: "{{ packages_keys }}"
-  loop_control:
-      loop_var: _pkg_key_item
-      label: "{{ _pkg_key_item.name | default('custom') }}"
-  when:
-      - packages_keys | length > 0
-      - _pkg_key_item.url is defined
-      - _pkg_key_item.keyring is not defined
-      - _pkg_key_item.state | default('present') == 'present'
-      - _pkg_key_item.dearmor | default(false)
-  register: _packages_keys_added_url_dearmor
-  become: true
-
-- name: Set correct permissions for dearmored keys (URL without keyring)
-  ansible.builtin.file:
-      path: "/usr/share/keyrings/{{ _pkg_key_item.name | default('custom') }}-keyring.gpg"
-      mode: "0644"
-      owner: root
-      group: root
-  loop: "{{ packages_keys }}"
-  loop_control:
-      loop_var: _pkg_key_item
-  when:
-      - _packages_keys_added_url_dearmor is changed
-      - _pkg_key_item.url is defined
-      - _pkg_key_item.keyring is not defined
-      - _pkg_key_item.state | default('present') == 'present'
-      - _pkg_key_item.dearmor | default(false)
-  become: true
-
-- name: Fetch APT signing keys from keyserver
-  vars:
-      _pkg_key_keyring_path: >-
-          {{ _pkg_key_item.keyring |
-             default('/usr/share/keyrings/' + (_pkg_key_item.name | default(_pkg_key_item.id)) +
-                     '-keyring.gpg') }}
-  ansible.builtin.shell:
-      cmd: |
-          set -e
-          _tmpfile=$(mktemp --suffix=.gpg)
-          trap 'rm -f "$_tmpfile" "${_tmpfile}~"' EXIT
-          gpg --no-default-keyring --keyring "$_tmpfile" --keyserver {{ _pkg_key_item.keyserver | quote }} --recv-keys {{ _pkg_key_item.id | quote }}
-          gpg --no-default-keyring --keyring "$_tmpfile" --export {{ _pkg_key_item.id | quote }} > {{ _pkg_key_keyring_path | quote }}
-      executable: /bin/bash
-      creates: "{{ _pkg_key_keyring_path }}"
-  loop: "{{ packages_keys }}"
-  loop_control:
-      loop_var: _pkg_key_item
-      label: "{{ _pkg_key_item.name | default(_pkg_key_item.id) }}"
-  when:
-      - packages_keys | length > 0
-      - _pkg_key_item.keyserver is defined
-      - _pkg_key_item.id is defined
-      - _pkg_key_item.state | default('present') == 'present'
-  register: _packages_keys_added_keyserver
-  become: true
-
-- name: Set correct permissions for keyserver keys
-  ansible.builtin.file:
-      path: >-
-          {{ _pkg_key_item.keyring |
-             default('/usr/share/keyrings/' + (_pkg_key_item.name | default(_pkg_key_item.id)) +
-                     '-keyring.gpg') }}
-      mode: "0644"
-      owner: root
-      group: root
-  loop: "{{ packages_keys }}"
-  loop_control:
-      loop_var: _pkg_key_item
-  when:
-      - _packages_keys_added_keyserver is changed
-      - _pkg_key_item.keyserver is defined
-      - _pkg_key_item.id is defined
-      - _pkg_key_item.state | default('present') == 'present'
-  become: true
-
-- name: Stat target keyrings on the host (data)
-  ansible.builtin.stat:
-      path: >-
-          {{ _pkg_key_item.keyring |
-             default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom-data')) +
-                     '-keyring.gpg') }}
-  loop: "{{ packages_keys }}"
-  loop_control:
-      loop_var: _pkg_key_item
-      label: "{{ _pkg_key_item.name | default('custom-data') }}"
-  when:
-      - packages_keys | length > 0
-      - _pkg_key_item.data is defined
-      - _pkg_key_item.state | default('present') == 'present'
-  register: _packages_keys_target_stat_data
-  changed_when: false
-
-- name: Write APT signing key data to temp file
-  ansible.builtin.copy:
-      content: "{{ _pkg_key_item.data }}"
-      dest: "/tmp/{{ _pkg_key_item.name | default('custom-data') }}-armored.asc"
-      mode: "0600"
-  loop: "{{ packages_keys }}"
-  loop_control:
-      loop_var: _pkg_key_item
-      extended: true
-      label: "{{ _pkg_key_item.name | default('custom-data') }}"
-  when:
-      - packages_keys | length > 0
-      - _pkg_key_item.data is defined
-      - _pkg_key_item.state | default('present') == 'present'
-      - not (_packages_keys_target_stat_data.results[ansible_loop.index0].stat.exists | default(false))
-        or packages_keys_force_update
-  register: _packages_keys_data_written
-  become: true
-
-- name: Dearmor APT signing keys from data
-  vars:
-      _pkg_key_keyring_path: >-
-          {{ _pkg_key_item.keyring |
-             default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom-data')) +
-                     '-keyring.gpg') }}
-      _pkg_key_armored_path: "/tmp/{{ _pkg_key_item.name | default('custom-data') }}-armored.asc"
-  ansible.builtin.shell:
-      cmd: |
-          set -e
-          _tmp={{ _pkg_key_armored_path | quote }}
-          trap 'rm -f "$_tmp"' EXIT
-          gpg --dearmor -o {{ _pkg_key_keyring_path | quote }} < "$_tmp"
-      executable: /bin/bash
-      creates: "{{ _pkg_key_keyring_path }}"
-  loop: "{{ packages_keys }}"
-  loop_control:
-      loop_var: _pkg_key_item
-      label: "{{ _pkg_key_item.name | default('custom-data') }}"
-  when:
-      - packages_keys | length > 0
-      - _pkg_key_item.data is defined
-      - _pkg_key_item.state | default('present') == 'present'
-  register: _packages_keys_added_data
-  become: true
-
-- name: Set correct permissions for data-imported keys
-  ansible.builtin.file:
-      path: >-
-          {{ _pkg_key_item.keyring |
-             default('/usr/share/keyrings/' + (_pkg_key_item.name | default('custom-data')) +
-                     '-keyring.gpg') }}
-      mode: "0644"
-      owner: root
-      group: root
-  loop: "{{ packages_keys }}"
-  loop_control:
-      loop_var: _pkg_key_item
-  when:
-      - _packages_keys_added_data is changed
-      - _pkg_key_item.data is defined
-      - _pkg_key_item.state | default('present') == 'present'
-  become: true
+      _pkg_key_item: "{{ packages_keys[_pkg_key.index] }}"
 
 - name: Remove APT signing keys (absent state)
   ansible.builtin.file:
-      path: >-
-          {{ _pkg_key_item.keyring |
-             default('/usr/share/keyrings/' + (_pkg_key_item.name |
-                     default(_pkg_key_item.id | default('custom'))) +
-                     '-keyring.gpg') }}
+      path: "{{ _pkg_norm.keyring }}"
       state: absent
-  loop: "{{ packages_keys }}"
+  loop: "{{ _pkg_keys_normalised }}"
   loop_control:
-      loop_var: _pkg_key_item
-  when:
-      - packages_keys | length > 0
-      - _pkg_key_item.state | default('present') == 'absent'
+      loop_var: _pkg_norm
+      label: "{{ _pkg_norm.label }}"
+  when: _pkg_norm.state == 'absent'
   register: _packages_keys_removed
   become: true
 
-- name: Set keys change flag
+- name: Track keyring removals in packages_keys_changed
   ansible.builtin.set_fact:
       packages_keys_changed: true
-  when: >
-      (_packages_keys_added_url_keyring is defined and _packages_keys_added_url_keyring is changed) or
-      (_packages_keys_added_url_keyring_dearmor is defined and _packages_keys_added_url_keyring_dearmor is changed) or
-      (_packages_keys_added_url is defined and _packages_keys_added_url is changed) or
-      (_packages_keys_added_url_dearmor is defined and _packages_keys_added_url_dearmor is changed) or
-      (_packages_keys_added_keyserver is defined and _packages_keys_added_keyserver is changed) or
-      (_packages_keys_added_data is defined and _packages_keys_added_data is changed) or
-      (_packages_keys_removed is defined and _packages_keys_removed is changed)
+  when: _packages_keys_removed is changed

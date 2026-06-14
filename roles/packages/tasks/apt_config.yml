@@ -11,4 +11,4 @@
   loop: "{{ packages_apt_conf }}"
   loop_control:
       loop_var: _pkg_config_item
-  notify: "packages update cache"
+  notify: "packages: update cache"

@@ -1,0 +1,29 @@
+---
+- name: Verify — arillso.system.bitwarden_secrets
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+      - name: Stat bws binary
+        ansible.builtin.stat:
+            path: /usr/local/bin/bws
+        register: _bws
+
+      - name: Assert bws is installed and executable
+        ansible.builtin.assert:
+            that:
+                - _bws.stat.exists
+                - _bws.stat.executable
+
+      - name: Run bws --version
+        ansible.builtin.command:
+            cmd: /usr/local/bin/bws --version
+        changed_when: false
+        register: _bws_version
+
+      - name: Assert bws --version returns something
+        ansible.builtin.assert:
+            that:
+                - _bws_version.rc == 0
+                - _bws_version.stdout | length > 0

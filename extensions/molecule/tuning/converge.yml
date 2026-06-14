@@ -1,0 +1,19 @@
+---
+# Wird vom Syntax-only test_sequence nicht aufgerufen, dient aber als
+# Referenz fuer manuelle Vagrant/VM-Runs (`molecule converge -s tuning`).
+
+- name: Converge — arillso.system.tuning (VM-only, do not run in container)
+  hosts: all
+  become: true
+
+  vars:
+      tuning_swap_file_enabled: false
+      tuning_network_tuning_enabled: false
+      tuning_cpu_governor: "auto"
+      tuning_io_scheduler: "auto"
+      tuning_transparent_hugepages: madvise
+
+  tasks:
+      - name: Apply tuning role
+        ansible.builtin.include_role:
+            name: arillso.system.tuning

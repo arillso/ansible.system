@@ -1,0 +1,20 @@
+---
+# The geerlingguy/docker-*-ansible images ship with an empty apt cache
+# (apt-get clean is part of their build), so the role's package installs
+# fail with "No package matching '<pkg>' is available" until the index is
+# refreshed. Prime the cache here; the converge then installs cleanly.
+- name: Prepare — refresh package cache
+  hosts: all
+  become: true
+
+  tasks:
+      - name: Update apt cache (Debian family)
+        ansible.builtin.apt:
+            update_cache: true
+            cache_valid_time: 3600
+        when: ansible_facts['os_family'] == "Debian"
+
+      - name: Update dnf cache (RedHat family)
+        ansible.builtin.dnf:
+            update_cache: true
+        when: ansible_facts['os_family'] == "RedHat"

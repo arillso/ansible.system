@@ -1,0 +1,59 @@
+---
+# tuning aendert kernel-sysctls, GRUB-cmdline, ethtool, swap, transparent
+# hugepages und tuned-Profile. In Containern faellt davon das meiste durch
+# (kein eigener Kernel, kein /proc/sys-Write, kein swapon). Dieses Szenario
+# faehrt deshalb nur Syntax und Lint statt einem echten Converge.
+
+dependency:
+    name: galaxy
+    options:
+        requirements-file: ../.config/requirements.yml
+
+driver:
+    name: docker
+
+platforms:
+    - name: tuning-debian-bookworm
+      image: geerlingguy/docker-debian12-ansible:latest
+      command: /usr/lib/systemd/systemd
+      privileged: true
+      pre_build_image: true
+      cgroupns_mode: host
+      volumes:
+          - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      tmpfs:
+          - /run
+          - /run/lock
+
+provisioner:
+    name: ansible
+    env:
+        # Point Ansible at the collections checkout the reusable workflow
+        # creates under ${GITHUB_WORKSPACE}/ansible_collections/<ns>/<name>/.
+        # Without this, include_role on arillso.system.<role> fails because
+        # molecule cd's into extensions/ before invoking ansible-playbook,
+        # which then doesn't auto-detect the ansible_collections/ marker
+        # two levels above. We also append the default user and system
+        # locations so the molecule docker driver's collections
+        # (community.docker, ansible.posix) stay resolvable.
+        ANSIBLE_COLLECTIONS_PATH: ${GITHUB_WORKSPACE}:${HOME}/.ansible/collections:/usr/share/ansible/collections
+    config_options:
+        defaults:
+            interpreter_python: auto_silent
+            stdout_callback: default
+            result_format: yaml
+        ssh_connection:
+            pipelining: true
+    inventory:
+        group_vars:
+            all:
+                ansible_user: root
+
+verifier:
+    name: ansible
+
+scenario:
+    test_sequence:
+        - dependency
+        - destroy
+        - syntax

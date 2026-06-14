@@ -1,0 +1,29 @@
+---
+- name: Verify — arillso.system.python
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+      - name: Confirm python3 is available
+        ansible.builtin.command:
+            cmd: python3 --version
+        changed_when: false
+        register: _py3
+
+      - name: Assert python3 returns version string
+        ansible.builtin.assert:
+            that:
+                - "'Python 3' in _py3.stdout"
+
+      - name: Confirm requests is importable in the molecule venv
+        ansible.builtin.command:
+            cmd: /opt/molecule-venv/bin/python -c "import requests; print(requests.__version__)"
+        changed_when: false
+        register: _requests
+
+      - name: Assert requests is importable
+        ansible.builtin.assert:
+            that:
+                - _requests.rc == 0
+                - _requests.stdout | length > 0

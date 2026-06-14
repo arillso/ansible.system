@@ -1,6 +1,7 @@
 ---
-- name: Restart zramswap
+- name: Restart zramswap to apply /etc/default/zramswap configuration changes
   ansible.builtin.systemd:
       name: zramswap
       state: restarted
   become: true
+  listen: "zram: restart zramswap"

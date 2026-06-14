@@ -1,19 +1,22 @@
 ---
-- name: Converge — arillso.system.network (resolv path only)
+- name: Converge — arillso.system.network (traditional resolv.conf path)
   hosts: all
   become: true
 
+  # The docker driver images ship no systemd-resolved unit, so the
+  # systemd-resolved branch (network_use_systemd_resolved: true) cannot
+  # converge in a container — it fails on "Could not find the requested
+  # service systemd-resolved". Exercise the traditional /etc/resolv.conf
+  # branch instead, which is the part that renders a file and is
+  # container-safe. The systemd-resolved branch is covered on a real VM.
   vars:
       network_resolv_enabled: true
       network_netplan_enabled: false
       network_netplan_apply: false
-      network_systemd_resolved_restart: false
-      network_use_systemd_resolved: true
-      network_resolved_fallback_dns:
+      network_use_systemd_resolved: false
+      network_dns_nameservers:
           - 1.1.1.1
           - 9.9.9.9
-      network_resolved_dnssec: "no"
-      network_resolved_dns_over_tls: "no"
 
   tasks:
       - name: Apply network role

@@ -20,7 +20,7 @@
             state: present
       access_sudoers:
           - name: deploy-nopasswd
-            users: [deploy]
+            user: deploy
             commands: ["ALL"]
             nopasswd: true
             runas: ALL

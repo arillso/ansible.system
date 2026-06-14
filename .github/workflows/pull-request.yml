@@ -22,7 +22,7 @@ permissions:
 
 jobs:
     ci:
-        uses: arillso/.github/.github/workflows/ci-ansible-collection.yml@2026-06-12
+        uses: arillso/.github/.github/workflows/ci-ansible-collection.yml@2026-06-14
         with:
             collection_namespace: arillso
             collection_name: system
@@ -41,7 +41,7 @@ jobs:
         # ("Pull Request"), so without the suffix both the top-level
         # workflow and the nested molecule call would share the same
         # group and GitHub would cancel the molecule run.
-        uses: arillso/.github/.github/workflows/ci-ansible-molecule.yml@2026-06-12
+        uses: arillso/.github/.github/workflows/ci-ansible-molecule.yml@2026-06-14
         with:
             collection_namespace: arillso
             collection_name: system
@@ -50,9 +50,9 @@ jobs:
             concurrency-suffix: molecule
 
     security-secrets:
-        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-06-12
+        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-06-14
 
     claude-review:
-        uses: arillso/.github/.github/workflows/ai-claude-review.yml@2026-06-12
+        uses: arillso/.github/.github/workflows/ai-claude-review.yml@2026-06-14
         secrets:
             CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

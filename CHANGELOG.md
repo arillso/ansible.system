@@ -136,15 +136,18 @@ tuning_optional_network_sysctl_params`. The previous single task
   to the same `2026-06-12` tag.
 - CI/Renovate: close the remaining version-tracking gaps. All 15
   molecule platform images (`geerlingguy/docker-*-ansible`) are pinned
-  to `latest@sha256:...` with a `# renovate: datasource=docker` marker
-  so Renovate keeps the digests fresh (the images publish only a
-  `latest` tag, so digest pinning is the only way to track them), and
-  each `python_version` CI input carries a
-  `# renovate: datasource=github-releases depName=python/cpython`
-  marker. Bumps the `arillso/.github` Renovate preset pin to
-  `2026-06-14`, whose comment manager splits an `@sha256:...` suffix
-  into `currentDigest` (required for the molecule digest pins to update
-  cleanly).
+  to `latest@sha256:...`. Tracking is handled by the shared
+  `renovate-ansible` preset, which now carries a dedicated `docker`
+  customManager for molecule `image:` lines (parses the line directly so
+  `currentValue` is the bare tag and `@sha256:...` is the digest — the
+  form Renovate's Docker datasource needs to refresh it) plus a
+  `pinDigests` rule; the preset pin is bumped to `2026-06-14`. The images
+  publish only a `latest` tag, so digest pinning is the only way to track
+  them. A local marker-comment approach was tried first but the generic
+  comment manager captured `repo:tag` as `currentValue`, which Renovate
+  could not resolve ("Could not determine new digest"); the preset-side
+  manager needs no markers. Each `python_version` CI input carries a
+  `# renovate: datasource=github-releases depName=python/cpython` marker.
 
 ## [1.1.6] - 2026-05-17
 

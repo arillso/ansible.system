@@ -28,7 +28,8 @@ provisioner:
     config_options:
         defaults:
             interpreter_python: auto_silent
-            stdout_callback: yaml
+            stdout_callback: default
+            result_format: yaml
         ssh_connection:
             pipelining: true
     inventory:

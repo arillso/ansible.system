@@ -1,7 +1,6 @@
 ---
-name: Software Release
-run-name: |
-    Release ${{ github.ref_name }} by @${{ github.actor }}
+name: Release - Ansible Collection
+run-name: Release ${{ github.ref_name }}
 
 on:
     push:
@@ -9,15 +8,15 @@ on:
             - "[0-9]+.[0-9]+.[0-9]+"
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
+    group: release-${{ github.ref_name }}
     cancel-in-progress: false
 
 permissions:
     contents: write
 
 jobs:
-    publish:
-        uses: arillso/.github/.github/workflows/release-ansible-collection.yml@2026-06-14
+    release:
+        uses: arillso/.github/.github/workflows/release-ansible-collection.yml@2026-06-17
         with:
             collection_namespace: arillso
             collection_name: system

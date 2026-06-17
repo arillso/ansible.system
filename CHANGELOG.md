@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `name: Release - Ansible Collection`, simplify `run-name` to
   `Release <ref>`, use a `release-<ref>` concurrency group, and pin the
   reusable workflow to `@2026-06-17`.
+- `.python-version` `3.14` → `3.13` (org-wide target — `3.14` is rejected by
+  `ansible-test`, which supports at most `3.13`).
 
 ### Added
 

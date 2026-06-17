@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Align the release workflow with the org convention: set
+  `name: Release - Ansible Collection`, simplify `run-name` to
+  `Release <ref>`, use a `release-<ref>` concurrency group, and pin the
+  reusable workflow to `@2026-06-17`.
+- `.python-version` bumped `3.12` → `3.14` (org-wide target, kept current by
+  the shared `renovate-ansible` preset); consumed by the release workflow.
+
 ### Added
 
 - Test infrastructure: 14 molecule scenarios (one per role) under

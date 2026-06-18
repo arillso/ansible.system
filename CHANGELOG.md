@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Role docs**: each role README now carries an inline `## Variables` table
+  (key variables + defaults sourced from `defaults/main.yml`) and a
+  `## Check Mode` section stating the role's `--check` support level, so the
+  docs are usable offline without the external guide.
+- **Modules**: `apt_update_info` and `reboot_info` DOCUMENTATION now declare an
+  `attributes:` block (check_mode `full`, diff_mode `none`), documenting the
+  check-mode support the modules already implement.
 - Test infrastructure: 14 molecule scenarios (one per role) under
   `extensions/molecule/`, plus a `pytest` unit suite under `tests/unit/`
   covering the filter, lookup, and module plugins. Scenarios that touch

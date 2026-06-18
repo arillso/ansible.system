@@ -22,6 +22,12 @@ author: "arillso (@arillso) <hello@arillso.io>"
 notes:
     - This module requires root privileges to update the APT cache.
     - Use C(become=true) when calling this module.
+attributes:
+    check_mode:
+        support: full
+        description: Can run in check_mode and return the same information; makes no changes.
+    diff_mode:
+        support: none
 """
 
 EXAMPLES = r"""

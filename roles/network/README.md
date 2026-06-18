@@ -28,6 +28,26 @@ For detailed documentation including all variables, examples, and usage instruct
                 - 1.0.0.1
 ```
 
+## Variables
+
+| Variable                       | Default | Description                                |
+| ------------------------------ | ------- | ------------------------------------------ |
+| `network_resolv_enabled`       | `true`  | Manage DNS resolver configuration          |
+| `network_netplan_enabled`      | `false` | Manage netplan interface configuration     |
+| `network_dns_nameservers`      | `[]`    | DNS nameserver addresses                   |
+| `network_dns_search`           | `[]`    | DNS search domains                         |
+| `network_use_systemd_resolved` | `true`  | Use systemd-resolved for DNS               |
+| `network_netplan_config`       | `{}`    | Netplan network definition (dict)          |
+| `network_netplan_apply`        | `false` | Run `netplan apply` after rendering config |
+| `network_validate_netplan`     | `true`  | Run `netplan generate` to validate config  |
+| `network_backup_configs`       | `true`  | Back up config files before changes        |
+
+See [`defaults/main.yml`](defaults/main.yml) for the complete list and [the guide](https://guide.arillso.io/collections/arillso/system/network_role.html) for detailed docs.
+
+## Check Mode
+
+This role is partially `--check` compatible. Config rendering is check-safe, but `netplan generate` (validation) and `netplan apply` are gated on a changed config file and are not executed/validated meaningfully in check mode.
+
 ## License
 
 MIT

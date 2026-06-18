@@ -8,7 +8,7 @@ galaxy_info:
     description: "YAML-driven nftables firewall management with hierarchical configuration merging"
     company: Enterprise Infrastructure
     license: MIT
-    min_ansible_version: "2.9"
+    min_ansible_version: "2.18"
 
     platforms:
         - name: Ubuntu

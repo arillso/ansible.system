@@ -4,7 +4,7 @@ galaxy_info:
     description: Comprehensive system tuning for performance optimization using native Ansible modules
     company: "arillso"
     license: MIT
-    min_ansible_version: "2.9"
+    min_ansible_version: "2.18"
     platforms:
         - name: Ubuntu
           versions:

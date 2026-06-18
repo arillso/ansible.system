@@ -5,7 +5,7 @@ galaxy_info:
     description: "Enterprise-grade system facts collection and MOTD generation for Linux systems"
     company: "arillso"
     license: "MIT"
-    min_ansible_version: "2.12"
+    min_ansible_version: "2.18"
 
     platforms:
         - name: Ubuntu

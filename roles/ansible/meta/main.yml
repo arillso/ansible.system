@@ -3,7 +3,7 @@ galaxy_info:
     author: sbaerlocher
     description: Configure Ansible automation (ansible-pull or ansible-playbook) with systemd timer
     license: MIT
-    min_ansible_version: "2.14"
+    min_ansible_version: "2.18"
 
     platforms:
         - name: Debian

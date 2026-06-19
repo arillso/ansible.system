@@ -1,0 +1,23 @@
+---
+# The tuning role starts and configures `tuned` whenever tuning_tuned_profile
+# is set. Ubuntu cloud images do not ship tuned, so install it (and refresh
+# the apt cache) before converge; otherwise the systemd service start would
+# fail on a missing unit. The `balanced` profile is part of the base tuned
+# package, so no extra profile package is needed.
+
+- name: Prepare — install tuned for the tuning converge
+  hosts: all
+  become: true
+
+  tasks:
+      - name: Update apt cache
+        ansible.builtin.apt:
+            update_cache: true
+            cache_valid_time: 3600
+        when: ansible_os_family == 'Debian'
+
+      - name: Install tuned
+        ansible.builtin.apt:
+            name: tuned
+            state: present
+        when: ansible_os_family == 'Debian'

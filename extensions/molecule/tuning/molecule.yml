@@ -1,8 +1,12 @@
 ---
-# tuning aendert kernel-sysctls, GRUB-cmdline, ethtool, swap, transparent
-# hugepages und tuned-Profile. In Containern faellt davon das meiste durch
-# (kein eigener Kernel, kein /proc/sys-Write, kein swapon). Dieses Szenario
-# faehrt deshalb nur Syntax und Lint statt einem echten Converge.
+# tuning writes kernel sysctls, a swap file, transparent-hugepage settings,
+# the GRUB cmdline, I/O scheduler, CPU governor, ethtool ring buffers and a
+# tuned profile. A container has no own kernel, no writable /proc/sys and no
+# swapon, so it could only run syntax. A KVM VM has a real kernel: sysctl,
+# swap file and THP apply for real, so this scenario runs under molecule-qemu
+# and converges the VM-supported subset (GRUB needs a reboot to verify and is
+# only written, not asserted; CPU-governor/io-scheduler stay at `auto` and are
+# gated on virtual-hardware detection that mostly no-ops in a guest).
 
 dependency:
     name: galaxy
@@ -10,20 +14,18 @@ dependency:
         requirements-file: ../.config/requirements.yml
 
 driver:
-    name: docker
+    name: molecule-qemu
 
 platforms:
-    - name: tuning-debian-bookworm
-      image: geerlingguy/docker-debian12-ansible:latest@sha256:1f76107285118095a97e14673de67ee7a4372a840b35223cd0c1212fdd3cf5b3
-      command: /usr/lib/systemd/systemd
-      privileged: true
-      pre_build_image: true
-      cgroupns_mode: host
-      volumes:
-          - /sys/fs/cgroup:/sys/fs/cgroup:rw
-      tmpfs:
-          - /run
-          - /run/lock
+    - name: tuning-ubuntu2204
+      image_url: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
+      image_checksum: sha256:https://cloud-images.ubuntu.com/jammy/current/SHA256SUMS
+      image_arch: x86_64
+      network_mode: user
+      network_ssh_port: 2223
+      network_ssh_user: ubuntu
+      vm_cpus: 2
+      vm_memory: 2048
 
 provisioner:
     name: ansible
@@ -34,20 +36,19 @@ provisioner:
         # molecule cd's into extensions/ before invoking ansible-playbook,
         # which then doesn't auto-detect the ansible_collections/ marker
         # two levels above. We also append the default user and system
-        # locations so the molecule docker driver's collections
-        # (community.docker, ansible.posix) stay resolvable.
+        # locations so any driver-provided collections stay resolvable.
         ANSIBLE_COLLECTIONS_PATH: ${GITHUB_WORKSPACE}:${HOME}/.ansible/collections:/usr/share/ansible/collections
     config_options:
         defaults:
             interpreter_python: auto_silent
-            stdout_callback: default
+            callbacks_enabled: profile_tasks, timer
+            stdout_callback: ansible.builtin.default
             result_format: yaml
-        ssh_connection:
-            pipelining: true
     inventory:
-        group_vars:
-            all:
-                ansible_user: root
+        host_vars:
+            tuning-ubuntu2204:
+                # cloud images log in as `ubuntu`; the role needs root.
+                ansible_become: true
 
 verifier:
     name: ansible
@@ -55,5 +56,13 @@ verifier:
 scenario:
     test_sequence:
         - dependency
+        - cleanup
         - destroy
         - syntax
+        - create
+        - prepare
+        - converge
+        - idempotence
+        - verify
+        - cleanup
+        - destroy

@@ -1,0 +1,44 @@
+---
+# Asserts the role actually configured zram on the real kernel: the module
+# is loaded (device node present), the service is active and the zram device
+# is an online swap backend.
+
+- name: Verify — arillso.system.zram
+  hosts: all
+  become: true
+
+  tasks:
+      - name: Check zram device node exists (module loaded)
+        ansible.builtin.stat:
+            path: /sys/block/zram0
+        register: zram_dev
+
+      - name: Assert the zram kernel module is loaded
+        ansible.builtin.assert:
+            that:
+                - zram_dev.stat.exists
+            fail_msg: "/sys/block/zram0 missing — zram module not loaded"
+
+      - name: Query zramswap service state
+        ansible.builtin.service_facts:
+
+      - name: Assert zramswap service is running
+        ansible.builtin.assert:
+            that:
+                - "'zramswap.service' in ansible_facts.services"
+                - ansible_facts.services['zramswap.service'].state == 'running'
+            fail_msg: "zramswap.service is not active"
+
+      - name: Read active swap devices
+        ansible.builtin.command:
+            cmd: swapon --show=NAME --noheadings
+        register: zram_swapon
+        changed_when: false
+
+      - name: Assert the zram device is an active swap backend
+        ansible.builtin.assert:
+            that:
+                - "'/dev/zram0' in zram_swapon.stdout"
+            fail_msg: >-
+                /dev/zram0 not present in `swapon --show`
+                (found: {{ zram_swapon.stdout_lines | join(', ') }})

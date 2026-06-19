@@ -1,9 +1,10 @@
 ---
-# zram lädt das zram-Kernelmodul, slurpt /sys/block/zram0/comp_algorithm
-# und ruft swapon -p. In Containern fehlt der eigene Kernel, /sys/block
-# ist read-only und swapon scheitert ohne Privilegien. Dieses Szenario
-# faehrt deshalb nur Syntax und Lint statt einem echten Converge — analog
-# zu tuning.
+# zram loads the zram kernel module (community.general.modprobe), slurps
+# /sys/block/zram0/comp_algorithm and calls swapon. A real kernel is
+# required for all of this, so this scenario runs under the molecule-qemu
+# (KVM) driver — a full Ubuntu cloud-image VM — and does a real
+# converge + idempotence + verify rather than the syntax-only run a
+# container can offer.
 
 dependency:
     name: galaxy
@@ -11,20 +12,18 @@ dependency:
         requirements-file: ../.config/requirements.yml
 
 driver:
-    name: docker
+    name: molecule-qemu
 
 platforms:
-    - name: zram-debian-bookworm
-      image: geerlingguy/docker-debian12-ansible:latest@sha256:1f76107285118095a97e14673de67ee7a4372a840b35223cd0c1212fdd3cf5b3
-      command: /usr/lib/systemd/systemd
-      privileged: true
-      pre_build_image: true
-      cgroupns_mode: host
-      volumes:
-          - /sys/fs/cgroup:/sys/fs/cgroup:rw
-      tmpfs:
-          - /run
-          - /run/lock
+    - name: zram-ubuntu2204
+      image_url: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
+      image_checksum: sha256:https://cloud-images.ubuntu.com/jammy/current/SHA256SUMS
+      image_arch: x86_64
+      network_mode: user
+      network_ssh_port: 2222
+      network_ssh_user: ubuntu
+      vm_cpus: 2
+      vm_memory: 2048
 
 provisioner:
     name: ansible
@@ -35,20 +34,19 @@ provisioner:
         # molecule cd's into extensions/ before invoking ansible-playbook,
         # which then doesn't auto-detect the ansible_collections/ marker
         # two levels above. We also append the default user and system
-        # locations so the molecule docker driver's collections
-        # (community.docker, ansible.posix) stay resolvable.
+        # locations so any driver-provided collections stay resolvable.
         ANSIBLE_COLLECTIONS_PATH: ${GITHUB_WORKSPACE}:${HOME}/.ansible/collections:/usr/share/ansible/collections
     config_options:
         defaults:
             interpreter_python: auto_silent
-            stdout_callback: default
+            callbacks_enabled: profile_tasks, timer
+            stdout_callback: ansible.builtin.default
             result_format: yaml
-        ssh_connection:
-            pipelining: true
     inventory:
-        group_vars:
-            all:
-                ansible_user: root
+        host_vars:
+            zram-ubuntu2204:
+                # cloud images log in as `ubuntu`; the role needs root.
+                ansible_become: true
 
 verifier:
     name: ansible
@@ -56,5 +54,13 @@ verifier:
 scenario:
     test_sequence:
         - dependency
+        - cleanup
         - destroy
         - syntax
+        - create
+        - prepare
+        - converge
+        - idempotence
+        - verify
+        - cleanup
+        - destroy

@@ -109,6 +109,23 @@ tuning_optional_network_sysctl_params`. The previous single task
 
 ### Changed
 
+- **Molecule (KVM converge)**: the `zram` and `tuning` scenarios now run a real
+  converge + idempotence + verify under the `molecule-qemu` (KVM) driver on an
+  Ubuntu 22.04 cloud-image VM, instead of the previous docker-driver,
+  syntax-only run — a container has no own kernel, so neither role could be
+  exercised. `zram` loads the zram module, brings a zram swap device online and
+  verifies `/sys/block/zram0`, the `zramswap` service and `/dev/zram0` in
+  `swapon`. `tuning` applies the VM-supported subset (sysctls, swappiness, a
+  swap file, transparent hugepages) and verifies the sysctl values, the
+  drop-in file and the active swap file; GRUB-cmdline (reboot-only) and CPU
+  governor / I/O scheduler (virtual-HW dependent) are intentionally not
+  asserted. `thermal` stays on the docker driver and syntax-only: a cloud KVM
+  guest exposes no real thermal sensors, so a converge would only confirm a
+  package install. In CI the kernel-bound scenarios moved into dedicated
+  `molecule-zram` / `molecule-tuning` jobs with `driver: qemu` (the reusable
+  installs QEMU/KVM only for `driver: qemu`); the remaining docker scenarios
+  run in the `molecule` job via an explicit pinned `scenarios:` list, so the
+  drivers do not mix within a single job.
 - Align the release workflow with the org convention: set
   `name: Release - Ansible Collection`, simplify `run-name` to
   `Release <ref>`, use a `release-<ref>` concurrency group, and pin the

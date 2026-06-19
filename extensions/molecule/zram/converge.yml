@@ -1,8 +1,9 @@
 ---
-# Wird vom Syntax-only test_sequence nicht aufgerufen, dient aber als
-# Referenz fuer manuelle Vagrant/VM-Runs (`molecule converge -s zram`).
+# Real converge against a KVM VM with a true kernel. zram can load the
+# module, validate the algorithm against /sys/block/zram0 and bring the
+# swap device online here, which a container cannot do.
 
-- name: Converge — arillso.system.zram (VM-only, do not run in container)
+- name: Converge — arillso.system.zram
   hosts: all
   become: true
 

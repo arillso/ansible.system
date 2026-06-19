@@ -1,0 +1,68 @@
+---
+# Asserts the VM-supported tuning subset actually applied: representative
+# sysctls match the configured values at runtime, swappiness is set and the
+# swap file exists and is an active swap backend. GRUB-cmdline and CPU/IO
+# tuning are intentionally not asserted (reboot-only / virtual-HW dependent).
+
+- name: Verify — arillso.system.tuning
+  hosts: all
+  become: true
+
+  tasks:
+      - name: Read vm.dirty_ratio
+        ansible.builtin.command:
+            cmd: sysctl -n vm.dirty_ratio
+        register: tuning_dirty_ratio
+        changed_when: false
+
+      - name: Read vm.swappiness
+        ansible.builtin.command:
+            cmd: sysctl -n vm.swappiness
+        register: tuning_swappiness
+        changed_when: false
+
+      - name: Read fs.file-max
+        ansible.builtin.command:
+            cmd: sysctl -n fs.file-max
+        register: tuning_file_max
+        changed_when: false
+
+      - name: Assert sysctl values were applied
+        ansible.builtin.assert:
+            that:
+                - tuning_dirty_ratio.stdout | int == 10
+                - tuning_swappiness.stdout | int == 10
+                - tuning_file_max.stdout | int == 6815744
+            fail_msg: >-
+                sysctl values not applied
+                (dirty_ratio={{ tuning_dirty_ratio.stdout }},
+                swappiness={{ tuning_swappiness.stdout }},
+                file-max={{ tuning_file_max.stdout }})
+
+      - name: Check the sysctl drop-in file was written
+        ansible.builtin.stat:
+            path: /etc/sysctl.d/99-tuning.conf
+        register: tuning_sysctl_file
+
+      - name: Check the swap file exists
+        ansible.builtin.stat:
+            path: /swapfile
+        register: tuning_swapfile
+
+      - name: Read active swap devices
+        ansible.builtin.command:
+            cmd: swapon --show=NAME --noheadings
+        register: tuning_swapon
+        changed_when: false
+
+      - name: Assert sysctl drop-in and swap file are in place
+        ansible.builtin.assert:
+            that:
+                - tuning_sysctl_file.stat.exists
+                - tuning_swapfile.stat.exists
+                - "'/swapfile' in tuning_swapon.stdout"
+            fail_msg: >-
+                tuning config missing
+                (sysctl_file={{ tuning_sysctl_file.stat.exists }},
+                swapfile={{ tuning_swapfile.stat.exists }},
+                swapon='{{ tuning_swapon.stdout }}')

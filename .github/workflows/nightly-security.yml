@@ -19,4 +19,4 @@ permissions:
 
 jobs:
     security-secrets:
-        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-06-14
+        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-06-18

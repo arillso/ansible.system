@@ -5,7 +5,7 @@ galaxy_info:
     description: "Shell environment and MOTD configuration for Linux systems"
     company: "arillso"
     license: "MIT"
-    min_ansible_version: "2.12"
+    min_ansible_version: "2.18"
 
     platforms:
         - name: Ubuntu

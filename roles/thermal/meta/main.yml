@@ -7,7 +7,7 @@ galaxy_info:
     author: sbaerlocher
     description: Thermal management and fan control using thermald
     license: MIT
-    min_ansible_version: "2.9"
+    min_ansible_version: "2.18"
 
     platforms:
         - name: Ubuntu

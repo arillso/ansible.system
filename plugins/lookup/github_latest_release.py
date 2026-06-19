@@ -60,6 +60,8 @@ RETURN = r"""
 # pylint: disable=import-error
 from json import JSONDecodeError, loads  # noqa: E402
 from re import compile as regex_compile  # noqa: E402
+from time import sleep  # noqa: E402
+from urllib.error import HTTPError, URLError  # noqa: E402
 
 from ansible.errors import AnsibleError, AnsibleParserError  # noqa: E402
 from ansible.module_utils._text import to_native, to_text  # noqa: E402
@@ -68,6 +70,13 @@ from ansible.plugins.lookup import LookupBase  # noqa: E402
 from ansible.utils.display import Display  # noqa: E402
 
 display = Display()
+
+# Network resilience settings for the Github API request.
+REQUEST_TIMEOUT = 10
+MAX_ATTEMPTS = 3
+RETRY_BACKOFF = 2
+# HTTP status codes that are worth retrying (rate limiting / transient errors).
+RETRYABLE_STATUS_CODES = (429, 502, 503, 504)
 
 
 class LookupModule(LookupBase):  # pylint: disable=too-few-public-methods
@@ -97,11 +106,43 @@ class LookupModule(LookupBase):  # pylint: disable=too-few-public-methods
 
             display.debug(f"Github version lookup term: '{to_text(repo)}'")
 
+            url = f"https://api.github.com/repos/{repo}/releases/latest"
+            response = None
+            last_error = None
+
+            for attempt in range(1, MAX_ATTEMPTS + 1):
+                try:
+                    response = open_url(
+                        url,
+                        headers={"Accept": "application/vnd.github.v3+json"},
+                        timeout=REQUEST_TIMEOUT,
+                    )
+                    break
+                except HTTPError as e:
+                    # Only retry transient HTTP errors; other status codes fail fast.
+                    if e.code not in RETRYABLE_STATUS_CODES:
+                        raise AnsibleError(
+                            f"Error fetching release from Github API for {to_text(repo)}: "
+                            f"{to_native(e)}"
+                        ) from e
+                    last_error = e
+                except (URLError, TimeoutError) as e:
+                    last_error = e
+
+                if attempt < MAX_ATTEMPTS:
+                    backoff = RETRY_BACKOFF * attempt
+                    display.vvvv(
+                        f"Github version lookup for {repo} failed "
+                        f"(attempt {attempt}/{MAX_ATTEMPTS}), retrying in {backoff}s"
+                    )
+                    sleep(backoff)
+                else:
+                    raise AnsibleError(
+                        f"Error fetching release from Github API for {to_text(repo)} "
+                        f"after {MAX_ATTEMPTS} attempts: {to_native(last_error)}"
+                    ) from last_error
+
             try:
-                response = open_url(
-                    f"https://api.github.com/repos/{repo}/releases/latest",
-                    headers={"Accept": "application/vnd.github.v3+json"},
-                )
                 json_response = loads(response.read().decode("utf-8"))
 
                 version = json_response.get("tag_name")

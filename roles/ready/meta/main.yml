@@ -5,7 +5,7 @@ galaxy_info:
     description: "Wait for system readiness (cloud-init, SSH) before configuration"
     company: "arillso"
     license: "MIT"
-    min_ansible_version: "2.12"
+    min_ansible_version: "2.18"
 
     platforms:
         - name: Ubuntu

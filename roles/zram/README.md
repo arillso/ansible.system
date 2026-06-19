@@ -32,6 +32,23 @@ For detailed documentation including all variables, examples, and usage instruct
 Pair with the `tuning` role for a zram-first layout by setting a lower
 `tuning_swap_priority` than `zram_priority`, so disk swap acts as a fallback.
 
+## Variables
+
+| Variable                     | Default                                             | Description                                       |
+| ---------------------------- | --------------------------------------------------- | ------------------------------------------------- |
+| `zram_enabled`               | `true`                                              | Master switch; `false` makes every task a no-op   |
+| `zram_percent`               | `50`                                                | Percentage of physical RAM allocated as zram swap |
+| `zram_algorithm`             | `zstd`                                              | Kernel compression algorithm                      |
+| `zram_priority`              | `100`                                               | Swap priority (kept above disk swap)              |
+| `zram_packages`              | `[zram-tools]`                                      | Distro packages to install                        |
+| `zram_kernel_module_package` | `linux-modules-extra-<kernel>` on Ubuntu, else `""` | Package providing the zram kernel module          |
+
+See [`defaults/main.yml`](defaults/main.yml) for the complete list and [the guide](https://guide.arillso.io/collections/arillso/system/zram_role.html) for detailed docs.
+
+## Check Mode
+
+This role is partially `--check` compatible. Package install and config templating are check-safe, but the compression-algorithm validation reads live kernel state (`/sys/block/zram0/comp_algorithm`) which is unavailable until the module is loaded, so validation is skipped in check mode.
+
 ## License
 
 MIT

@@ -29,6 +29,26 @@ For detailed documentation including all variables, examples, and usage instruct
                   rotate: 14
 ```
 
+## Variables
+
+| Variable                         | Default              | Description                                  |
+| -------------------------------- | -------------------- | -------------------------------------------- |
+| `logging_logrotate_enabled`      | `true`               | Manage logrotate configuration               |
+| `logging_rsyslog_enabled`        | `true`               | Manage rsyslog configuration                 |
+| `logging_logrotate_entries`      | `[]`                 | Custom logrotate definitions (list of dicts) |
+| `logging_logrotate_rotate`       | `4`                  | Default number of rotations to keep          |
+| `logging_logrotate_compress`     | `true`               | Compress rotated logs                        |
+| `logging_rsyslog_entries`        | `[]`                 | Custom rsyslog rule snippets (list of dicts) |
+| `logging_rsyslog_remote_servers` | `[]`                 | Remote syslog forwarding targets             |
+| `logging_rsyslog_modules`        | `[imuxsock, imklog]` | rsyslog input modules to load                |
+| `logging_backup_configs`         | `true`               | Back up config files before changes          |
+
+See [`defaults/main.yml`](defaults/main.yml) for the complete list and [the guide](https://guide.arillso.io/collections/arillso/system/logging_role.html) for detailed docs.
+
+## Check Mode
+
+This role supports `--check` mode. Fully supported; logrotate/rsyslog config is rendered with templates and services managed via idempotent modules.
+
 ## License
 
 MIT

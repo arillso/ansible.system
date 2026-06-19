@@ -5,7 +5,11 @@
 
 - name: Validate zram configuration against kernel capabilities
   ansible.builtin.include_tasks: validate.yml
-  when: zram_enabled
+  # Skipped in check mode: the module is not actually loaded under --check,
+  # so /sys/block/zram0/comp_algorithm may not exist and the slurp would fail.
+  when:
+      - zram_enabled
+      - not ansible_check_mode
 
 - name: Install zram tools package via packages role
   ansible.builtin.include_role:

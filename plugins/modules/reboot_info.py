@@ -18,6 +18,13 @@ description:
   - This module checks if a system requires a reboot, typically after package updates.
 author:
   - arillso (@arillso) <hello@arillso.io>
+attributes:
+  check_mode:
+    support: full
+    description: Can run in check_mode and return the same information; makes no changes.
+  diff_mode:
+    support: none
+    description: This module only reports state and makes no changes, so diff mode does not apply.
 """
 
 EXAMPLES = r"""

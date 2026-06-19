@@ -60,7 +60,6 @@ RETURN = r"""
 # pylint: disable=import-error
 from json import JSONDecodeError, loads  # noqa: E402
 from re import compile as regex_compile  # noqa: E402
-from socket import timeout as socket_timeout  # noqa: E402
 from time import sleep  # noqa: E402
 from urllib.error import HTTPError, URLError  # noqa: E402
 
@@ -127,7 +126,7 @@ class LookupModule(LookupBase):  # pylint: disable=too-few-public-methods
                             f"{to_native(e)}"
                         ) from e
                     last_error = e
-                except (URLError, socket_timeout) as e:
+                except (URLError, TimeoutError) as e:
                     last_error = e
 
                 if attempt < MAX_ATTEMPTS:

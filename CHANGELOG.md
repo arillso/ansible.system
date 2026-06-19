@@ -40,6 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **github_latest_release lookup**: the GitHub API request had no timeout and no
+  retry, so network flakiness or a transient `429`/`5xx` aborted the task. The
+  request now uses a 10s timeout and retries up to 3 times with a linear backoff
+  on `URLError`, socket timeouts, and retryable status codes (429/502/503/504);
+  non-retryable errors (e.g. `404`) still fail fast.
 - `tuning` role: replace the two swap-validation `fail` tasks with
   `assert`. The previous `when:` lists were AND-joined, but the
   conditions were mutually exclusive (a variable cannot be both
@@ -110,6 +115,14 @@ tuning_optional_network_sysctl_params`. The previous single task
   reusable workflow to `@2026-06-17`.
 - `.python-version` `3.14` → `3.13` (org-wide target — `3.14` is rejected by
   `ansible-test`, which supports at most `3.13`).
+- **Role metadata**: bump `min_ansible_version` to `"2.18"` across all 15 roles
+  to match the collection's `requires_ansible: ">=2.18.0"` (`meta/runtime.yml`).
+- **Molecule**: add an `idempotence` step to the `firewall` and `ready` default
+  scenarios (the only converge-capable scenarios) so a second converge must
+  report `changed=0`.
+- **Renovate**: add a `# renovate:` comment to `bitwarden_secrets_version` in
+  the argument spec (the regex manager already scans `meta/argument_specs.yml`),
+  so the `bws` CLI version is bumped in both `defaults/main.yml` and the spec.
 - All roles: consolidate privilege escalation on the principle of least
   privilege. `become` now lives on the single privileged task (the
   `ansible.builtin.systemd` task inside the shared `systemd` sub-role),

@@ -1,0 +1,23 @@
+---
+# Ubuntu cloud images ship the kvm kernel (linux-image-virtual) whose zram
+# module is not in the base image — it lives in linux-modules-extra-<kernel>.
+# The role installs that package itself (bootstrap.yml), but pulling it here
+# first keeps the converge focused on role behaviour and surfaces a missing
+# package as a prepare failure rather than a confusing modprobe error.
+
+- name: Prepare — ensure zram kernel module is installable
+  hosts: all
+  become: true
+
+  tasks:
+      - name: Update apt cache
+        ansible.builtin.apt:
+            update_cache: true
+            cache_valid_time: 3600
+        when: ansible_os_family == 'Debian'
+
+      - name: Install kernel modules-extra package for the running kernel
+        ansible.builtin.apt:
+            name: "linux-modules-extra-{{ ansible_kernel }}"
+            state: present
+        when: ansible_distribution == 'Ubuntu'

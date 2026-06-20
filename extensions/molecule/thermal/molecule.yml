@@ -1,6 +1,12 @@
 ---
-# thermal laedt Kernel-Module (coretemp), liest /sys/class/thermal und ruft
-# sensors-detect auf. Im Container nicht reproduzierbar — daher Syntax-only.
+# thermal loads the coretemp kernel module, runs sensors-detect and starts
+# thermald. Unlike zram/tuning this role was NOT converted to molecule-qemu:
+# a cloud KVM guest has no real thermal hardware. The virtual CPU exposes no
+# Intel coretemp device, so `modprobe coretemp` and sensors-detect find
+# nothing meaningful, and thermald has no zones to manage — a verify could
+# only assert "package installed", which is low-value. This scenario therefore
+# stays on the docker driver and runs syntax-only (real sensors are
+# unavailable in CI VMs). converge.yml is kept as a manual VM-run reference.
 
 dependency:
     name: galaxy

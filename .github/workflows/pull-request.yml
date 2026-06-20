@@ -31,9 +31,13 @@ jobs:
             enable_unit_tests: true
 
     molecule:
-        # Scenarios are auto-discovered from extensions/molecule/ by the
-        # reusable workflow (every subdir not starting with `.`). To pin
-        # the matrix explicitly, pass scenarios: '["access", ...]'.
+        # Docker-driver scenarios (syntax/lint or real container converge).
+        # The matrix is PINNED explicitly rather than auto-discovered so the
+        # kernel-bound scenarios that need a real kernel (zram, tuning) can run
+        # under the qemu driver in their own jobs below — a single
+        # docker-driver job does NOT install QEMU/KVM, so a qemu scenario in it
+        # would fail. thermal stays here (docker, syntax-only): a cloud KVM
+        # guest has no real thermal sensors, so a converge would be low-value.
         #
         # concurrency-suffix avoids a deadlock with the caller's
         # concurrency: group: ${{ github.workflow }}-${{ github.ref }} —
@@ -47,7 +51,40 @@ jobs:
             collection_name: system
             # renovate: datasource=github-releases depName=python/cpython extractVersion=^v(?<version>3\.\d+)
             python_version: "3.12"
+            scenarios: >-
+                ["access", "ansible", "bitwarden_secrets", "facts",
+                 "firewall", "logging", "network", "packages", "python",
+                 "ready", "shell", "systemd", "thermal"]
             concurrency-suffix: molecule
+
+    molecule-zram:
+        # zram needs a real kernel (loads the zram module, brings a zram swap
+        # device online), so it runs under the qemu (KVM) molecule driver,
+        # which the reusable provisions only when driver: qemu. Scenarios live
+        # under extensions/molecule/, so scenarios_root keeps the reusable's
+        # default and the matrix is pinned to the single zram scenario.
+        uses: arillso/.github/.github/workflows/ci-ansible-molecule.yml@2026-06-18
+        with:
+            collection_namespace: arillso
+            collection_name: system
+            driver: qemu
+            # renovate: datasource=github-releases depName=python/cpython extractVersion=^v(?<version>3\.\d+)
+            python_version: "3.12"
+            scenarios: '["zram"]'
+            concurrency-suffix: molecule-zram
+
+    molecule-tuning:
+        # tuning needs a real kernel (writable /proc/sys, swap file, THP), so
+        # it runs under the qemu (KVM) molecule driver like zram above.
+        uses: arillso/.github/.github/workflows/ci-ansible-molecule.yml@2026-06-18
+        with:
+            collection_namespace: arillso
+            collection_name: system
+            driver: qemu
+            # renovate: datasource=github-releases depName=python/cpython extractVersion=^v(?<version>3\.\d+)
+            python_version: "3.12"
+            scenarios: '["tuning"]'
+            concurrency-suffix: molecule-tuning
 
     security-secrets:
         uses: arillso/.github/.github/workflows/security-secrets.yml@2026-06-18

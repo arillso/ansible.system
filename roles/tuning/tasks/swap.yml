@@ -82,6 +82,18 @@
                 {{ line.split()[2] }}{%- endif -%}
                 {%- endfor -%}
 
+      # Resize decision uses a ±1 MiB tolerance, not an exact match. swapon
+      # reports the file size minus the mkswap header, and that overhead can
+      # exceed the 0.5 MiB rounding correction above (it grows on small files
+      # and varies by kernel), so an exact `current != target` comparison would
+      # recreate a correctly-sized swap file on every run and break idempotency.
+      - name: Determine whether the active swap file needs resizing
+        ansible.builtin.set_fact:
+            swap_needs_resize: >-
+                {{ current_swap_size != ""
+                   and ((current_swap_size | int)
+                        - (tuning_swap_file_size_mb | int)) | abs > 1 }}
+
 - name: Create or resize swap file
   block:
       # Kein Backup der Swap-Datei: Swap enthält nur flüchtige Pages, eine Kopie
@@ -112,16 +124,14 @@
         changed_when: true
         when:
             - swap_file_active
-            - current_swap_size != ""
-            - current_swap_size != (tuning_swap_file_size_mb | string)
+            - swap_needs_resize | bool
 
       - name: Refresh swap_file_active fact after swapoff
         ansible.builtin.set_fact:
             swap_file_active: false
         when:
             - swap_file_active
-            - current_swap_size != ""
-            - current_swap_size != (tuning_swap_file_size_mb | string)
+            - swap_needs_resize | bool
 
       - name: Remove existing swap file if resizing
         ansible.builtin.file:
@@ -130,8 +140,7 @@
         become: true
         when:
             - swap_file_stat.stat.exists
-            - current_swap_size != ""
-            - current_swap_size != (tuning_swap_file_size_mb | string)
+            - swap_needs_resize | bool
 
       - name: Create swap file using fallocate
         ansible.builtin.command: fallocate -l {{ tuning_swap_file_size_mb }}M {{ tuning_swap_file_path }}
@@ -140,8 +149,7 @@
         changed_when: fallocate_result.rc == 0
         failed_when: false
         when: >-
-            not swap_file_stat.stat.exists
-            or (current_swap_size != "" and current_swap_size != (tuning_swap_file_size_mb | string))
+            not swap_file_stat.stat.exists or (swap_needs_resize | bool)
 
       - name: Create swap file using dd (fallback)
         ansible.builtin.command: >-
@@ -194,8 +202,7 @@
         register: mkswap_result
         changed_when: mkswap_result.rc == 0
         when: >-
-            not swap_file_stat.stat.exists
-            or (current_swap_size != "" and current_swap_size != (tuning_swap_file_size_mb | string))
+            not swap_file_stat.stat.exists or (swap_needs_resize | bool)
 
       - name: Enable swap file
         ansible.builtin.command: swapon -p {{ tuning_swap_priority }} {{ tuning_swap_file_path }}

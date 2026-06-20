@@ -22,12 +22,23 @@
       - name: Query zramswap service state
         ansible.builtin.service_facts:
 
-      - name: Assert zramswap service is running
+      # zramswap.service is a Type=oneshot unit with RemainAfterExit: it sets
+      # up the swap device and exits, so systemd reports it as "active (exited)"
+      # which service_facts surfaces as state "stopped". Assert it is enabled
+      # and not failed rather than "running"; the swapon check below is the real
+      # proof that the swap backend is live.
+      - name: Assert zramswap service is enabled and not failed
         ansible.builtin.assert:
             that:
                 - "'zramswap.service' in ansible_facts.services"
-                - ansible_facts.services['zramswap.service'].state == 'running'
-            fail_msg: "zramswap.service is not active"
+                - ansible_facts.services['zramswap.service'].status == 'enabled'
+                - ansible_facts.services['zramswap.service'].state != 'failed'
+            fail_msg: >-
+                zramswap.service is not enabled/active
+                (status={{ ansible_facts.services['zramswap.service'].status
+                | default('absent') }},
+                state={{ ansible_facts.services['zramswap.service'].state
+                | default('absent') }})
 
       - name: Read active swap devices
         ansible.builtin.command:

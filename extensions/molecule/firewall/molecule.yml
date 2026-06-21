@@ -14,7 +14,7 @@ driver:
 
 platforms:
     - name: firewall-debian-bookworm
-      image: geerlingguy/docker-debian12-ansible:latest@sha256:1f76107285118095a97e14673de67ee7a4372a840b35223cd0c1212fdd3cf5b3
+      image: geerlingguy/docker-debian12-ansible:latest@sha256:f580d866a5e830286799b48e9eda2d4b8fc0ef10721096c727e666c7ab4e473e
       command: /usr/lib/systemd/systemd
       privileged: true
       pre_build_image: true

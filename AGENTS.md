@@ -81,7 +81,7 @@ Event-focused workflows calling reusables from `arillso/.github`:
 
 - **pull-request.yml** - Lint, unit tests, molecule, secret scan, and Claude review on PRs
 - **merge.yml** - Same CI plus secret scan on push to `main`
-- **nightly-security.yml** - Scheduled weekly secret scan
+- **nightly-security.yml** - Scheduled daily secret scan
 - **tag.yml** - Publishes to Ansible Galaxy on tag push (e.g. `1.0.1`)
 
 ### Release Process

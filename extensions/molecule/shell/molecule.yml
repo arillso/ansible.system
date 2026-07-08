@@ -9,7 +9,7 @@ driver:
 
 platforms:
     - name: shell-debian-bookworm
-      image: geerlingguy/docker-debian12-ansible:latest@sha256:af3173ea26264fc34c5a45bc97142c8530e6fc7c89744bb10143f03b2070f1b3
+      image: geerlingguy/docker-debian12-ansible:latest@sha256:4553092be2c00b1ffe580927b9ff03f3c3a0df32b7dd693a3eb02efb6c2b77b7
       command: /usr/lib/systemd/systemd
       privileged: true
       pre_build_image: true
@@ -21,7 +21,7 @@ platforms:
           - /run/lock
 
     - name: shell-ubuntu-noble
-      image: geerlingguy/docker-ubuntu2404-ansible:latest@sha256:00a7a880e2ee8738d6c0182820795440e5e59c8062778b29861b95b22547e43f
+      image: geerlingguy/docker-ubuntu2404-ansible:latest@sha256:eac5576411b04b7e0120990b67f6d687ea2d0174dd1f77d1cd891aedee71c096
       command: /usr/lib/systemd/systemd
       privileged: true
       pre_build_image: true
@@ -33,7 +33,7 @@ platforms:
           - /run/lock
 
     - name: shell-rocky-9
-      image: geerlingguy/docker-rockylinux9-ansible:latest@sha256:2be9149edc8fcc59e87ddbbf56cf475b4f5576b18a5f8bd11105d2ef5edb4158
+      image: geerlingguy/docker-rockylinux9-ansible:latest@sha256:d1cbc175351a828abed8dac2218bf960c3b2c7a4375f2448894d72dab97994a2
       command: /usr/lib/systemd/systemd
       privileged: true
       pre_build_image: true

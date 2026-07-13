@@ -9,7 +9,7 @@ driver:
 
 platforms:
     - name: bws-debian-bookworm
-      image: geerlingguy/docker-debian12-ansible:latest@sha256:4553092be2c00b1ffe580927b9ff03f3c3a0df32b7dd693a3eb02efb6c2b77b7
+      image: geerlingguy/docker-debian12-ansible:latest@sha256:1b1881bfc5f025980765a90e76ecaebd61f53248eb0f3f23bc027da1b201400e
       command: /usr/lib/systemd/systemd
       privileged: true
       pre_build_image: true
@@ -21,7 +21,7 @@ platforms:
           - /run/lock
 
     - name: bws-rocky-9
-      image: geerlingguy/docker-rockylinux9-ansible:latest@sha256:d1cbc175351a828abed8dac2218bf960c3b2c7a4375f2448894d72dab97994a2
+      image: geerlingguy/docker-rockylinux9-ansible:latest@sha256:12e0bf8e95037b84af695b0c4ae6a552e3100c69793ee02f95870b4e02bd22ff
       command: /usr/lib/systemd/systemd
       privileged: true
       pre_build_image: true

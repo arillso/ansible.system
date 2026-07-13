@@ -12,7 +12,7 @@ driver:
 
 platforms:
     - name: network-debian-bookworm
-      image: geerlingguy/docker-debian12-ansible:latest@sha256:4553092be2c00b1ffe580927b9ff03f3c3a0df32b7dd693a3eb02efb6c2b77b7
+      image: geerlingguy/docker-debian12-ansible:latest@sha256:1b1881bfc5f025980765a90e76ecaebd61f53248eb0f3f23bc027da1b201400e
       command: /usr/lib/systemd/systemd
       privileged: true
       pre_build_image: true
@@ -24,7 +24,7 @@ platforms:
           - /run/lock
 
     - name: network-ubuntu-noble
-      image: geerlingguy/docker-ubuntu2404-ansible:latest@sha256:eac5576411b04b7e0120990b67f6d687ea2d0174dd1f77d1cd891aedee71c096
+      image: geerlingguy/docker-ubuntu2404-ansible:latest@sha256:c446997f67e9f43bb427180166ce1db7ad4312f7065242456c57c937cb9cdd5b
       command: /usr/lib/systemd/systemd
       privileged: true
       pre_build_image: true

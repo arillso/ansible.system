@@ -18,7 +18,7 @@ driver:
 
 platforms:
     - name: thermal-debian-bookworm
-      image: geerlingguy/docker-debian12-ansible:latest@sha256:1b1881bfc5f025980765a90e76ecaebd61f53248eb0f3f23bc027da1b201400e
+      image: geerlingguy/docker-debian12-ansible:latest@sha256:e642ef9fc4932231fdd98b553fff0b1880df89d7bb64f9baff3c85811286cb5b
       command: /usr/lib/systemd/systemd
       privileged: true
       pre_build_image: true

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Collection metadata**: `meta/runtime.yml` now declares an `action_groups`
+  entry (`system`) listing `arillso.system.apt_update_info` and
+  `arillso.system.reboot_info`, so consumers can set `module_defaults` for the
+  whole group instead of per module.
 - **Role docs**: each role README now carries an inline `## Variables` table
   (key variables + defaults sourced from `defaults/main.yml`) and a
   `## Check Mode` section stating the role's `--check` support level, so the

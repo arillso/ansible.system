@@ -1,2 +1,12 @@
 ---
+# Runtime metadata for arillso.system collection
+# This file defines collection-level metadata and requirements
+
+# Minimum Ansible version required
 requires_ansible: ">=2.18.0"
+
+# Action groups let consumers set module_defaults for all modules at once
+action_groups:
+    system:
+        - arillso.system.apt_update_info
+        - arillso.system.reboot_info

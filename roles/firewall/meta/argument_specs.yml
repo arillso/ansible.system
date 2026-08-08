@@ -8,6 +8,30 @@ argument_specs:
             - Direct mapping from YAML to nftables configuration
 
         options:
+            firewall_ssh_rate_limit:
+                description:
+                    - Rate limit for new SSH connections in the default input chain
+                    - nftables rate syntax, e.g. "10/minute" or "5/second"
+                type: str
+                required: false
+                default: "10/minute"
+            firewall_ssh_rate_burst:
+                description: Burst allowance in packets for the SSH rate limit
+                type: int
+                required: false
+                default: 5
+            firewall_log_drop_rate_limit:
+                description:
+                    - Rate limit for the log-on-drop rule in the default input chain
+                    - Caps how much the drop log can write, independent of traffic volume
+                type: str
+                required: false
+                default: "5/minute"
+            firewall_log_drop_prefix:
+                description: Log prefix for packets dropped by the input chain policy
+                type: str
+                required: false
+                default: "nft-drop-input: "
             firewall:
                 description: "Main nftables configuration with default filter table (input/forward/output chains)"
                 type: list
@@ -219,6 +243,19 @@ argument_specs:
                                             meta_protocol:
                                                 description: Protocol type
                                                 type: str
+                                                required: false
+                                            # Rate limiting
+                                            limit:
+                                                description:
+                                                    Rate limit in nftables syntax (e.g.
+                                                    "10/minute", "5/second")
+                                                type: str
+                                                required: false
+                                            burst:
+                                                description:
+                                                    Burst allowance in packets, applied on top
+                                                    of limit. Has no effect without limit.
+                                                type: int
                                                 required: false
                                             log_prefix:
                                                 description: Log prefix for logging rules

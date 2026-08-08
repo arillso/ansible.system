@@ -27,9 +27,17 @@
                           - comment: "Accept established"
                             ct_state: ["established", "related"]
                             action: accept
-                          - comment: "Accept SSH"
+                          - comment: "Accept new SSH connections, rate-limited"
                             tcp_dport: 22
+                            ct_state: ["new"]
+                            limit: "10/minute"
+                            burst: 5
                             action: accept
+                          - comment: "Log packets before the chain policy drops them"
+                            limit: "5/minute"
+                            log_prefix: "nft-drop-input: "
+                            log_level: info
+                            action: drop
 
   tasks:
       - name: Render hierarchical firewall payload only

@@ -1,5 +1,15 @@
 ---
-firewall:  # noqa: argument-specs
+# Tunables for the default input chain below. A bastion behind a CI runner
+# that opens many short-lived sessions needs a higher ceiling than a single
+# admin host — raise firewall_ssh_rate_limit there rather than dropping the
+# rule. Set firewall_log_drop_prefix to "" only if the drop log is noisy
+# enough to matter; the rate limit already caps it.
+firewall_ssh_rate_limit: "10/minute"
+firewall_ssh_rate_burst: 5
+firewall_log_drop_rate_limit: "5/minute"
+firewall_log_drop_prefix: "nft-drop-input: "
+
+firewall: # noqa: argument-specs
     - table:
           name: filter
           family: inet
@@ -16,9 +26,26 @@ firewall:  # noqa: argument-specs
                     - comment: "Accept established and related connections"
                       ct_state: ["established", "related"]
                       action: accept
-                    - comment: "Accept SSH traffic"
+                    # Rate-limited on ct_state new only: established SSH
+                    # sessions already match the rule above, so the limit
+                    # applies to connection attempts and never throttles a
+                    # session that is already up. Without the ct_state match
+                    # a busy interactive session would eat its own budget.
+                    - comment: "Accept new SSH connections, rate-limited"
                       tcp_dport: 22
+                      ct_state: ["new"]
+                      limit: "{{ firewall_ssh_rate_limit }}"
+                      burst: "{{ firewall_ssh_rate_burst }}"
                       action: accept
+                    # Anything reaching here is dropped by the chain policy
+                    # anyway; this rule only makes the drop visible. It must
+                    # stay last — an earlier log-and-drop would shadow the
+                    # accepts above.
+                    - comment: "Log packets before the chain policy drops them"
+                      limit: "{{ firewall_log_drop_rate_limit }}"
+                      log_prefix: "{{ firewall_log_drop_prefix }}"
+                      log_level: info
+                      action: drop
               - name: forward
                 type: filter
                 hook: forward

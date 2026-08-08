@@ -1,0 +1,28 @@
+---
+# Hardware sensor detection and coretemp kernel module setup
+
+- name: Detect hardware sensors
+  ansible.builtin.command:
+      cmd: sensors-detect --auto
+  become: true
+  when: thermal_run_sensors_detect
+  register: sensors_detect_result
+  # sensors-detect is interactive by default; running non-interactively
+  # the success is host-dependent (no sensors found is rc != 0). Probe
+  # task only — actual fan/thermal config is written by templates below.
+  changed_when: false
+  failed_when: false
+
+- name: Load coretemp kernel module
+  community.general.modprobe:
+      name: coretemp
+      state: present
+  become: true
+
+- name: Ensure coretemp module loads on boot
+  ansible.builtin.lineinfile:
+      path: /etc/modules
+      line: "coretemp"
+      create: true
+      mode: "0644"
+  become: true

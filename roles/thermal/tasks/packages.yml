@@ -1,0 +1,8 @@
+---
+# Install packages required for thermal management
+
+- name: Install thermal management packages
+  ansible.builtin.package:
+      name: "{{ thermal_packages }}"
+      state: present
+  become: true

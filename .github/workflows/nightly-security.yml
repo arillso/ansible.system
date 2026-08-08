@@ -49,9 +49,11 @@ jobs:
     security-sbom:
         # Filesystem SBOM: the collection ships no container image and no Go
         # module, so `filesystem` over the repo root is the applicable type.
-        # attach-to-release stays off — this workflow never runs on a tag ref.
+        # read is enough: at @2026-06-18 the reusable only generates the SBOM
+        # and stores it via upload-artifact, which needs no contents scope.
+        # It has no release-attach step, so nothing here writes to the repo.
         permissions:
-            contents: write
+            contents: read
         uses: arillso/.github/.github/workflows/security-sbom.yml@2026-06-18
         with:
             artifact-type: filesystem

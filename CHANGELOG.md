@@ -57,6 +57,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `tuning` role: the configuration summary reported the I/O scheduler as
+  `unchanged` on every run. The summary read `_tuning_final_io_scheduler`, a
+  variable that is never set anywhere in the role, so the
+  `| default('unchanged')` fallback always applied even when
+  `io_scheduler.yml` had changed the scheduler. The line now reports the
+  schedulers actually applied, derived from
+  `_tuning_optimized_storage_devices`, so it reflects the resolved value like
+  the neighbouring CPU governor line.
 - **github_latest_release lookup**: the GitHub API request had no timeout and no
   retry, so network flakiness or a transient `429`/`5xx` aborted the task. The
   request now uses a 10s timeout and retries up to 3 times with a linear backoff

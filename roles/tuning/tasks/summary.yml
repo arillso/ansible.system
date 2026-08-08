@@ -6,7 +6,7 @@
       msg:
           - "System tuning configuration applied:"
           - "  - CPU Governor: {{ _tuning_final_cpu_governor | default('unchanged') }}"
-          - "  - I/O Scheduler: {{ _tuning_final_io_scheduler | default('unchanged') }}"
+          - "  - I/O Scheduler: {{ _tuning_optimized_storage_devices | default([]) | map(attribute='scheduler') | unique | join(', ') | default('unchanged', true) }}"
           - "  - Transparent Huge Pages: {{ tuning_transparent_hugepages | default('unchanged') }}"
           - "  - Tuned Profile: {{ tuning_tuned_profile | default('unchanged') }}"
           - "  - Network Tuning: {{ 'enabled' if tuning_network_tuning_enabled else 'disabled' }}"

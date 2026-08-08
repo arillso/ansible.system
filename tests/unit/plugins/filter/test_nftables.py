@@ -60,6 +60,35 @@ class TestRuleToNft:
         assert "level warn" in result
         assert result.endswith("drop")
 
+    def test_rate_limit_with_burst(self, fm):
+        rule = {"limit": "10/minute", "burst": 5, "action": "accept"}
+        assert fm.rule_to_nft(rule) == "limit rate 10/minute burst 5 packets accept"
+
+    def test_rate_limit_without_burst(self, fm):
+        assert fm.rule_to_nft({"limit": "5/second", "action": "drop"}) == "limit rate 5/second drop"
+
+    def test_burst_from_jinja_renders_like_int(self, fm):
+        # A default resolved through Jinja arrives as a string, so "5" and 5
+        # have to produce the same rule — otherwise the shipped defaults would
+        # render differently than this test suite exercises them.
+        as_int = fm.rule_to_nft({"limit": "10/minute", "burst": 5, "action": "accept"})
+        as_str = fm.rule_to_nft({"limit": "10/minute", "burst": "5", "action": "accept"})
+        assert as_int == as_str
+
+    def test_ssh_accept_matches_shipped_default(self, fm):
+        # The default input chain rate-limits on ct_state new only: an
+        # established session must not consume the connection budget.
+        rule = {
+            "tcp_dport": 22,
+            "ct_state": ["new"],
+            "limit": "10/minute",
+            "burst": 5,
+            "action": "accept",
+        }
+        assert fm.rule_to_nft(rule) == (
+            "tcp dport 22 ct state new limit rate 10/minute burst 5 packets accept"
+        )
+
 
 class TestMergeNftablesStructure:
     def _base(self) -> dict:

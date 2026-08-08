@@ -7,8 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **firewall**: the default input chain now rate-limits new SSH connections
+  (`firewall_ssh_rate_limit`, default `10/minute` with a burst of 5) and logs
+  packets before the chain policy drops them (`firewall_log_drop_prefix`,
+  capped by `firewall_log_drop_rate_limit`). The rate limit matches on
+  `ct state new` only, so established sessions are never throttled. Hosts that
+  legitimately open many short-lived SSH connections (CI runners, bastions)
+  should raise `firewall_ssh_rate_limit` rather than remove the rule.
+
 ### Added
 
+- **firewall**: rule-level `limit` and `burst` keys are now declared in
+  `meta/argument_specs.yml`. The filter plugin already rendered them, but
+  argument validation rejected them without the spec entries.
 - **Collection metadata**: `meta/runtime.yml` now declares an `action_groups`
   entry (`system`) listing `arillso.system.apt_update_info` and
   `arillso.system.reboot_info`, so consumers can set `module_defaults` for the

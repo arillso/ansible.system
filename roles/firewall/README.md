@@ -31,12 +31,18 @@ For detailed documentation including all variables, examples, and usage instruct
 
 ## Variables
 
-| Variable          | Default   | Description                                                                                                                                                                                 |
-| ----------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `firewall`        | `[{...}]` | Base nftables ruleset: an `inet filter` table with input/forward (policy `drop`) and output (policy `accept`) chains; input accepts loopback, established/related, and SSH (`tcp_dport 22`) |
-| `firewall_global` | `[]`      | Global-level rules merged on top of the base                                                                                                                                                |
-| `firewall_group`  | `[]`      | Group-level rules merged on top of global                                                                                                                                                   |
-| `firewall_host`   | `[]`      | Host-level rules merged last (highest precedence)                                                                                                                                           |
+| Variable                       | Default                            | Description                                                                                                                                                                                                                |
+| ------------------------------ | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `firewall`                     | `[{...}]`                          | Base nftables ruleset: an `inet filter` table with input/forward (policy `drop`) and output (policy `accept`) chains; input accepts loopback, established/related and new SSH connections, then logs what the policy drops |
+| `firewall_ssh_rate_limit`      | `10/minute`                        | Rate limit for **new** SSH connections. Established sessions match the preceding established/related rule and are never throttled                                                                                          |
+| `firewall_ssh_rate_burst`      | `5`                                | Burst allowance in packets on top of the SSH rate limit                                                                                                                                                                    |
+| `firewall_log_drop_rate_limit` | `5/minute`                         | Rate limit for the log-on-drop rule; caps log volume independently of traffic                                                                                                                                              |
+| `firewall_log_drop_prefix`     | `nft-drop-input:` + trailing space | Log prefix for packets dropped by the input chain policy. Keep the trailing space — nftables appends the packet details directly after it                                                                                  |
+| `firewall_global`              | `[]`                               | Global-level rules merged on top of the base                                                                                                                                                                               |
+| `firewall_group`               | `[]`                               | Group-level rules merged on top of global                                                                                                                                                                                  |
+| `firewall_host`                | `[]`                               | Host-level rules merged last (highest precedence)                                                                                                                                                                          |
+
+Raise `firewall_ssh_rate_limit` on hosts that legitimately open many short-lived SSH connections (CI runners, bastions) rather than removing the rule.
 
 See [`defaults/main.yml`](defaults/main.yml) for the complete list and [the guide](https://guide.arillso.io/collections/arillso/system/firewall_role.html) for detailed docs.
 

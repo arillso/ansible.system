@@ -40,7 +40,7 @@ git checkout -b fix/issue-description
 - Use 4 spaces for indentation (no tabs)
 - Use lowercase with underscores for variable names
 - Prefix role variables with the role name
-- Keep lines under 160 characters
+- Keep lines under 500 characters
 - Require `---` document start
 
 ### Python

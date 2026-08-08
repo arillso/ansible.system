@@ -24,9 +24,9 @@
       # das "-"-Prefix laesst systemd den Stop bei nicht existenter
       # Table (Fresh-Boot, Service-Start vor erstem Apply) ignorieren.
       _firewall_execstop_cmds: >-
-          {{ [''] + (_firewall | default([])
+          {{ [''] + (_firewall_tables | default([])
                      | map(attribute='table.family')
-                     | zip(_firewall | default([]) | map(attribute='table.name'))
+                     | zip(_firewall_tables | default([]) | map(attribute='table.name'))
                      | map('join', ' ')
                      | map('regex_replace', '^', '-/usr/sbin/nft flush table ')
                      | list) }}

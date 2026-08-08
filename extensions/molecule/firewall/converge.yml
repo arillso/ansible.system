@@ -42,7 +42,7 @@
   tasks:
       - name: Render hierarchical firewall payload only
         ansible.builtin.set_fact:
-            _firewall: >-
+            _firewall_tables: >-
                 {{ {
                     'firewall_tables': firewall_tables | default([]),
                     'firewall_global': firewall_global | default([]),

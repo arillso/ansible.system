@@ -3,7 +3,7 @@
 
 - name: Apply hierarchical override and generate final firewall configuration
   ansible.builtin.set_fact:
-      _firewall: >-
+      _firewall_tables: >-
           {{ {
               'firewall_tables': firewall_tables | default([]),
               'firewall_global': firewall_global | default([]),

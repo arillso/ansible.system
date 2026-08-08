@@ -10,7 +10,7 @@
 
   vars:
       _molecule_firewall_syntax_only: true
-      firewall:
+      firewall_tables:
           - table:
                 name: filter
                 family: inet
@@ -44,7 +44,7 @@
         ansible.builtin.set_fact:
             _firewall: >-
                 {{ {
-                    'firewall': firewall | default([]),
+                    'firewall_tables': firewall_tables | default([]),
                     'firewall_global': firewall_global | default([]),
                     'firewall_group': firewall_group | default([]),
                     'firewall_host': firewall_host | default([])

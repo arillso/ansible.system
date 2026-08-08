@@ -11,7 +11,7 @@ _access_ssh_service_names:
 
 # Dynamically selected SSH service name
 _access_ssh_service_name: >-
-    {{ _access_ssh_service_names[ansible_os_family] |
+    {{ _access_ssh_service_names[ansible_facts['os_family']] |
        default(_access_ssh_service_names['default']) }}
 
 # Sudoers file validation command by OS family

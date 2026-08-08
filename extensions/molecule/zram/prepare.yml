@@ -14,10 +14,10 @@
         ansible.builtin.apt:
             update_cache: true
             cache_valid_time: 3600
-        when: ansible_os_family == 'Debian'
+        when: ansible_facts['os_family'] == 'Debian'
 
       - name: Install kernel modules-extra package for the running kernel
         ansible.builtin.apt:
-            name: "linux-modules-extra-{{ ansible_kernel }}"
+            name: "linux-modules-extra-{{ ansible_facts['kernel'] }}"
             state: present
-        when: ansible_distribution == 'Ubuntu'
+        when: ansible_facts['distribution'] == 'Ubuntu'

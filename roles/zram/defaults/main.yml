@@ -29,10 +29,10 @@ zram_packages:
 # zram_kernel_module_package: package that provides the zram kernel module.
 # On Ubuntu cloud images with linux-image-virtual the module is not part of
 # the base image — it lives in linux-modules-extra-<kernel>, resolved against
-# the running kernel (ansible_kernel) so kernel upgrades pull the matching
+# the running kernel (ansible_facts['kernel']) so kernel upgrades pull the matching
 # package automatically. Debian ships the module in the stock kernel and has
 # no linux-modules-extra-* package, so the default is empty there and the
 # install step is skipped. Set explicitly to override per host.
 zram_kernel_module_package: >-
-    {{ 'linux-modules-extra-' ~ ansible_kernel
-       if ansible_distribution == 'Ubuntu' else '' }}
+    {{ 'linux-modules-extra-' ~ ansible_facts['kernel']
+       if ansible_facts['distribution'] == 'Ubuntu' else '' }}

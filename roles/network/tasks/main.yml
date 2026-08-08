@@ -10,5 +10,5 @@
         ansible.builtin.include_tasks: netplan.yml
         when:
             - network_netplan_enabled | default(false) | bool
-            - ansible_distribution == "Ubuntu"
+            - ansible_facts['distribution'] == "Ubuntu"
         tags: ["network", "netplan"]

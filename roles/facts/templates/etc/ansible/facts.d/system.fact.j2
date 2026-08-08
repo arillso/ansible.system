@@ -197,8 +197,8 @@ collect_cloud_provider_info() {
     fqdn=$(safe_exec "hostname -f" "{{ ansible_facts['fqdn'] }}")
     processor_cores=$(get_numeric_value "nproc" "{{ ansible_facts['processor_cores'] | default(1) }}")
     memory_mb=$(get_numeric_value "free -m | awk 'NR==2{print \$2}'" "{{ ansible_facts['memtotal_mb'] | default(0) }}")
-    ipv4="{{ ansible_default_ipv4.address | default('') }}"
-    ipv6="{{ ansible_default_ipv6.address | default('') }}"
+    ipv4="{{ ansible_facts['default_ipv4'].address | default('') }}"
+    ipv6="{{ ansible_facts['default_ipv6'].address | default('') }}"
 
     # Build JSON object conditionally
     local json_base
@@ -226,7 +226,7 @@ collect_cloud_provider_info() {
 
 # Collect security update information (semi-static - changes weekly/monthly)
 collect_security_updates() {
-{% if ansible_os_family == "Debian" %}
+{% if ansible_facts['os_family'] == "Debian" %}
     if command -v apt &> /dev/null; then
         local security_updates
         security_updates=$(get_numeric_value "apt list --upgradable 2>/dev/null | grep -c security" "0")
@@ -235,7 +235,7 @@ collect_security_updates() {
     else
         jq -n '{security_updates_available: 0}'
     fi
-{% elif ansible_os_family == "RedHat" %}
+{% elif ansible_facts['os_family'] == "RedHat" %}
     if command -v yum &> /dev/null; then
         local security_updates
         security_updates=$(get_numeric_value "yum check-update --security 2>/dev/null | grep -c 'Needed'" "0")

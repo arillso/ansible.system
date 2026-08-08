@@ -6,7 +6,7 @@ bitwarden_secrets_install_path: "/usr/local/bin"
 bitwarden_secrets_binary_name: "bws"
 
 # Architecture Detection
-bitwarden_secrets_arch: "{{ _bitwarden_secrets_arch_map[ansible_architecture] | default('x86_64-unknown-linux-gnu') }}"
+bitwarden_secrets_arch: "{{ _bitwarden_secrets_arch_map[ansible_facts['architecture']] | default('x86_64-unknown-linux-gnu') }}"
 
 # Download Configuration
 bitwarden_secrets_download_url: >-

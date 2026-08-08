@@ -6,7 +6,7 @@
 
 - name: Calculate cache age
   ansible.builtin.set_fact:
-      _cache_age: "{{ ansible_date_time.epoch | int - _apt_cache_stat.stat.mtime | default(0) | int }}"
+      _cache_age: "{{ ansible_facts['date_time'].epoch | int - _apt_cache_stat.stat.mtime | default(0) | int }}"
   when: _apt_cache_stat.stat.exists
 
 - name: Set cache age to max if stamp doesn't exist

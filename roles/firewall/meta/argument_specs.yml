@@ -32,7 +32,7 @@ argument_specs:
                 type: str
                 required: false
                 default: "nft-drop-input: "
-            firewall:
+            firewall_tables:
                 description: "Main nftables configuration with default filter table (input/forward/output chains)"
                 type: list
                 elements: dict

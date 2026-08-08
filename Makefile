@@ -54,14 +54,22 @@ test-unit: ## Run pytest unit suite (skipped when pytest is missing; CI is the g
 		pytest tests/unit/; \
 	fi
 
-test-molecule: ## Run every molecule scenario (slow, needs docker; skipped when unavailable)
+# Scenarios declaring the docker driver need a reachable daemon; the qemu (KVM)
+# scenarios do not, so the daemon is checked per scenario, not globally.
+define molecule_needs_docker
+grep -qE '^[[:space:]]*name:[[:space:]]*docker[[:space:]]*$$' extensions/molecule/$(1)/molecule.yml
+endef
+
+test-molecule: ## Run every molecule scenario (slow; scenarios without their driver are skipped)
 	@if ! command -v molecule >/dev/null 2>&1; then \
 		echo "SKIP: molecule not installed"; \
-	elif ! docker info >/dev/null 2>&1; then \
-		echo "SKIP: docker daemon not available"; \
 	else \
 		echo "Running every molecule scenario..."; \
 		for s in $$(ls extensions/molecule | grep -v '^\.'); do \
+			if $(call molecule_needs_docker,$$s) && ! docker info >/dev/null 2>&1; then \
+				echo "SKIP $$s: docker daemon not available"; \
+				continue; \
+			fi; \
 			echo "==> molecule test -s $$s"; \
 			(cd extensions && molecule test -s $$s) || exit $$?; \
 		done; \
@@ -70,7 +78,7 @@ test-molecule: ## Run every molecule scenario (slow, needs docker; skipped when 
 test-molecule-%: ## Run a single molecule scenario (e.g. make test-molecule-access)
 	@if ! command -v molecule >/dev/null 2>&1; then \
 		echo "SKIP: molecule not installed"; \
-	elif ! docker info >/dev/null 2>&1; then \
+	elif $(call molecule_needs_docker,$*) && ! docker info >/dev/null 2>&1; then \
 		echo "SKIP: docker daemon not available"; \
 	else \
 		echo "Running molecule scenario: $*"; \

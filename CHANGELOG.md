@@ -129,8 +129,12 @@ tuning_optional_network_sysctl_params`. The previous single task
 - **Makefile**: `lint-ansible`, `lint-python`, `test-unit`, `test-molecule` and
   `test-molecule-%` now print `SKIP: <tool> not installed` and exit 0 when the
   required tool is missing, instead of failing with exit 127. The molecule
-  targets additionally skip when the docker daemon does not answer (the `docker`
-  binary can be present without a running daemon). This only affects local
+  targets additionally skip a scenario when it declares the docker driver and
+  the daemon does not answer (the `docker` binary can be present without a
+  running daemon); the `zram` and `tuning` scenarios run under the
+  `molecule-qemu` (KVM) driver and are therefore never gated on docker, and in
+  `test-molecule` a skipped scenario no longer short-circuits the remaining
+  ones. This only affects local
   runs on hosts that lack the tooling: CI does not invoke `make`, it calls
   `ansible-lint`, `ansible-test units` and `molecule test` directly through the
   `arillso/.github` reusable workflows, so those gates are unchanged and remain

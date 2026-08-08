@@ -1,0 +1,29 @@
+---
+# Kernel command-line parameters in GRUB
+
+- name: Configure kernel parameters in GRUB
+  when: tuning_grub_cmdline_linux_append is defined
+  block:
+      - name: Read current GRUB configuration
+        ansible.builtin.slurp:
+            src: /etc/default/grub
+        register: grub_config
+
+      - name: Parse current GRUB_CMDLINE_LINUX
+        ansible.builtin.set_fact:
+            current_grub_cmdline: >-
+                {%- set match = grub_config.content | b64decode |
+                    regex_search('GRUB_CMDLINE_LINUX="([^"]+)"', '\\1') -%}
+                {{ match[0] if match else '' }}
+
+      - name: Update GRUB_CMDLINE_LINUX with new parameters
+        ansible.builtin.lineinfile:
+            path: /etc/default/grub
+            regexp: "^GRUB_CMDLINE_LINUX="
+            line: 'GRUB_CMDLINE_LINUX="{{ current_grub_cmdline }} {{ tuning_grub_cmdline_linux_append }}"'
+            backup: true
+        become: true
+        notify: "tuning: update grub"
+        when:
+            - tuning_grub_cmdline_linux_append is defined
+            - tuning_grub_cmdline_linux_append not in current_grub_cmdline

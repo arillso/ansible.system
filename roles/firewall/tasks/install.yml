@@ -1,0 +1,17 @@
+---
+# Package installation and configuration directory for the nftables firewall
+
+- name: Install nftables package
+  ansible.builtin.package:
+      name: nftables
+      state: present
+  become: true
+
+- name: Create nftables configuration directory
+  ansible.builtin.file:
+      path: /etc/nftables
+      state: directory
+      mode: "0755"
+      owner: root
+      group: root
+  become: true

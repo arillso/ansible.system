@@ -1,0 +1,40 @@
+---
+# Transparent huge pages
+
+- name: Configure transparent huge pages
+  block:
+      - name: Validate transparent huge pages setting
+        ansible.builtin.fail:
+            msg: "Invalid transparent_hugepages setting: {{ tuning_transparent_hugepages }}"
+        when: tuning_transparent_hugepages not in ['always', 'madvise', 'never']
+
+      # Best-effort immediate apply: containers and minimal kernels can
+      # have transparent_hugepage disabled at compile time (sysfs entry
+      # missing) or read-only. The disable-thp.service rendered below is
+      # the persistent path of record — failing here would prevent the
+      # systemd unit from being deployed on hosts that just happen not
+      # to expose the sysfs knob, which is the opposite of what we want.
+      - name: Set transparent huge pages immediately
+        ansible.builtin.copy:
+            content: "{{ tuning_transparent_hugepages }}"
+            dest: /sys/kernel/mm/transparent_hugepage/enabled
+            mode: "0644"
+        become: true
+        register: thp_result
+        failed_when: false
+        when: tuning_transparent_hugepages is defined
+
+      - name: Create systemd service for transparent huge pages
+        ansible.builtin.template:
+            src: etc/systemd/system/disable-thp.service.j2
+            dest: /etc/systemd/system/disable-thp.service
+            mode: "0644"
+            owner: root
+            group: root
+        become: true
+        notify:
+            - "tuning: reload systemd"
+            - "tuning: apply thp"
+        when:
+            - tuning_transparent_hugepages is defined
+            - thp_result is not failed

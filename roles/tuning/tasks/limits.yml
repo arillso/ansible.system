@@ -1,0 +1,12 @@
+---
+# PAM security limits
+
+- name: Configure security limits
+  community.general.pam_limits:
+      domain: "{{ item.domain }}"
+      limit_type: "{{ item.type }}"
+      limit_item: "{{ item.item }}"
+      value: "{{ item.value }}"
+  become: true
+  loop: "{{ tuning_security_limits }}"
+  when: tuning_security_limits is defined and tuning_security_limits | length > 0

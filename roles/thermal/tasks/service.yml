@@ -1,0 +1,15 @@
+---
+# Thermal service management
+
+- name: Manage thermal services via systemd role
+  ansible.builtin.include_role:
+      name: arillso.system.systemd
+      tasks_from: service
+  vars:
+      systemd_services:
+          - name: thermald
+            enabled: true
+            state: started
+          - name: fancontrol
+            enabled: false
+            state: stopped

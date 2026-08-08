@@ -1,0 +1,20 @@
+---
+# Swappiness and optional swap file setup
+# Named swap_config.yml because swap.yml already exists and is included
+# from the block below.
+
+- name: Configure swap settings
+  block:
+      - name: Set swappiness
+        ansible.posix.sysctl:
+            name: vm.swappiness
+            value: "{{ tuning_swap_swappiness }}"
+            state: present
+            reload: true
+            sysctl_file: "{{ tuning_sysctl_file }}"
+        become: true
+        when: tuning_swap_swappiness is defined
+
+      - name: Configure swap file if needed
+        ansible.builtin.include_tasks: swap.yml
+        when: tuning_swap_file_enabled | default(false)

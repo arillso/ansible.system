@@ -1,0 +1,23 @@
+---
+# Build the effective ruleset and render /etc/nftables.conf
+
+- name: Apply hierarchical override and generate final firewall configuration
+  ansible.builtin.set_fact:
+      _firewall: >-
+          {{ {
+              'firewall': firewall | default([]),
+              'firewall_global': firewall_global | default([]),
+              'firewall_group': firewall_group | default([]),
+              'firewall_host': firewall_host | default([])
+          } | arillso.system.to_nftables_hierarchy }}
+
+- name: Generate nftables.conf from hierarchical YAML structure
+  ansible.builtin.template:
+      src: etc/nftables.conf.j2
+      dest: /etc/nftables.conf
+      mode: "0644"
+      owner: root
+      group: root
+      backup: true
+  become: true
+  notify: "firewall: restart"

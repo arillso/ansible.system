@@ -134,6 +134,21 @@ tuning_optional_network_sysctl_params`. The previous single task
 
 ### Changed
 
+- **Makefile**: `lint-ansible`, `lint-python`, `test-unit`, `test-molecule` and
+  `test-molecule-%` now print `SKIP: <tool> not installed` and exit 0 when the
+  required tool is missing, instead of failing with exit 127. The molecule
+  targets additionally skip a scenario when it declares the docker driver and
+  the daemon does not answer (the `docker` binary can be present without a
+  running daemon); the `zram` and `tuning` scenarios run under the
+  `molecule-qemu` (KVM) driver and are therefore never gated on docker, and in
+  `test-molecule` a skipped scenario no longer short-circuits the remaining
+  ones. This only affects local
+  runs on hosts that lack the tooling: CI does not invoke `make`, it calls
+  `ansible-lint`, `ansible-test units` and `molecule test` directly through the
+  `arillso/.github` reusable workflows, so those gates are unchanged and remain
+  the authoritative verification. `lint-yaml`, `format`, `build`, `clean` and
+  `install-dev` are untouched, so `make lint` now reaches `lint-yaml` instead of
+  aborting at the first missing binary.
 - **Molecule (KVM converge)**: the `zram` and `tuning` scenarios now run a real
   converge + idempotence + verify under the `molecule-qemu` (KVM) driver on an
   Ubuntu 22.04 cloud-image VM, instead of the previous docker-driver,

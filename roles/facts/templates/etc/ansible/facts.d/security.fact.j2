@@ -110,13 +110,13 @@ safe_exec() {
 get_security_updates() {
     local security_updates=0
 
-{% if ansible_os_family == "Debian" %}
+{% if ansible_facts['os_family'] == "Debian" %}
     if command -v apt >/dev/null 2>&1; then
         # Debian/Ubuntu: Check for security updates
         security_updates=$(safe_exec "apt list --upgradable 2>/dev/null | grep -c 'security\|security-updates'" "0" "${SECURITY_TIMEOUT}")
         log_debug "Debian security updates found: $security_updates"
     fi
-{% elif ansible_os_family == "RedHat" %}
+{% elif ansible_facts['os_family'] == "RedHat" %}
     if command -v yum >/dev/null 2>&1; then
         # RHEL/CentOS with yum
         security_updates=$(safe_exec "yum check-update --security -q 2>/dev/null | grep -v '^$' | wc -l" "0" "${SECURITY_TIMEOUT}")
@@ -158,7 +158,7 @@ collect_security_facts() {
         --arg iso_timestamp "$iso_timestamp" \
         --arg human_timestamp "$human_timestamp" \
         --arg epoch_timestamp "$epoch_timestamp" \
-        --arg check_method "{{ ansible_os_family }}" \
+        --arg check_method "{{ ansible_facts['os_family'] }}" \
         '{
             security_updates_available: ($security_updates | tonumber),
             meta: {

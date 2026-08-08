@@ -25,7 +25,7 @@
   # scripts. A handler only fires when something upstream notified it,
   # so reporting the run as changed (the default) matches reality.
   ansible.builtin.command: update-motd
-  when: ansible_os_family == "Debian"
+  when: ansible_facts['os_family'] == "Debian"
   changed_when: true
   listen: "facts: update motd"
   tags:

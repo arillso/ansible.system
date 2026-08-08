@@ -50,7 +50,7 @@ packages_apt_proxy_socks: ""
 # APT Mirror/Sources Configuration
 packages_apt_mirror_enabled: false
 packages_apt_mirror_uri: ""
-packages_apt_mirror_distribution: "{{ ansible_distribution_release }}"
+packages_apt_mirror_distribution: "{{ ansible_facts['distribution_release'] }}"
 packages_apt_mirror_components:
     - main
     - restricted

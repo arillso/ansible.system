@@ -254,7 +254,7 @@ argument_specs:
                 type: str
                 default: ""
             packages_apt_mirror_distribution:
-                description: "APT mirror distribution. Defaults to ansible_distribution_release."
+                description: "APT mirror distribution. Defaults to ansible_facts['distribution_release']."
                 type: str
             packages_apt_mirror_components:
                 description: "APT mirror components"

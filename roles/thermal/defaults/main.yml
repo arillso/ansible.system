@@ -9,7 +9,7 @@ thermal_packages:
     - thermald
 
 # Platform name
-thermal_platform_name: "{{ ansible_product_name | default('Generic') }}"
+thermal_platform_name: "{{ ansible_facts['product_name'] | default('Generic') }}"
 
 # Thermal preference: QUIET, PERFORMANCE, or BALANCED
 thermal_preference: "QUIET"

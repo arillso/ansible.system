@@ -25,7 +25,7 @@ argument_specs:
                     - thermald
 
             thermal_platform_name:
-                description: "Platform name for thermal configuration (auto-detected from ansible_product_name)"
+                description: "Platform name for thermal configuration (auto-detected from ansible_facts['product_name'])"
                 type: "str"
                 required: false
 

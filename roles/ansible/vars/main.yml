@@ -5,4 +5,4 @@ _ansible_arch_map:
     aarch64: aarch64
     armv7l: armv7l
 
-_ansible_detected_arch: "{{ _ansible_arch_map[ansible_architecture] | default('x86_64') }}"
+_ansible_detected_arch: "{{ _ansible_arch_map[ansible_facts['architecture']] | default('x86_64') }}"

@@ -64,7 +64,7 @@ main() {
         --arg role_path "{{ role_path | default('unknown') }}" \
         --argjson tags '{{ facts_system_tags | default(['facts', 'metadata']) | to_json }}' \
         --arg owner "{{ facts_system_owner | default(ansible_user | default('ops')) }}" \
-        --arg node_type "{{ facts_node_type | default(ansible_virtualization_type | default('unknown')) }}" \
+        --arg node_type "{{ facts_node_type | default(ansible_facts['virtualization_type'] | default('unknown')) }}" \
         --arg ansible_user "{{ ansible_user | default(ansible_env.USER | default('system')) }}" \
         --arg ansible_host "{{ ansible_host | default(inventory_hostname) }}" \
         --arg ansible_connection "{{ ansible_connection | default('ssh') }}" \

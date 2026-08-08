@@ -20,7 +20,7 @@ argument_specs:
                 type: str
                 default: "bws"
             bitwarden_secrets_arch:
-                description: "Target architecture for the bws binary (auto-detected from ansible_architecture)"
+                description: "Target architecture for the bws binary (auto-detected from ansible_facts['architecture'])"
                 type: str
             bitwarden_secrets_download_url:
                 description: "Full download URL for the bws release archive (auto-constructed from version and arch)"

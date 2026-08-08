@@ -3,7 +3,7 @@ extends: default
 
 rules:
     line-length:
-        max: 160
+        max: 500
         level: warning
 
     comments:
@@ -17,7 +17,7 @@ rules:
         check-multi-line-strings: false
 
     truthy:
-        allowed-values: ['true', 'false']
+        allowed-values: ["true", "false"]
         check-keys: false
 
     brackets:

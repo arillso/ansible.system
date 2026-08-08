@@ -21,7 +21,7 @@ pre-commit:
         yamllint:
             glob: "*.{yml,yaml}"
             exclude: "(^\\.ansible/)"
-            run: yamllint -c .yamllint {staged_files}
+            run: yamllint -c .yamllint.yml {staged_files}
         markdownlint:
             glob: "*.md"
             exclude: "(^\\.ansible/)"

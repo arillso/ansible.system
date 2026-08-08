@@ -44,7 +44,7 @@ Key roles:
 
 - `galaxy.yml` - Ansible Galaxy collection metadata
 - `.ansible-lint` - Ansible lint configuration
-- `.yamllint` - YAML linting rules
+- `.yamllint.yml` - YAML linting rules
 - `lefthook.yml` - Local git hooks (prettier, yamllint, markdownlint, ansible-lint, actionlint, gitleaks)
 - `REVIEW.md` - Code review guidelines (read by the `ai-claude-review` workflow)
 - `.python-version` - Pinned Python version for plugin development (3.12)

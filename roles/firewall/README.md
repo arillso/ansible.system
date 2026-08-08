@@ -23,7 +23,7 @@ For detailed documentation including all variables, examples, and usage instruct
   roles:
       - role: arillso.system.firewall
         vars:
-            nftables:
+            firewall_tables:
                 - table:
                       name: filter
                       family: inet

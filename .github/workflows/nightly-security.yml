@@ -19,7 +19,7 @@ permissions:
 
 jobs:
     security-secrets:
-        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-06-18
+        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-08-07
 
     security-code:
         # CodeQL over the collection's Python: plugins/{filter,lookup,modules}.
@@ -28,7 +28,7 @@ jobs:
             actions: read
             contents: read
             security-events: write
-        uses: arillso/.github/.github/workflows/security-code.yml@2026-06-18
+        uses: arillso/.github/.github/workflows/security-code.yml@2026-08-07
         with:
             languages: '["python"]'
             concurrency-suffix: security-code
@@ -40,7 +40,7 @@ jobs:
         permissions:
             contents: read
             security-events: write
-        uses: arillso/.github/.github/workflows/security-config.yml@2026-06-18
+        uses: arillso/.github/.github/workflows/security-config.yml@2026-08-07
         with:
             scan-ansible: true
             ansible-path: roles
@@ -54,7 +54,7 @@ jobs:
         # It has no release-attach step, so nothing here writes to the repo.
         permissions:
             contents: read
-        uses: arillso/.github/.github/workflows/security-sbom.yml@2026-06-18
+        uses: arillso/.github/.github/workflows/security-sbom.yml@2026-08-07
         with:
             artifact-type: filesystem
             artifact-ref: .

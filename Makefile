@@ -8,22 +8,30 @@ help: ## Show this help message
 
 lint: lint-ansible lint-yaml lint-python ## Run all linters
 
-lint-ansible: ## Run ansible-lint
-	@echo "Running ansible-lint..."
-	@ansible-lint --force-color
+lint-ansible: ## Run ansible-lint (skipped when ansible-lint is missing; CI is the gate)
+	@if ! command -v ansible-lint >/dev/null 2>&1; then \
+		echo "SKIP: ansible-lint not installed"; \
+	else \
+		echo "Running ansible-lint..."; \
+		ansible-lint --force-color; \
+	fi
 
 lint-yaml: ## Run yamllint
 	@echo "Running yamllint..."
 	@yamllint .
 
-lint-python: ## Run Python linters (ruff, black)
-	@if [ -n "$$(find plugins/ -name '*.py' 2>/dev/null)" ]; then \
+lint-python: ## Run Python linters (skipped when ruff/black are missing; CI is the gate)
+	@if [ -z "$$(find plugins/ -name '*.py' 2>/dev/null)" ]; then \
+		echo "No Python plugins found, skipping..."; \
+	elif ! command -v ruff >/dev/null 2>&1; then \
+		echo "SKIP: ruff not installed"; \
+	elif ! command -v black >/dev/null 2>&1; then \
+		echo "SKIP: black not installed"; \
+	else \
 		echo "Running ruff..."; \
 		ruff check plugins/; \
 		echo "Running black..."; \
 		black --check plugins/; \
-	else \
-		echo "No Python plugins found, skipping..."; \
 	fi
 
 format: ## Auto-format Python code
@@ -38,20 +46,36 @@ format: ## Auto-format Python code
 
 test: test-unit ## Run unit tests (alias for test-unit)
 
-test-unit: ## Run pytest unit suite
-	@echo "Running pytest..."
-	@pytest tests/unit/
+test-unit: ## Run pytest unit suite (skipped when pytest is missing; CI is the gate)
+	@if ! command -v pytest >/dev/null 2>&1; then \
+		echo "SKIP: pytest not installed"; \
+	else \
+		echo "Running pytest..."; \
+		pytest tests/unit/; \
+	fi
 
-test-molecule: ## Run every molecule scenario (slow, needs docker)
-	@echo "Running every molecule scenario..."
-	@for s in $$(ls extensions/molecule | grep -v '^\.'); do \
-		echo "==> molecule test -s $$s"; \
-		(cd extensions && molecule test -s $$s) || exit $$?; \
-	done
+test-molecule: ## Run every molecule scenario (slow, needs docker; skipped when unavailable)
+	@if ! command -v molecule >/dev/null 2>&1; then \
+		echo "SKIP: molecule not installed"; \
+	elif ! docker info >/dev/null 2>&1; then \
+		echo "SKIP: docker daemon not available"; \
+	else \
+		echo "Running every molecule scenario..."; \
+		for s in $$(ls extensions/molecule | grep -v '^\.'); do \
+			echo "==> molecule test -s $$s"; \
+			(cd extensions && molecule test -s $$s) || exit $$?; \
+		done; \
+	fi
 
 test-molecule-%: ## Run a single molecule scenario (e.g. make test-molecule-access)
-	@echo "Running molecule scenario: $*"
-	@cd extensions && molecule test -s $*
+	@if ! command -v molecule >/dev/null 2>&1; then \
+		echo "SKIP: molecule not installed"; \
+	elif ! docker info >/dev/null 2>&1; then \
+		echo "SKIP: docker daemon not available"; \
+	else \
+		echo "Running molecule scenario: $*"; \
+		cd extensions && molecule test -s $*; \
+	fi
 
 build: ## Build collection
 	@echo "Building collection..."

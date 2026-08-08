@@ -9,7 +9,7 @@ firewall_ssh_rate_burst: 5
 firewall_log_drop_rate_limit: "5/minute"
 firewall_log_drop_prefix: "nft-drop-input: "
 
-firewall: # noqa: argument-specs
+firewall_tables:
     - table:
           name: filter
           family: inet

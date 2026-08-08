@@ -134,6 +134,16 @@ tuning_optional_network_sysctl_params`. The previous single task
 
 ### Changed
 
+- **BREAKING CHANGE — firewall**: the public role variable `firewall` is now
+  `firewall_tables`, and the base-level key of the dict passed to the
+  `to_nftables_hierarchy` filter changes with it. Rename `firewall:` to
+  `firewall_tables:` in inventories, `group_vars`, `host_vars` and playbooks,
+  and in any playbook that builds the filter dict by hand. A leftover
+  `firewall:` is silently ignored, so the role falls back to its default
+  ruleset instead of failing — check for stale keys after upgrading.
+  `firewall_global`, `firewall_group` and `firewall_host` are unchanged. With
+  the last unprefixed variable gone, `var-naming[no-role-prefix]` is no longer
+  skipped in `.ansible-lint` and the collection passes it in full.
 - **Makefile**: `lint-ansible`, `lint-python`, `test-unit`, `test-molecule` and
   `test-molecule-%` now print `SKIP: <tool> not installed` and exit 0 when the
   required tool is missing, instead of failing with exit 127. The molecule

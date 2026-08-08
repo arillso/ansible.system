@@ -93,7 +93,7 @@ class TestRuleToNft:
 class TestMergeNftablesStructure:
     def _base(self) -> dict:
         return {
-            "firewall": [
+            "firewall_tables": [
                 {
                     "table": {
                         "name": "filter",
@@ -140,7 +140,7 @@ class TestMergeNftablesStructure:
 
     def test_missing_table_key_is_skipped(self, fm):
         cfg = {
-            "firewall": [{"not_a_table": True}],
+            "firewall_tables": [{"not_a_table": True}],
             "firewall_global": [],
             "firewall_group": [],
             "firewall_host": [],
@@ -149,7 +149,7 @@ class TestMergeNftablesStructure:
 
     def test_missing_name_or_family_is_skipped(self, fm):
         cfg = {
-            "firewall": [{"table": {"name": "filter"}}],
+            "firewall_tables": [{"table": {"name": "filter"}}],
             "firewall_global": [],
             "firewall_group": [],
             "firewall_host": [],

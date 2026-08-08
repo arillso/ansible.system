@@ -23,7 +23,7 @@ For detailed documentation including all variables, examples, and usage instruct
   roles:
       - role: arillso.system.firewall
         vars:
-            nftables:
+            firewall_tables:
                 - table:
                       name: filter
                       family: inet
@@ -33,7 +33,7 @@ For detailed documentation including all variables, examples, and usage instruct
 
 | Variable                       | Default                            | Description                                                                                                                                                                                                                |
 | ------------------------------ | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `firewall`                     | `[{...}]`                          | Base nftables ruleset: an `inet filter` table with input/forward (policy `drop`) and output (policy `accept`) chains; input accepts loopback, established/related and new SSH connections, then logs what the policy drops |
+| `firewall_tables`              | `[{...}]`                          | Base nftables ruleset: an `inet filter` table with input/forward (policy `drop`) and output (policy `accept`) chains; input accepts loopback, established/related and new SSH connections, then logs what the policy drops |
 | `firewall_ssh_rate_limit`      | `10/minute`                        | Rate limit for **new** SSH connections. Established sessions match the preceding established/related rule and are never throttled                                                                                          |
 | `firewall_ssh_rate_burst`      | `5`                                | Burst allowance in packets on top of the SSH rate limit                                                                                                                                                                    |
 | `firewall_log_drop_rate_limit` | `5/minute`                         | Rate limit for the log-on-drop rule; caps log volume independently of traffic                                                                                                                                              |

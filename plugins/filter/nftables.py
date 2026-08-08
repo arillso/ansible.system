@@ -1,7 +1,7 @@
 """
 nftables filter plugins for YAML structure processing
 Clean, maintainable conversion from YAML to nftables syntax
-Hierarchical override: firewall → firewall_global → firewall_group → firewall_host
+Hierarchical override: firewall_tables → firewall_global → firewall_group → firewall_host
 """
 
 import json
@@ -31,7 +31,7 @@ class FilterModule:
     def merge_nftables_structure(self, firewall_configs, debug=False):
         """
         Apply hierarchical override for nftables configurations
-        Priority: firewall (base) → firewall_global → firewall_group → firewall_host
+        Priority: firewall_tables (base) → firewall_global → firewall_group → firewall_host
         Later configurations completely override earlier ones if they have content
         """
 
@@ -55,13 +55,13 @@ class FilterModule:
             return []
 
         # Extract configurations in priority order
-        firewall = firewall_configs.get("firewall", [])
+        firewall_tables = firewall_configs.get("firewall_tables", [])
         firewall_global = firewall_configs.get("firewall_global", [])
         firewall_group = firewall_configs.get("firewall_group", [])
         firewall_host = firewall_configs.get("firewall_host", [])
 
         self._debug_print(
-            f"firewall length: {len(firewall) if isinstance(firewall, list) else 'not a list'}"
+            f"firewall_tables length: {len(firewall_tables) if isinstance(firewall_tables, list) else 'not a list'}"
         )
         self._debug_print(
             f"firewall_global length: {len(firewall_global) if isinstance(firewall_global, list) else 'not a list'}"
@@ -75,7 +75,7 @@ class FilterModule:
 
         # Apply hierarchical override logic
         # Start with base configuration
-        result = self._validate_config(firewall, "firewall")
+        result = self._validate_config(firewall_tables, "firewall_tables")
 
         # Override with global if it has content
         if firewall_global and len(firewall_global) > 0:

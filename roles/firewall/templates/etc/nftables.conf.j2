@@ -12,13 +12,13 @@
    `table { }`-Stub vor dem Flush ist ein No-op wenn die Table bereits
    existiert, legt sie auf Fresh-Hosts an und macht `flush table` damit
    beim ersten Apply nicht-failable. #}
-{% for firewall_table in _firewall | default([]) %}
+{% for firewall_table in _firewall_tables | default([]) %}
 table {{ firewall_table.table.family }} {{ firewall_table.table.name }} {
 }
 flush table {{ firewall_table.table.family }} {{ firewall_table.table.name }}
 {% endfor %}
 
-{% for firewall_table in _firewall | default([]) %}
+{% for firewall_table in _firewall_tables | default([]) %}
 table {{ firewall_table.table.family }} {{ firewall_table.table.name }} {
 {% for chain in firewall_table.table.chains %}
     chain {{ chain.name }} {

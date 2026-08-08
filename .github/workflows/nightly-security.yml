@@ -20,3 +20,42 @@ permissions:
 jobs:
     security-secrets:
         uses: arillso/.github/.github/workflows/security-secrets.yml@2026-06-18
+
+    security-code:
+        # CodeQL over the collection's Python: plugins/{filter,lookup,modules}.
+        # security-code.yml, not the legacy Go-only security-codeql.yml.
+        permissions:
+            actions: read
+            contents: read
+            security-events: write
+        uses: arillso/.github/.github/workflows/security-code.yml@2026-06-18
+        with:
+            languages: '["python"]'
+            concurrency-suffix: security-code
+
+    security-config:
+        # Trivy IaC scan over the roles. Reports only — fail-on-findings stays
+        # false so a nightly finding surfaces in the Security tab without
+        # turning the scheduled run red.
+        permissions:
+            contents: read
+            security-events: write
+        uses: arillso/.github/.github/workflows/security-config.yml@2026-06-18
+        with:
+            scan-ansible: true
+            ansible-path: roles
+            concurrency-suffix: security-config
+
+    security-sbom:
+        # Filesystem SBOM: the collection ships no container image and no Go
+        # module, so `filesystem` over the repo root is the applicable type.
+        # read is enough: at @2026-06-18 the reusable only generates the SBOM
+        # and stores it via upload-artifact, which needs no contents scope.
+        # It has no release-attach step, so nothing here writes to the repo.
+        permissions:
+            contents: read
+        uses: arillso/.github/.github/workflows/security-sbom.yml@2026-06-18
+        with:
+            artifact-type: filesystem
+            artifact-ref: .
+            concurrency-suffix: security-sbom

@@ -2,17 +2,17 @@
 - name: Check APT cache age
   ansible.builtin.stat:
       path: /var/lib/apt/periodic/update-success-stamp
-  register: _apt_cache_stat
+  register: _packages_apt_cache_stat
 
 - name: Calculate cache age
   ansible.builtin.set_fact:
-      _cache_age: "{{ ansible_facts['date_time'].epoch | int - _apt_cache_stat.stat.mtime | default(0) | int }}"
-  when: _apt_cache_stat.stat.exists
+      _packages_cache_age: "{{ ansible_facts['date_time'].epoch | int - _packages_apt_cache_stat.stat.mtime | default(0) | int }}"
+  when: _packages_apt_cache_stat.stat.exists
 
 - name: Set cache age to max if stamp doesn't exist
   ansible.builtin.set_fact:
-      _cache_age: "{{ packages_cache_valid_time + 1 }}"
-  when: not _apt_cache_stat.stat.exists
+      _packages_cache_age: "{{ packages_cache_valid_time + 1 }}"
+  when: not _packages_apt_cache_stat.stat.exists
 
 - name: Update APT cache (only when needed)
   ansible.builtin.apt:
@@ -25,7 +25,7 @@
   until: _packages_cache_updated is succeeded
   when: >
       packages_force_cache_update or
-      (_cache_age | int > packages_cache_valid_time | int)
+      (_packages_cache_age | int > packages_cache_valid_time | int)
   changed_when: false
   failed_when: >
       _packages_cache_updated is failed and

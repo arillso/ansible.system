@@ -14,7 +14,7 @@
 
 - name: Detect CPU information using facts
   ansible.builtin.set_fact:
-      detected_cpu_vendor: >-
+      _tuning_detected_cpu_vendor: >-
           {%- if 'Intel' in ansible_processor[1] -%}
           intel{%- elif 'AMD' in ansible_processor[1] -%}
           amd{%- else -%}
@@ -23,18 +23,18 @@
 - name: Check if CPU frequency scaling is supported
   ansible.builtin.stat:
       path: /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors
-  register: cpufreq_check
+  register: _tuning_cpufreq_check
 
 - name: Set detected CPU info
   ansible.builtin.set_fact:
-      detected_cpu_info:
-          vendor: "{{ detected_cpu_vendor }}"
+      _tuning_detected_cpu_info:
+          vendor: "{{ _tuning_detected_cpu_vendor }}"
           model: "{{ ansible_processor[1] }}"
-          cpufreq_supported: "{{ cpufreq_check.stat.exists }}"
+          cpufreq_supported: "{{ _tuning_cpufreq_check.stat.exists }}"
 
 - name: Detect storage devices using facts
   ansible.builtin.set_fact:
-      detected_storage_devices: >-
+      _tuning_detected_storage_devices: >-
           {{
             ansible_devices
             | dict2items
@@ -47,7 +47,7 @@
 
 - name: Detect network interfaces using facts
   ansible.builtin.set_fact:
-      detected_network_interfaces: >-
+      _tuning_detected_network_interfaces: >-
           {{
             ansible_interfaces
             | difference(['lo'])
@@ -59,17 +59,17 @@
 - name: Set optimal settings
   ansible.builtin.set_fact:
       # CPU Governor: nur setzen wenn CPUfreq unterstützt wird
-      final_cpu_governor: >-
-          {%- if not detected_cpu_info.cpufreq_supported -%}
+      _tuning_final_cpu_governor: >-
+          {%- if not _tuning_detected_cpu_info.cpufreq_supported -%}
           none{%- elif tuning_cpu_governor_override -%}
-          {{ tuning_cpu_governor_override }}{%- elif detected_cpu_info.vendor == 'intel' -%}
+          {{ tuning_cpu_governor_override }}{%- elif _tuning_detected_cpu_info.vendor == 'intel' -%}
           powersave{%- else -%}
           ondemand{%- endif -%}
 
       # Storage: einfache Regeln
-      optimized_storage_devices: >-
+      _tuning_optimized_storage_devices: >-
           {%- set devices = [] -%}
-          {%- for device in detected_storage_devices -%}
+          {%- for device in _tuning_detected_storage_devices -%}
           {%- set scheduler = 'none' if 'nvme' in device.key else 'mq-deadline' -%}
           {%- set _ = devices.append({'name': device.key, 'scheduler': scheduler}) -%}
           {%- endfor -%}

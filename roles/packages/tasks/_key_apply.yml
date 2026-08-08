@@ -27,13 +27,13 @@
       timeout: 30
   become: true
   when: _pkg_key.dispatch == 'url-direct'
-  register: _pkg_key_apply_get
+  register: _packages_key_apply_get
 
 - name: "Stat target keyring before staging ({{ _pkg_key.label }})"
   ansible.builtin.stat:
       path: "{{ _pkg_key.keyring }}"
   when: _pkg_key.dispatch in ['url-dearmor', 'data']
-  register: _pkg_key_target_stat
+  register: _packages_key_target_stat
   changed_when: false
 
 - name: "Stage armored key from URL into /tmp ({{ _pkg_key.label }})"
@@ -45,7 +45,7 @@
   become: true
   when:
       - _pkg_key.dispatch == 'url-dearmor'
-      - (not (_pkg_key_target_stat.stat.exists | default(false)))
+      - (not (_packages_key_target_stat.stat.exists | default(false)))
         or packages_keys_force_update
 
 - name: "Stage armored key from data into /tmp ({{ _pkg_key.label }})"
@@ -56,7 +56,7 @@
   become: true
   when:
       - _pkg_key.dispatch == 'data'
-      - (not (_pkg_key_target_stat.stat.exists | default(false)))
+      - (not (_packages_key_target_stat.stat.exists | default(false)))
         or packages_keys_force_update
 
 - name: "Dearmor staged key into host keyring ({{ _pkg_key.label }})"
@@ -76,7 +76,7 @@
       creates: "{{ _keyring }}"
   become: true
   when: _pkg_key.dispatch in ['url-dearmor', 'data']
-  register: _pkg_key_apply_dearmor
+  register: _packages_key_apply_dearmor
 
 - name: "Fetch key from keyserver into host keyring ({{ _pkg_key.label }})"
   vars:
@@ -95,7 +95,7 @@
       creates: "{{ _keyring }}"
   become: true
   when: _pkg_key.dispatch == 'keyserver'
-  register: _pkg_key_apply_keyserver
+  register: _packages_key_apply_keyserver
 
 - name: "Normalise keyring permissions ({{ _pkg_key.label }})"
   ansible.builtin.file:
@@ -106,14 +106,14 @@
   become: true
   when:
       - _pkg_key.dispatch in ['url-direct', 'url-dearmor', 'keyserver', 'data']
-      - (_pkg_key_apply_get is changed | default(false))
-        or (_pkg_key_apply_dearmor is changed | default(false))
-        or (_pkg_key_apply_keyserver is changed | default(false))
+      - (_packages_key_apply_get is changed | default(false))
+        or (_packages_key_apply_dearmor is changed | default(false))
+        or (_packages_key_apply_keyserver is changed | default(false))
 
 - name: "Track that a key was applied ({{ _pkg_key.label }})"
   ansible.builtin.set_fact:
       packages_keys_changed: true
   when:
-      - (_pkg_key_apply_get is changed | default(false))
-        or (_pkg_key_apply_dearmor is changed | default(false))
-        or (_pkg_key_apply_keyserver is changed | default(false))
+      - (_packages_key_apply_get is changed | default(false))
+        or (_packages_key_apply_dearmor is changed | default(false))
+        or (_packages_key_apply_keyserver is changed | default(false))

@@ -12,8 +12,8 @@ Wants=network.target
 Type=oneshot
 RemainAfterExit=yes
 
-{% if valid_network_buffers is defined %}
-{%   for buffer in valid_network_buffers %}
+{% if _tuning_valid_network_buffers is defined %}
+{%   for buffer in _tuning_valid_network_buffers %}
 # Configure ring buffers for {{ buffer.interface }} (detected: {{ buffer.speed | default('unknown') }} speed)
 ExecStart=/usr/sbin/ethtool -G {{ buffer.interface }} rx {{ buffer.rx_buffer }} tx {{ buffer.tx_buffer }}
 ExecStartPost=/bin/sh -c '/usr/sbin/ethtool -g {{ buffer.interface }} | grep -q "RX:.*{{ buffer.rx_buffer }}"'

@@ -6,8 +6,8 @@
 # SSDs: mq-deadline (good for solid state)
 # HDDs: bfq (fairness for rotating media)
 
-{% if optimized_storage_devices is defined %}
-{% for device in optimized_storage_devices %}
+{% if _tuning_optimized_storage_devices is defined %}
+{% for device in _tuning_optimized_storage_devices %}
 # {{ device.name }}: {{ device.scheduler }}
 ACTION=="add|change", KERNEL=="{{ device.name }}", ATTR{queue/scheduler}="{{ device.scheduler }}"
 {% endfor %}

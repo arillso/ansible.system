@@ -41,15 +41,15 @@
             paths: /sys/devices/system/cpu
             patterns: "cpu[0-9]*"
             file_type: directory
-        register: cpu_cores
+        register: _tuning_cpu_cores
 
       - name: Check current CPU governor
         ansible.builtin.slurp:
             src: "{{ item.path }}/cpufreq/scaling_governor"
-        register: current_governor
+        register: _tuning_current_governor
         failed_when: false
-        loop: "{{ cpu_cores.files }}"
-        when: cpu_cores.files is defined
+        loop: "{{ _tuning_cpu_cores.files }}"
+        when: _tuning_cpu_cores.files is defined
 
       # Best-effort immediate apply per CPU. Persistence comes from the
       # cpufreq/cpupower service enabled below. The `Validate CPU
@@ -58,17 +58,17 @@
       # fires and the role bails out.
       - name: Set CPU governor immediately
         ansible.builtin.copy:
-            content: "{{ final_cpu_governor }}"
+            content: "{{ _tuning_final_cpu_governor }}"
             dest: "{{ item.item.path }}/cpufreq/scaling_governor"
             mode: "0644"
         become: true
-        register: governor_result
+        register: _tuning_governor_result
         failed_when: false
-        changed_when: governor_result.rc is defined and governor_result.rc == 0
+        changed_when: _tuning_governor_result.rc is defined and _tuning_governor_result.rc == 0
         when:
             - not item.failed
-            - (item.content | b64decode | trim) != final_cpu_governor
-        loop: "{{ current_governor.results }}"
+            - (item.content | b64decode | trim) != _tuning_final_cpu_governor
+        loop: "{{ _tuning_current_governor.results }}"
 
       - name: Report CPU governor configuration status
         ansible.builtin.debug:
@@ -77,35 +77,35 @@
                 {% if item.failed -%}
                 Could not access governor settings{%- else -%}
                 Current governor: {{ item.content | b64decode | trim }}{%- endif %}
-        loop: "{{ current_governor.results | default([]) }}"
-        when: current_governor.results is defined and current_governor.results | length > 0
+        loop: "{{ _tuning_current_governor.results | default([]) }}"
+        when: _tuning_current_governor.results is defined and _tuning_current_governor.results | length > 0
 
 - name: Verify CPU governor configuration
   block:
       - name: Read final CPU governor settings
         ansible.builtin.slurp:
             src: "{{ item.path }}/cpufreq/scaling_governor"
-        register: final_governor
+        register: _tuning_final_governor
         failed_when: false
-        loop: "{{ cpu_cores.files }}"
-        when: cpu_cores.files is defined
+        loop: "{{ _tuning_cpu_cores.files }}"
+        when: _tuning_cpu_cores.files is defined
 
       - name: Validate CPU governor was applied
         ansible.builtin.assert:
             that:
                 - not item.failed
-                - (item.content | b64decode | trim) == final_cpu_governor
-            fail_msg: "Failed to set CPU governor {{ final_cpu_governor }} for {{ item.item.path | basename }}"
-            success_msg: "CPU governor {{ final_cpu_governor }} successfully applied to {{ item.item.path | basename }}"
-        loop: "{{ final_governor.results }}"
+                - (item.content | b64decode | trim) == _tuning_final_cpu_governor
+            fail_msg: "Failed to set CPU governor {{ _tuning_final_cpu_governor }} for {{ item.item.path | basename }}"
+            success_msg: "CPU governor {{ _tuning_final_cpu_governor }} successfully applied to {{ item.item.path | basename }}"
+        loop: "{{ _tuning_final_governor.results }}"
         when:
             - not ansible_check_mode
-            - final_governor.results is defined
+            - _tuning_final_governor.results is defined
 
 - name: Enable CPU frequency service
   ansible.builtin.systemd:
-      name: "{{ _service_commands[ansible_os_family]['cpufreq'] }}"
+      name: "{{ _tuning_service_commands[ansible_os_family]['cpufreq'] }}"
       enabled: true
       state: started
   become: true
-  when: ansible_os_family in _service_commands
+  when: ansible_os_family in _tuning_service_commands

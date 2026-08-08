@@ -21,16 +21,16 @@
       backup: true
   become: true
   notify: "tuning: reload udev"
-  when: optimized_storage_devices is defined and optimized_storage_devices | length > 0
+  when: _tuning_optimized_storage_devices is defined and _tuning_optimized_storage_devices | length > 0
 
 - name: Apply I/O scheduler immediately for each device
   block:
       - name: Check current I/O scheduler
         ansible.builtin.slurp:
             src: "/sys/block/{{ item.name }}/queue/scheduler"
-        register: current_scheduler
+        register: _tuning_current_scheduler
         failed_when: false
-        loop: "{{ optimized_storage_devices }}"
+        loop: "{{ _tuning_optimized_storage_devices }}"
 
       # Best-effort immediate apply. Persistence comes from the udev
       # rule rendered above (60-io-scheduler.rules); this write only
@@ -40,23 +40,23 @@
         ansible.builtin.shell: |
             echo "{{ item.item.scheduler }}" > /sys/block/{{ item.item.name }}/queue/scheduler
         become: true
-        register: scheduler_result
+        register: _tuning_scheduler_result
         failed_when: false
-        changed_when: scheduler_result.rc == 0
+        changed_when: _tuning_scheduler_result.rc == 0
         when:
             - not item.failed
             - item.item.scheduler not in (item.content | b64decode)
-        loop: "{{ current_scheduler.results }}"
+        loop: "{{ _tuning_current_scheduler.results }}"
 
       - name: Report I/O scheduler configuration status
         ansible.builtin.debug:
             msg: >-
                 Device {{ item.item.name }} ({{ item.item.type }}):
                 {% if item.failed -%}
-                Could not access scheduler settings{%- elif scheduler_result.results[loop.index0].changed -%}
+                Could not access scheduler settings{%- elif _tuning_scheduler_result.results[loop.index0].changed -%}
                 Changed to {{ item.item.scheduler }}{%- else -%}
                 Already using {{ item.item.scheduler }}{%- endif %}
-        loop: "{{ current_scheduler.results }}"
+        loop: "{{ _tuning_current_scheduler.results }}"
         loop_control:
             extended: true
 
@@ -65,9 +65,9 @@
       - name: Read final I/O scheduler settings
         ansible.builtin.slurp:
             src: "/sys/block/{{ item.name }}/queue/scheduler"
-        register: final_scheduler
+        register: _tuning_final_scheduler
         failed_when: false
-        loop: "{{ optimized_storage_devices }}"
+        loop: "{{ _tuning_optimized_storage_devices }}"
 
       - name: Validate I/O scheduler was applied
         ansible.builtin.assert:
@@ -76,5 +76,5 @@
                 - ('[' + item.item.scheduler + ']') in (item.content | b64decode)
             fail_msg: "Failed to set I/O scheduler {{ item.item.scheduler }} for device {{ item.item.name }}"
             success_msg: "I/O scheduler {{ item.item.scheduler }} successfully applied to {{ item.item.name }}"
-        loop: "{{ final_scheduler.results }}"
+        loop: "{{ _tuning_final_scheduler.results }}"
         when: not ansible_check_mode

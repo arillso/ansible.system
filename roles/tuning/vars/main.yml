@@ -29,7 +29,7 @@ _tuning_packages:
         - name: pciutils
 
 # CPU governor mapping based on CPU type
-_cpu_governor_mapping:
+_tuning_cpu_governor_mapping:
     intel:
         performance: "performance"
         balanced: "powersave"
@@ -44,20 +44,20 @@ _cpu_governor_mapping:
         powersave: "powersave"
 
 # I/O scheduler mapping based on storage type
-_io_scheduler_mapping:
+_tuning_io_scheduler_mapping:
     nvme: "none" # NVMe drives work best with none (bypasses kernel scheduler)
     ssd: "mq-deadline" # SSDs work well with mq-deadline
     hdd: "bfq" # HDDs benefit from BFQ for fairness
     default: "mq-deadline"
 
 # GRUB update commands per OS family
-_grub_update_commands:
+_tuning_grub_update_commands:
     Debian: "update-grub"
     RedHat: "grub2-mkconfig -o /boot/grub2/grub.cfg"
     Suse: "grub2-mkconfig -o /boot/grub2/grub.cfg"
 
 # Service management commands per OS family
-_service_commands:
+_tuning_service_commands:
     Debian:
         cpufreq: "cpufrequtils"
     RedHat:
@@ -66,7 +66,7 @@ _service_commands:
         cpufreq: "cpupower"
 
 # Available I/O schedulers to validate against
-_available_io_schedulers:
+_tuning_available_io_schedulers:
     - none
     - mq-deadline
     - kyber
@@ -74,7 +74,7 @@ _available_io_schedulers:
     - cfq
 
 # Available CPU governors to validate against
-_available_cpu_governors:
+_tuning_available_cpu_governors:
     - performance
     - powersave
     - ondemand

@@ -7,12 +7,12 @@
       - name: Read current GRUB configuration
         ansible.builtin.slurp:
             src: /etc/default/grub
-        register: grub_config
+        register: _tuning_grub_config
 
       - name: Parse current GRUB_CMDLINE_LINUX
         ansible.builtin.set_fact:
-            current_grub_cmdline: >-
-                {%- set match = grub_config.content | b64decode |
+            _tuning_current_grub_cmdline: >-
+                {%- set match = _tuning_grub_config.content | b64decode |
                     regex_search('GRUB_CMDLINE_LINUX="([^"]+)"', '\\1') -%}
                 {{ match[0] if match else '' }}
 
@@ -20,10 +20,10 @@
         ansible.builtin.lineinfile:
             path: /etc/default/grub
             regexp: "^GRUB_CMDLINE_LINUX="
-            line: 'GRUB_CMDLINE_LINUX="{{ current_grub_cmdline }} {{ tuning_grub_cmdline_linux_append }}"'
+            line: 'GRUB_CMDLINE_LINUX="{{ _tuning_current_grub_cmdline }} {{ tuning_grub_cmdline_linux_append }}"'
             backup: true
         become: true
         notify: "tuning: update grub"
         when:
             - tuning_grub_cmdline_linux_append is defined
-            - tuning_grub_cmdline_linux_append not in current_grub_cmdline
+            - tuning_grub_cmdline_linux_append not in _tuning_current_grub_cmdline

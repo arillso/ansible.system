@@ -18,13 +18,13 @@
 
 - name: Configure I/O scheduler
   ansible.builtin.include_tasks: io_scheduler.yml
-  when: detected_storage_devices is defined and detected_storage_devices | length > 0
+  when: _tuning_detected_storage_devices is defined and _tuning_detected_storage_devices | length > 0
 
 - name: Configure CPU governor
   ansible.builtin.include_tasks: cpu_governor.yml
   when:
-      - detected_cpu_info is defined
-      - detected_cpu_info.cpufreq_supported | default(false)
+      - _tuning_detected_cpu_info is defined
+      - _tuning_detected_cpu_info.cpufreq_supported | default(false)
 
 - name: Configure transparent huge pages
   ansible.builtin.include_tasks: thp.yml

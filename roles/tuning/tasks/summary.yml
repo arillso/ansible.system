@@ -5,8 +5,8 @@
   ansible.builtin.debug:
       msg:
           - "System tuning configuration applied:"
-          - "  - CPU Governor: {{ final_cpu_governor | default('unchanged') }}"
-          - "  - I/O Scheduler: {{ final_io_scheduler | default('unchanged') }}"
+          - "  - CPU Governor: {{ _tuning_final_cpu_governor | default('unchanged') }}"
+          - "  - I/O Scheduler: {{ _tuning_final_io_scheduler | default('unchanged') }}"
           - "  - Transparent Huge Pages: {{ tuning_transparent_hugepages | default('unchanged') }}"
           - "  - Tuned Profile: {{ tuning_tuned_profile | default('unchanged') }}"
           - "  - Network Tuning: {{ 'enabled' if tuning_network_tuning_enabled else 'disabled' }}"

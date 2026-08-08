@@ -1,5 +1,5 @@
 ---
-# Normalise `packages_keys` into `_pkg_keys_normalised`: a list of
+# Normalise `packages_keys` into `_packages_keys_normalised`: a list of
 # dicts, one per input entry, with these fields always set:
 #
 #   index      0-based position in the original packages_keys list
@@ -16,9 +16,9 @@
 
 - name: Build normalised key dispatch list
   ansible.builtin.set_fact:
-      _pkg_keys_normalised: >-
+      _packages_keys_normalised: >-
           {{
-            _pkg_keys_normalised | default([]) + [{
+            _packages_keys_normalised | default([]) + [{
               'index':    _pkg_keys_index,
               'state':    _pkg_key_state,
               'dispatch': _pkg_key_dispatch,

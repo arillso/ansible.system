@@ -7,7 +7,7 @@
 # the matching bug surface every time something changed (e.g. the
 # 1.1.4 dearmor regression had to be fixed in four places). Now each
 # entry in `packages_keys` is dispatched through `_key_apply.yml` once
-# with normalised metadata pre-computed in `_pkg_keys_normalised`.
+# with normalised metadata pre-computed in `_packages_keys_normalised`.
 
 - name: Normalise packages_keys for dispatch
   ansible.builtin.include_tasks: _keys_normalise.yml
@@ -35,11 +35,11 @@
   become: true
   vars:
       _pkg_keys_present: >-
-          {{ _pkg_keys_normalised | selectattr('state', 'equalto', 'present') | list }}
+          {{ _packages_keys_normalised | selectattr('state', 'equalto', 'present') | list }}
 
 - name: Apply each APT signing key from packages_keys
   ansible.builtin.include_tasks: _key_apply.yml
-  loop: "{{ _pkg_keys_normalised }}"
+  loop: "{{ _packages_keys_normalised }}"
   loop_control:
       loop_var: _pkg_key
       label: "{{ _pkg_key.label }}"
@@ -53,7 +53,7 @@
   ansible.builtin.file:
       path: "{{ _pkg_norm.keyring }}"
       state: absent
-  loop: "{{ _pkg_keys_normalised }}"
+  loop: "{{ _packages_keys_normalised }}"
   loop_control:
       loop_var: _pkg_norm
       label: "{{ _pkg_norm.label }}"

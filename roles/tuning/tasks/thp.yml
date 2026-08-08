@@ -20,7 +20,7 @@
             dest: /sys/kernel/mm/transparent_hugepage/enabled
             mode: "0644"
         become: true
-        register: thp_result
+        register: _tuning_thp_result
         failed_when: false
         when: tuning_transparent_hugepages is defined
 
@@ -37,4 +37,4 @@
             - "tuning: apply thp"
         when:
             - tuning_transparent_hugepages is defined
-            - thp_result is not failed
+            - _tuning_thp_result is not failed

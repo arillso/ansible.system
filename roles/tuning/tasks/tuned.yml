@@ -18,19 +18,19 @@
 
       - name: Get available tuned profiles
         ansible.builtin.command: tuned-adm list
-        register: available_tuned_profiles
+        register: _tuning_available_tuned_profiles
         changed_when: false
 
       - name: Validate tuned profile
         ansible.builtin.fail:
             msg: >-
                 Tuned profile '{{ tuning_tuned_profile }}' is not available.
-                Available profiles: {{ available_tuned_profiles.stdout }}
-        when: tuning_tuned_profile not in available_tuned_profiles.stdout
+                Available profiles: {{ _tuning_available_tuned_profiles.stdout }}
+        when: tuning_tuned_profile not in _tuning_available_tuned_profiles.stdout
 
       - name: Get current tuned profile
         ansible.builtin.command: tuned-adm active
-        register: current_tuned_profile
+        register: _tuning_current_tuned_profile
         changed_when: false
 
       - name: Set tuned profile
@@ -38,7 +38,7 @@
         become: true
         when:
             - tuning_tuned_profile is defined
-            - tuning_tuned_profile not in current_tuned_profile.stdout
+            - tuning_tuned_profile not in _tuning_current_tuned_profile.stdout
         changed_when: true
-        register: tuned_result
-        failed_when: tuned_result.rc != 0
+        register: _tuning_tuned_result
+        failed_when: _tuning_tuned_result.rc != 0

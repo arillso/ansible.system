@@ -36,7 +36,8 @@ depends on the plugin type:
 Filters are the trap: `plugins/filter/nftables.py` and `plugins/filter/toml.py`
 contain no documentation blocks at all. Each filter gets its own sidecar YAML,
 one per filter — not one per Python file. `plugins/filter/to_toml.yml` is the
-reference; it also shows `options`, `requirements` and `seealso`.
+reference for `requirements` and `seealso`; see `plugins/filter/from_toml.yml`
+for an `options` block.
 
 ## Before Opening a PR
 

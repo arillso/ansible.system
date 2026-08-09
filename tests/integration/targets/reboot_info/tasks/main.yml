@@ -1,0 +1,101 @@
+---
+# Integration coverage for the arillso.system.reboot_info module.
+#
+# The module hardcodes /var/run/reboot-required (plugins/modules/reboot_info.py),
+# so this target has to create and remove that exact path to exercise both
+# return branches. A pre-existing marker on the test host is left untouched:
+# it is restored in the always block instead of being deleted.
+
+- name: Record whether the host already reports a pending reboot
+  ansible.builtin.stat:
+      path: /var/run/reboot-required
+  register: reboot_info_marker_before
+
+- name: Check whether the marker path is writable
+  ansible.builtin.command: touch /var/run/.reboot_info_write_probe
+  register: reboot_info_write_probe
+  changed_when: false
+  failed_when: false
+
+- name: End the host when the marker path cannot be manipulated
+  when: reboot_info_write_probe.rc != 0
+  block:
+      - name: Report why reboot_info is not exercised
+        ansible.builtin.debug:
+            msg: >-
+                Skipping reboot_info: /var/run is not writable
+                (rc={{ reboot_info_write_probe.rc }}). This target needs to create and
+                remove /var/run/reboot-required, which requires a writable /var/run
+                and root privileges.
+
+      - name: End the host
+        ansible.builtin.meta: end_host
+
+- name: Remove the write probe
+  ansible.builtin.file:
+      path: /var/run/.reboot_info_write_probe
+      state: absent
+  changed_when: false
+
+- name: Exercise both branches of reboot_info
+  block:
+      - name: Remove the reboot marker so the negative branch is deterministic
+        ansible.builtin.file:
+            path: /var/run/reboot-required
+            state: absent
+
+      - name: Query reboot_info without a marker present
+        arillso.system.reboot_info:
+        register: reboot_info_without_marker
+
+      - name: Assert reboot_info reports no pending reboot
+        ansible.builtin.assert:
+            that:
+                - reboot_info_without_marker.reboot is defined
+                - reboot_info_without_marker.reboot is boolean
+                - not reboot_info_without_marker.reboot
+                - not reboot_info_without_marker.changed
+            fail_msg: >-
+                reboot_info reported {{ reboot_info_without_marker.reboot | default('<undefined>') }}
+                while /var/run/reboot-required was absent.
+
+      - name: Create the reboot marker
+        ansible.builtin.file:
+            path: /var/run/reboot-required
+            state: touch
+            mode: "0644"
+
+      - name: Query reboot_info with a marker present
+        arillso.system.reboot_info:
+        register: reboot_info_with_marker
+
+      - name: Assert reboot_info reports a pending reboot
+        ansible.builtin.assert:
+            that:
+                - reboot_info_with_marker.reboot is defined
+                - reboot_info_with_marker.reboot is boolean
+                - reboot_info_with_marker.reboot
+                - not reboot_info_with_marker.changed
+            fail_msg: >-
+                reboot_info reported {{ reboot_info_with_marker.reboot | default('<undefined>') }}
+                while /var/run/reboot-required was present.
+
+      - name: Query reboot_info in check mode with a marker present
+        arillso.system.reboot_info:
+        check_mode: true
+        register: reboot_info_check_mode
+
+      - name: Assert check mode returns the same result as a normal run
+        ansible.builtin.assert:
+            that:
+                - reboot_info_check_mode.reboot == reboot_info_with_marker.reboot
+                - not reboot_info_check_mode.changed
+            fail_msg: reboot_info returned a different result in check mode.
+
+  always:
+      - name: Restore the marker state the host started with
+        ansible.builtin.file:
+            path: /var/run/reboot-required
+            state: "{{ 'touch' if reboot_info_marker_before.stat.exists else 'absent' }}"
+            mode: "0644"
+        changed_when: false

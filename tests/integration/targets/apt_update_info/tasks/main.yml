@@ -1,0 +1,70 @@
+---
+# Integration coverage for the arillso.system.apt_update_info module.
+#
+# The module needs python-apt and root: it calls cache.update()
+# (plugins/modules/apt_update_info.py) and fails without privileges. The target
+# therefore guards itself on the package manager and on python-apt being
+# importable rather than relying on a skip/<platform> alias — under
+# `ansible-test integration --docker` only skip/docker, skip/python* and
+# skip/<arch> are evaluated, so a platform alias would not skip anything.
+#
+# The assertions cover the shape of the return value only. The set of
+# upgradable packages depends on how old the container image is, so asserting
+# a non-empty list would be flaky.
+
+- name: Check whether python-apt is importable on the test host
+  ansible.builtin.command: "{{ ansible_python_interpreter | default('/usr/bin/python3') }} -c 'import apt'"
+  register: apt_update_info_python_apt
+  changed_when: false
+  failed_when: false
+
+- name: End the host when apt_update_info cannot be exercised here
+  when: >-
+      ansible_facts['pkg_mgr'] != 'apt'
+      or apt_update_info_python_apt.rc != 0
+      or ansible_facts['effective_user_id'] != 0
+  block:
+      - name: Report why apt_update_info is not exercised
+        ansible.builtin.debug:
+            msg: >-
+                Skipping apt_update_info: pkg_mgr is {{ ansible_facts['pkg_mgr'] }},
+                python-apt import returned rc={{ apt_update_info_python_apt.rc }},
+                effective uid is {{ ansible_facts['effective_user_id'] }}. The module
+                requires an APT-based host with python-apt, running as root so that
+                cache.update() can refresh the APT cache.
+
+      - name: End the host
+        ansible.builtin.meta: end_host
+
+- name: Query apt_update_info
+  arillso.system.apt_update_info:
+  register: apt_update_info_result
+
+- name: Assert apt_update_info returns a package list
+  ansible.builtin.assert:
+      that:
+          - apt_update_info_result.packages is defined
+          - apt_update_info_result.packages is iterable
+          - apt_update_info_result.packages is not string
+          - not apt_update_info_result.changed
+      fail_msg: apt_update_info did not return a usable packages list.
+
+- name: Assert every reported package carries the documented keys
+  ansible.builtin.assert:
+      that:
+          - item.package is defined
+          - item.package is string
+          - item.current is defined
+          - item.current is string
+          - item.available is defined
+          - item.available is string
+      fail_msg: "apt_update_info returned an entry without the documented keys: {{ item }}"
+  loop: "{{ apt_update_info_result.packages }}"
+  loop_control:
+      label: "{{ item.package | default('<unnamed>') }}"
+
+- name: Report how many upgradable packages were seen
+  ansible.builtin.debug:
+      msg: >-
+          apt_update_info reported {{ apt_update_info_result.packages | length }}
+          upgradable package(s).

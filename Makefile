@@ -1,4 +1,4 @@
-.PHONY: help lint lint-ansible lint-yaml lint-python format test test-unit test-molecule test-molecule-% build clean install-dev
+.PHONY: help lint lint-ansible lint-yaml lint-python format test test-unit test-integration test-molecule test-molecule-% build clean install-dev
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -52,6 +52,24 @@ test-unit: ## Run pytest unit suite (skipped when pytest is missing; CI is the g
 	else \
 		echo "Running pytest..."; \
 		pytest tests/unit/; \
+	fi
+
+test-integration: ## Run ansible-test integration targets (skipped when ansible-test/docker are missing; CI is the gate)
+	@if ! command -v ansible-test >/dev/null 2>&1; then \
+		echo "SKIP: ansible-test not installed"; \
+	elif ! docker info >/dev/null 2>&1; then \
+		echo "SKIP: docker daemon not available"; \
+	elif ! pwd -P | grep -q '/ansible_collections/[^/]*/[^/]*$$'; then \
+		echo "SKIP: ansible-test requires the collection to live in"; \
+		echo "      .../ansible_collections/arillso/system/ — CI does this via"; \
+		echo "      actions/checkout with path:. A symlink does not work because"; \
+		echo "      ansible-test resolves the real path; copy the tree instead:"; \
+		echo "        mkdir -p /tmp/ac/ansible_collections/arillso/system"; \
+		echo "        git archive HEAD | tar -x -C /tmp/ac/ansible_collections/arillso/system"; \
+		echo "        cd /tmp/ac/ansible_collections/arillso/system && make test-integration"; \
+	else \
+		echo "Running ansible-test integration..."; \
+		ansible-test integration --docker --color; \
 	fi
 
 # Scenarios declaring the docker driver need a reachable daemon; the qemu (KVM)

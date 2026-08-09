@@ -1,13 +1,16 @@
 # Tests — arillso.system
 
-This collection ships two complementary test suites:
+This collection ships three complementary test suites:
 
-| Layer                  | Path                               | What it verifies                                                    | When it runs                              |
-| ---------------------- | ---------------------------------- | ------------------------------------------------------------------- | ----------------------------------------- |
-| Unit tests             | `tests/unit/`                      | Plugin code in `plugins/{filter,lookup,modules}` (pure Python).     | Every push (`enable_unit_tests` in CI).   |
-| Molecule scenarios     | `extensions/molecule/<role>/`      | Role behaviour against real containers, one scenario per role.      | Manual locally, opt-in matrix in CI.      |
+| Layer               | Path                          | What it verifies                                                | When it runs                             |
+| ------------------- | ----------------------------- | --------------------------------------------------------------- | ---------------------------------------- |
+| Unit tests          | `tests/unit/`                 | Plugin code in `plugins/{filter,lookup,modules}` (pure Python). | Every push (`enable_unit_tests` in CI).  |
+| Integration targets | `tests/integration/targets/`  | The custom modules end-to-end against a live host.              | Every push (`enable_integration_tests`). |
+| Molecule scenarios  | `extensions/molecule/<role>/` | Role behaviour against real containers, one scenario per role.  | Manual locally, opt-in matrix in CI.     |
 
-The unit suite is the fast gate (sub-second). Molecule is the slow gate
+The unit suite is the fast gate (sub-second). Integration targets sit in
+between: they run the modules for real via `ansible-test`, but only cover
+`plugins/modules/`, not the roles. Molecule is the slow gate
 (minutes per scenario) and lives under `extensions/` so it ships inside
 the published collection tarball and runs from a Galaxy-installed
 collection without re-cloning the repo.
@@ -35,6 +38,54 @@ The suite covers:
 - `plugins/modules/reboot_info.py` — marker-file detection logic
   (without instantiating `AnsibleModule`, which couples to the
   ansible-core version).
+
+## Integration targets
+
+One target per custom module under `plugins/modules/`:
+
+```text
+tests/integration/targets/
+├── apt_update_info/
+│   ├── aliases                     # non_destructive
+│   └── tasks/main.yml
+└── reboot_info/
+    ├── aliases                     # non_destructive
+    └── tasks/main.yml
+```
+
+- `reboot_info` — creates and removes `/var/run/reboot-required` (the path
+  the module hardcodes) and asserts both return branches plus check mode.
+  The original marker state is restored in an `always` block, so a host
+  that really does have a pending reboot is left as it was found.
+- `apt_update_info` — asserts the _shape_ of the returned `packages` list:
+  it is a list, and every entry carries `package`, `current` and
+  `available`. The number of upgradable packages depends on how old the
+  container image is, so asserting a non-empty list would be flaky.
+
+Both targets guard themselves and end the host with a `debug` message when
+their preconditions are not met — `reboot_info` needs a writable `/var/run`,
+`apt_update_info` needs an APT-based host with `python-apt` and root. The
+guards are task-level on purpose: under `ansible-test integration --docker`
+only `skip/docker`, `skip/python*` and `skip/<arch>` aliases are honoured,
+so a `skip/<platform>` alias would silently not skip anything.
+
+```bash
+# ansible-test requires the collection to sit in an ansible_collections tree.
+# A symlink does not work — ansible-test resolves the real path.
+mkdir -p /tmp/ac/ansible_collections/arillso/system
+git archive HEAD | tar -x -C /tmp/ac/ansible_collections/arillso/system
+cd /tmp/ac/ansible_collections/arillso/system
+
+make test-integration
+# …which is equivalent to:
+ansible-test integration --docker --color
+
+# Run a single target
+ansible-test integration reboot_info --docker --color
+```
+
+CI does the same relocation with `actions/checkout` and a `path:` input, so
+the reusable workflow can call `ansible-test` directly.
 
 ## Molecule scenarios
 
@@ -137,10 +188,17 @@ The shortest path is to copy an adjacent role's directory and adjust:
 
 ### Running the full matrix in CI
 
-The repo's CI uses
-`arillso/.github/.github/workflows/ci-ansible-collection.yml`, which
-already supports a Molecule job — wire it up by adding a `scenarios:`
-input listing every scenario directory under
-`extensions/molecule/`. Until that input is set, Molecule runs are
-local-only and serve as a documented contract for what the roles
-should do.
+Every scenario is wired into CI via
+`arillso/.github/.github/workflows/ci-ansible-molecule.yml`, called three
+times from `.github/workflows/pull-request.yml`:
+
+- the `molecule` job runs the docker-driver scenarios (`access`,
+  `ansible`, `bitwarden_secrets`, `facts`, `firewall`, `logging`,
+  `network`, `packages`, `python`, `ready`, `shell`, `systemd`,
+  `thermal`),
+- `molecule-zram` and `molecule-tuning` run their kernel-bound scenario
+  under the `qemu` (KVM) driver, because a docker-driver job does not
+  provision QEMU/KVM.
+
+The matrix is pinned explicitly rather than auto-discovered so those two
+scenarios can be routed to the right driver.

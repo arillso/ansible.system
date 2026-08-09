@@ -67,6 +67,17 @@ Key roles:
 - Reusable CI (`arillso/.github`) runs lint, unit tests, and molecule on pull requests
 - Test roles in molecule when available
 
+Two unit-test runners are in use on purpose:
+
+- `make test-unit` (`pytest tests/unit/`) is the fast local smoke test
+- `ansible-test units --docker` in the CI job `unit-test` is the authoritative
+  check; it runs the collection from `ansible_collections/arillso/system`
+  inside a container
+
+They collect tests differently and build different environments, so `make test`
+is not a substitute for the CI run — a green local run does not guarantee green
+CI.
+
 ### Documentation
 
 - Each role should have a README in the role directory

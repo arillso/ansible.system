@@ -2,11 +2,11 @@
 
 This collection ships three complementary test suites:
 
-| Layer               | Path                          | What it verifies                                                | When it runs                             |
-| ------------------- | ----------------------------- | --------------------------------------------------------------- | ---------------------------------------- |
-| Unit tests          | `tests/unit/`                 | Plugin code in `plugins/{filter,lookup,modules}` (pure Python). | Every push (`enable_unit_tests` in CI).  |
-| Integration targets | `tests/integration/targets/`  | The custom modules end-to-end against a live host.              | Every push (`enable_integration_tests`). |
-| Molecule scenarios  | `extensions/molecule/<role>/` | Role behaviour against real containers, one scenario per role.  | Manual locally, opt-in matrix in CI.     |
+| Layer               | Path                          | What it verifies                                                | When it runs                                                                 |
+| ------------------- | ----------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Unit tests          | `tests/unit/`                 | Plugin code in `plugins/{filter,lookup,modules}` (pure Python). | `pytest` locally; `ansible-test units --docker` in CI (`enable_unit_tests`). |
+| Integration targets | `tests/integration/targets/`  | The custom modules end-to-end against a live host.              | Every push (`enable_integration_tests`).                                     |
+| Molecule scenarios  | `extensions/molecule/<role>/` | Role behaviour against real containers, one scenario per role.  | Manual locally, opt-in matrix in CI.                                         |
 
 The unit suite is the fast gate (sub-second). Integration targets sit in
 between: they run the modules for real via `ansible-test`, but only cover
@@ -26,6 +26,14 @@ make test
 # …which is equivalent to:
 pytest tests/unit/
 ```
+
+This is the fast local smoke test. CI runs the same directory through a
+different runner — `ansible-test units --docker` in the `unit-test` job of the
+reusable `ci-ansible-collection.yml`, which checks the collection out under
+`ansible_collections/arillso/system` and runs it in a container. That run is
+authoritative; a green `make test` does not guarantee green CI. `tests/unit/conftest.py`
+keeps the two runners importable from the same paths, but it cannot make the
+environments identical.
 
 The suite covers:
 

@@ -73,6 +73,11 @@ Key roles:
 - Document role variables in defaults/main.yml with comments
 - Keep collection-level documentation in main README.md
 
+### Adding a Role or Plugin
+
+Required files and the per-type plugin documentation layout are documented in
+the `adding-role-or-plugin` skill (`.claude/skills/adding-role-or-plugin/`).
+
 ## Workflows
 
 ### CI/CD

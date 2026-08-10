@@ -98,6 +98,17 @@ This runs ansible-lint, yamllint, and Python linters (ruff, black).
 make test
 ```
 
+This runs `pytest tests/unit/` directly in the repository root, as a fast local
+smoke test. It is deliberately **not** the same runner CI uses: the `unit-test`
+job of the reusable `ci-ansible-collection.yml` runs
+`ansible-test units --docker`, which checks the collection out under
+`ansible_collections/arillso/system` and runs the tests inside a container.
+
+Because the two runners collect tests differently and set up different
+environments, a green `make test` does not guarantee a green CI run.
+`ansible-test units --docker` is the authoritative check; run it locally before
+pushing if you need certainty and have a Docker daemon available.
+
 ### Auto-format
 
 ```bash

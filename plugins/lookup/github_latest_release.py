@@ -64,7 +64,7 @@ from time import sleep  # noqa: E402
 from urllib.error import HTTPError, URLError  # noqa: E402
 
 from ansible.errors import AnsibleError, AnsibleParserError  # noqa: E402
-from ansible.module_utils._text import to_native, to_text  # noqa: E402
+from ansible.module_utils.common.text.converters import to_native, to_text  # noqa: E402
 from ansible.module_utils.urls import open_url  # noqa: E402
 from ansible.plugins.lookup import LookupBase  # noqa: E402
 from ansible.utils.display import Display  # noqa: E402

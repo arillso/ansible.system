@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **plugins**: `plugins/filter/toml.py` and `plugins/lookup/github_latest_release.py`
+  now import `to_text` and `to_native` from
+  `ansible.module_utils.common.text.converters` instead of the deprecated
+  `ansible.module_utils._text`, which ansible-core removes in 2.24. The APIs are
+  identical, so plugin behaviour is unchanged; `.pylintrc` tracks the new module
+  path in `ignored-modules`.
+
 ## [2.0.0] - 2026-08-15
 
 ### Security

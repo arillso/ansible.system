@@ -11,7 +11,7 @@ from datetime import datetime
 
 # pylint: disable=import-error
 from ansible.errors import AnsibleFilterError
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 
 # Importing libraries for writing TOML
 TOMLW_IMPORT_ERROR = None

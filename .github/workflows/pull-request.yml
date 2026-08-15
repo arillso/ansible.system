@@ -22,7 +22,7 @@ permissions:
 
 jobs:
     ci:
-        uses: arillso/.github/.github/workflows/ci-ansible-collection.yml@2026-08-12
+        uses: arillso/.github/.github/workflows/ci-ansible-collection.yml@2026-08-14
         with:
             collection_namespace: arillso
             collection_name: system
@@ -46,7 +46,7 @@ jobs:
         # ("Pull Request"), so without the suffix both the top-level
         # workflow and the nested molecule call would share the same
         # group and GitHub would cancel the molecule run.
-        uses: arillso/.github/.github/workflows/ci-ansible-molecule.yml@2026-08-12
+        uses: arillso/.github/.github/workflows/ci-ansible-molecule.yml@2026-08-14
         with:
             collection_namespace: arillso
             collection_name: system
@@ -64,7 +64,7 @@ jobs:
         # which the reusable provisions only when driver: qemu. Scenarios live
         # under extensions/molecule/, so scenarios_root keeps the reusable's
         # default and the matrix is pinned to the single zram scenario.
-        uses: arillso/.github/.github/workflows/ci-ansible-molecule.yml@2026-08-12
+        uses: arillso/.github/.github/workflows/ci-ansible-molecule.yml@2026-08-14
         with:
             collection_namespace: arillso
             collection_name: system
@@ -77,7 +77,7 @@ jobs:
     molecule-tuning:
         # tuning needs a real kernel (writable /proc/sys, swap file, THP), so
         # it runs under the qemu (KVM) molecule driver like zram above.
-        uses: arillso/.github/.github/workflows/ci-ansible-molecule.yml@2026-08-12
+        uses: arillso/.github/.github/workflows/ci-ansible-molecule.yml@2026-08-14
         with:
             collection_namespace: arillso
             collection_name: system
@@ -88,9 +88,9 @@ jobs:
             concurrency-suffix: molecule-tuning
 
     security-secrets:
-        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-08-12
+        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-08-14
 
     claude-review:
-        uses: arillso/.github/.github/workflows/ai-claude-review.yml@2026-08-12
+        uses: arillso/.github/.github/workflows/ai-claude-review.yml@2026-08-14
         secrets:
             CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

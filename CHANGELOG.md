@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-08-15
+
 ### Security
 
 - **firewall**: the default input chain now rate-limits new SSH connections
@@ -40,6 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `test_sequence` since the docker driver cannot exercise those
   reliably; shared collection requirements live in
   `extensions/molecule/.config/requirements.yml`.
+- Test infrastructure: `ansible-test integration` targets for
+  `apt_update_info` and `reboot_info` under `tests/integration/targets/`,
+  wired into the CI job on pull requests and merges to `main`.
 - New `zram` role: compressed RAM swap via the Debian/Ubuntu `zram-tools`
   package. Bootstraps the zram kernel module (incl.
   `linux-modules-extra-<kernel>` on cloud images), validates the
@@ -538,7 +543,10 @@ Users need to migrate to the new role structure. See role documentation for migr
 
 For releases prior to this changelog format change, see: <https://github.com/arillso/ansible.system/releases>
 
-[Unreleased]: https://github.com/arillso/ansible.system/compare/1.1.4...HEAD
+[Unreleased]: https://github.com/arillso/ansible.system/compare/2.0.0...HEAD
+[2.0.0]: https://github.com/arillso/ansible.system/compare/1.1.6...2.0.0
+[1.1.6]: https://github.com/arillso/ansible.system/compare/1.1.5...1.1.6
+[1.1.5]: https://github.com/arillso/ansible.system/compare/1.1.4...1.1.5
 [1.1.4]: https://github.com/arillso/ansible.system/compare/1.1.3...1.1.4
 [1.1.3]: https://github.com/arillso/ansible.system/compare/1.1.2...1.1.3
 [1.1.2]: https://github.com/arillso/ansible.system/compare/1.1.1...1.1.2

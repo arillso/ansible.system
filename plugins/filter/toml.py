@@ -157,7 +157,7 @@ class FilterModule:
     - to_nice_toml: Converts Python dictionaries to nicely formatted TOML strings.
 
     Requirements:
-    - Python 3.11+ (uses built-in tomllib) OR tomli package for reading TOML
+    - Python 3.11+ (uses built-in tomllib) for reading TOML
     - tomli-w package for writing TOML
     """
 

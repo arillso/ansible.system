@@ -6,7 +6,7 @@ DOCUMENTATION:
     short_description: Convert TOML string to dictionary
     description:
         - Converts a TOML-formatted string into a Python dictionary.
-        - Uses tomllib (Python 3.11+) or tomli package for parsing.
+        - Uses the standard library tomllib for parsing.
     positional: _input
     options:
         _input:

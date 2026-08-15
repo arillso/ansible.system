@@ -49,11 +49,14 @@ jobs:
     security-sbom:
         # Filesystem SBOM: the collection ships no container image and no Go
         # module, so `filesystem` over the repo root is the applicable type.
-        # read is enough: at @2026-06-18 the reusable only generates the SBOM
-        # and stores it via upload-artifact, which needs no contents scope.
-        # It has no release-attach step, so nothing here writes to the repo.
+        # `contents: write` mirrors the reusable's own top-level declaration.
+        # A called workflow can never receive more than the calling job grants,
+        # so a narrower scope here makes GitHub reject the whole workflow with
+        # a startup failure before any job runs — no logs, no annotations.
+        # This run only uploads an artifact, but the grant must match the
+        # declaration, not the subset of it the run actually exercises.
         permissions:
-            contents: read
+            contents: write
         uses: arillso/.github/.github/workflows/security-sbom.yml@2026-08-12
         with:
             artifact-type: filesystem

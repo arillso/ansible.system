@@ -6,12 +6,12 @@ with support for Python versions before and after 3.11.
 """
 
 import tomllib
+from collections.abc import Mapping
 from datetime import datetime
 
 # pylint: disable=import-error
 from ansible.errors import AnsibleFilterError
 from ansible.module_utils._text import to_text
-from ansible.module_utils.common._collections_compat import Mapping
 
 # Importing libraries for writing TOML
 TOMLW_IMPORT_ERROR = None

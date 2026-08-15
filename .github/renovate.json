@@ -5,6 +5,11 @@
         {
             "matchPackageNames": ["ansible-core"],
             "enabled": false
+        },
+        {
+            "description": "Flagged as abandoned by release inactivity, not deprecated. Both are still in use and have no equivalent replacement: molecule-qemu drives the KVM scenarios that need a real kernel (zram, tuning), and tomli-w writes TOML for the to_toml filter, which the standard library cannot do.",
+            "matchPackageNames": ["molecule-qemu", "tomli-w"],
+            "enabled": false
         }
     ],
     "customManagers": [

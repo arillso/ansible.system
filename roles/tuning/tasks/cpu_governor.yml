@@ -4,7 +4,7 @@
 
 - name: Install CPU frequency utilities
   ansible.builtin.package:
-      name: "{{ 'cpufrequtils' if ansible_os_family == 'Debian' else 'kernel-tools' }}"
+      name: "{{ 'cpufrequtils' if ansible_facts['os_family'] == 'Debian' else 'kernel-tools' }}"
       state: present
   become: true
 
@@ -20,7 +20,7 @@
             backup: true
         become: true
         notify: "tuning: restart cpufrequtils"
-        when: ansible_os_family == "Debian"
+        when: ansible_facts['os_family'] == "Debian"
 
       - name: Create cpupower configuration (RedHat/CentOS)
         ansible.builtin.template:
@@ -32,7 +32,7 @@
             backup: true
         become: true
         notify: "tuning: restart cpupower"
-        when: ansible_os_family in ["RedHat", "Suse"]
+        when: ansible_facts['os_family'] in ["RedHat", "Suse"]
 
 - name: Apply CPU governor immediately
   block:
@@ -104,8 +104,8 @@
 
 - name: Enable CPU frequency service
   ansible.builtin.systemd:
-      name: "{{ _tuning_service_commands[ansible_os_family]['cpufreq'] }}"
+      name: "{{ _tuning_service_commands[ansible_facts['os_family']]['cpufreq'] }}"
       enabled: true
       state: started
   become: true
-  when: ansible_os_family in _tuning_service_commands
+  when: ansible_facts['os_family'] in _tuning_service_commands

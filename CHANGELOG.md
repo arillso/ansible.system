@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-08-16
+
+### Fixed
+
+- **roles**: `tuning` and `facts` now read facts through `ansible_facts` instead
+  of the auto-injected top-level variables (`ansible_env`, `ansible_os_family`,
+  `ansible_processor`, `ansible_devices`, `ansible_interfaces`,
+  `ansible_mounts`, `ansible_date_time`). `INJECT_FACTS_AS_VARS` defaults to
+  `True` today but is deprecated and drops in ansible-core 2.24, which would
+  have broken both roles for anyone who already turned injection off. The
+  `gather_subset` filter patterns in `roles/tuning/tasks/system_detection.yml`
+  keep the `ansible_` prefix, because they match fact key names rather than
+  resolving variables.
+
 ### Changed
 
 - **plugins**: `plugins/filter/toml.py` and `plugins/lookup/github_latest_release.py`
@@ -15,6 +29,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ansible.module_utils._text`, which ansible-core removes in 2.24. The APIs are
   identical, so plugin behaviour is unchanged; `.pylintrc` tracks the new module
   path in `ignored-modules`.
+- **plugins/filter**: `toml.py` imports `Mapping` from `collections.abc` instead
+  of the deprecated `ansible.module_utils.common._collections_compat` shim,
+  which ansible-core removes in 2.24.
+- **plugins/filter**: dropped the dead `toml` fallback import from `toml.py`.
+  `tomli-w` is a hard requirement, so the fallback branch never ran; removing it
+  also clears a CodeQL `py/import-own-module` false positive and the
+  `import-self` pylint suppression it needed.
+
+### Removed
+
+- **docs**: the `toml` filter no longer documents a `tomli` reading fallback.
+  The collection requires ansible-core 2.18+ and Python 3.12+, so stdlib
+  `tomllib` is always present and the documented fallback never existed in code.
 
 ## [2.0.0] - 2026-08-15
 
@@ -552,7 +579,8 @@ Users need to migrate to the new role structure. See role documentation for migr
 
 For releases prior to this changelog format change, see: <https://github.com/arillso/ansible.system/releases>
 
-[Unreleased]: https://github.com/arillso/ansible.system/compare/2.0.0...HEAD
+[Unreleased]: https://github.com/arillso/ansible.system/compare/2.0.1...HEAD
+[2.0.1]: https://github.com/arillso/ansible.system/compare/2.0.0...2.0.1
 [2.0.0]: https://github.com/arillso/ansible.system/compare/1.1.6...2.0.0
 [1.1.6]: https://github.com/arillso/ansible.system/compare/1.1.5...1.1.6
 [1.1.5]: https://github.com/arillso/ansible.system/compare/1.1.4...1.1.5

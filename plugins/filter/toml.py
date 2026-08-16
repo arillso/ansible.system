@@ -19,12 +19,8 @@ TOMLW_IMPORT_ERROR = None
 try:
     import tomli_w as tomlw
 except ImportError:
-    try:
-        # pylint: disable=import-self
-        import toml as tomlw
-    except ImportError:
-        tomlw = None
-        TOMLW_IMPORT_ERROR = 'A Python library for writing TOML is required ("tomli-w" or "toml").'
+    tomlw = None
+    TOMLW_IMPORT_ERROR = 'A Python library for writing TOML is required ("tomli-w").'
 
 
 def from_toml(toml_string):
@@ -161,8 +157,8 @@ class FilterModule:
     - to_nice_toml: Converts Python dictionaries to nicely formatted TOML strings.
 
     Requirements:
-    - Python 3.11+ (uses built-in tomllib) OR tomli package for reading TOML
-    - tomli-w package (or toml as fallback) for writing TOML
+    - Python 3.11+ (uses built-in tomllib) for reading TOML
+    - tomli-w package for writing TOML
     """
 
     def filters(self):

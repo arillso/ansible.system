@@ -6,10 +6,10 @@ DOCUMENTATION:
     short_description: Convert variable to TOML string
     description:
         - Converts an Ansible variable (dict) into a TOML string representation.
-        - This filter uses the tomli-w library (or toml as fallback) for writing TOML.
+        - This filter uses the tomli-w library for writing TOML.
         - For reading TOML, use the companion filter C(from_toml).
     requirements:
-        - tomli-w (Python < 3.11) or toml library
+        - tomli-w
     seealso:
         - plugin: arillso.system.from_toml
           plugin_type: filter

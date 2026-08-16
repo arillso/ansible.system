@@ -1,7 +1,7 @@
 [MAIN]
 # Ansible ships its runtime libraries as a collection that pylint cannot
 # resolve statically, so the import graph is incomplete during linting.
-ignored-modules=ansible.module_utils._text,
+ignored-modules=ansible.module_utils.common.text.converters,
                 ansible.module_utils.basic,
                 ansible.module_utils.urls,
                 apt

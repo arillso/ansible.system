@@ -94,4 +94,4 @@ tuning_sysctl_file: /etc/sysctl.d/99-tuning.conf
 tuning_network_sysctl_file: /etc/sysctl.d/99-network-tuning.conf
 
 # Packages
-tuning_packages_list: "{{ _tuning_packages[ansible_os_family] | default([]) }}"
+tuning_packages_list: "{{ _tuning_packages[ansible_facts['os_family']] | default([]) }}"

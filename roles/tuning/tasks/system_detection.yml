@@ -15,8 +15,8 @@
 - name: Detect CPU information using facts
   ansible.builtin.set_fact:
       _tuning_detected_cpu_vendor: >-
-          {%- if 'Intel' in ansible_processor[1] -%}
-          intel{%- elif 'AMD' in ansible_processor[1] -%}
+          {%- if 'Intel' in ansible_facts['processor'][1] -%}
+          intel{%- elif 'AMD' in ansible_facts['processor'][1] -%}
           amd{%- else -%}
           unknown{%- endif -%}
 
@@ -29,14 +29,14 @@
   ansible.builtin.set_fact:
       _tuning_detected_cpu_info:
           vendor: "{{ _tuning_detected_cpu_vendor }}"
-          model: "{{ ansible_processor[1] }}"
+          model: "{{ ansible_facts['processor'][1] }}"
           cpufreq_supported: "{{ _tuning_cpufreq_check.stat.exists }}"
 
 - name: Detect storage devices using facts
   ansible.builtin.set_fact:
       _tuning_detected_storage_devices: >-
           {{
-            ansible_devices
+            ansible_facts['devices']
             | dict2items
             | selectattr('value.type', 'defined')
             | selectattr('value.type', 'equalto', 'disk')
@@ -49,7 +49,7 @@
   ansible.builtin.set_fact:
       _tuning_detected_network_interfaces: >-
           {{
-            ansible_interfaces
+            ansible_facts['interfaces']
             | difference(['lo'])
             | reject('match', '^(docker|br-|veth|virbr).*')
             | reject('contains', '@')

@@ -30,7 +30,7 @@
         ansible.builtin.set_fact:
             _tuning_swap_mount_point: >-
                 {%- set swap_dir = tuning_swap_file_path | dirname -%}
-                {%- for mount in ansible_mounts -%}
+                {%- for mount in ansible_facts['mounts'] -%}
                 {%- if swap_dir.startswith(mount.mount) -%}
                 {{ mount.mount }}{%- endif -%}
                 {%- endfor -%}
@@ -38,7 +38,7 @@
       - name: Get available space from mount facts
         ansible.builtin.set_fact:
             _tuning_available_space_mb: >-
-                {%- for mount in ansible_mounts -%}
+                {%- for mount in ansible_facts['mounts'] -%}
                 {%- if mount.mount == _tuning_swap_mount_point -%}
                 {{ (mount.size_available / 1024 / 1024) | int }}{%- endif -%}
                 {%- endfor -%}

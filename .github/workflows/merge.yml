@@ -25,7 +25,7 @@ jobs:
             collection_namespace: arillso
             collection_name: system
             # renovate: datasource=github-releases depName=python/cpython extractVersion=^v(?<version>3\.\d+)
-            python_version: "3.12"
+            python_version: "3.13"
             enable_unit_tests: true
             enable_integration_tests: true
 

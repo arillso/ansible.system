@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **ci**: reusable workflow refs and the Renovate preset pin now point at the
+  `2026-08-17` tag of `arillso/.github`. That tag derives the controller Python
+  version from the ansible-core branch, so sanity tests run on 3.14 for
+  `stable-2.20` and on 3.13 for `stable-2.18`/`stable-2.19` instead of being
+  capped at 3.12, and the preset raises the `ansible-core` `allowedVersions`
+  ceiling from `<3.14` to `<3.15`.
+
 ## [2.0.1] - 2026-08-16
 
 ### Fixed

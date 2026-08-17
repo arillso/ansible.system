@@ -27,7 +27,7 @@ jobs:
             collection_namespace: arillso
             collection_name: system
             # renovate: datasource=github-releases depName=python/cpython extractVersion=^v(?<version>3\.\d+)
-            python_version: "3.12"
+            python_version: "3.13"
             enable_unit_tests: true
             enable_integration_tests: true
 
@@ -51,7 +51,7 @@ jobs:
             collection_namespace: arillso
             collection_name: system
             # renovate: datasource=github-releases depName=python/cpython extractVersion=^v(?<version>3\.\d+)
-            python_version: "3.12"
+            python_version: "3.13"
             scenarios: >-
                 ["access", "ansible", "bitwarden_secrets", "facts",
                  "firewall", "logging", "network", "packages", "python",
@@ -70,7 +70,7 @@ jobs:
             collection_name: system
             driver: qemu
             # renovate: datasource=github-releases depName=python/cpython extractVersion=^v(?<version>3\.\d+)
-            python_version: "3.12"
+            python_version: "3.13"
             scenarios: '["zram"]'
             concurrency-suffix: molecule-zram
 
@@ -83,7 +83,7 @@ jobs:
             collection_name: system
             driver: qemu
             # renovate: datasource=github-releases depName=python/cpython extractVersion=^v(?<version>3\.\d+)
-            python_version: "3.12"
+            python_version: "3.13"
             scenarios: '["tuning"]'
             concurrency-suffix: molecule-tuning
 

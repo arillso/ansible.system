@@ -47,7 +47,7 @@
       - _pkg_key.state == 'present'
       - _pkg_key.dispatch != 'unknown'
   vars:
-      _pkg_key_item: "{{ packages_keys[_pkg_key.index] }}"
+      _pkg_key_item: "{{ _pkg_key.item }}"
 
 - name: Remove APT signing keys (absent state)
   ansible.builtin.file:

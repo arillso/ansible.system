@@ -18,3 +18,39 @@
       - name: Apply packages role
         ansible.builtin.include_role:
             name: arillso.system.packages
+
+      # Two consecutive `keys` includes, one key each, mirror how consuming
+      # roles call this role (tailscale sets its key, alloy then sets
+      # grafana's). `_packages_keys_normalised` used to survive between the
+      # two calls, so the second run re-processed the first key's entry and
+      # wrote one vendor's key into the other's keyring.
+      - name: Apply first signing key
+        ansible.builtin.include_role:
+            name: arillso.system.packages
+            tasks_from: keys
+        vars:
+            packages_keys:
+                - url: https://pkgs.tailscale.com/stable/ubuntu/noble.noarmor.gpg
+                  state: present
+                  keyring: /usr/share/keyrings/molecule-first-keyring.gpg
+                  name: molecule-first
+
+      - name: Record normalised list after the first key
+        ansible.builtin.set_fact:
+            _molecule_keys_after_first: "{{ _packages_keys_normalised }}"
+
+      - name: Apply second signing key
+        ansible.builtin.include_role:
+            name: arillso.system.packages
+            tasks_from: keys
+        vars:
+            packages_keys:
+                - url: https://apt.grafana.com/gpg.key
+                  state: present
+                  keyring: /usr/share/keyrings/molecule-second-keyring.gpg
+                  name: molecule-second
+                  dearmor: true
+
+      - name: Record normalised list after the second key
+        ansible.builtin.set_fact:
+            _molecule_keys_after_second: "{{ _packages_keys_normalised }}"

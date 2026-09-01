@@ -26,3 +26,35 @@
         ansible.builtin.assert:
             that:
                 - _jq.rc == 0
+
+      - name: Assert each keys include saw only its own entry
+        ansible.builtin.assert:
+            that:
+                - _molecule_keys_after_first | length == 1
+                - _molecule_keys_after_first[0].label == 'molecule-first'
+                - _molecule_keys_after_second | length == 1
+                - _molecule_keys_after_second[0].label == 'molecule-second'
+
+      - name: Assert url and keyring belong to the same key
+        ansible.builtin.assert:
+            that:
+                - "'molecule-second' in _molecule_keys_after_second[0].keyring"
+                - "'grafana' in _molecule_keys_after_second[0].item.url"
+
+      - name: Stat the keyring written by the first include
+        ansible.builtin.stat:
+            path: /usr/share/keyrings/molecule-first-keyring.gpg
+        register: _molecule_first_keyring
+
+      - name: Stat the keyring written by the second include
+        ansible.builtin.stat:
+            path: /usr/share/keyrings/molecule-second-keyring.gpg
+        register: _molecule_second_keyring
+
+      - name: Assert both keyrings exist and hold different keys
+        ansible.builtin.assert:
+            that:
+                - _molecule_first_keyring.stat.exists
+                - _molecule_second_keyring.stat.exists
+                - _molecule_first_keyring.stat.checksum
+                  != _molecule_second_keyring.stat.checksum

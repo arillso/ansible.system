@@ -26,3 +26,21 @@
         ansible.builtin.assert:
             that:
                 - _jq.rc == 0
+
+      - name: Stat the keyring written by the first include
+        ansible.builtin.stat:
+            path: /usr/share/keyrings/molecule-first-keyring.gpg
+        register: _molecule_first_keyring
+
+      - name: Stat the keyring written by the second include
+        ansible.builtin.stat:
+            path: /usr/share/keyrings/molecule-second-keyring.gpg
+        register: _molecule_second_keyring
+
+      - name: Assert both keyrings exist and hold different keys
+        ansible.builtin.assert:
+            that:
+                - _molecule_first_keyring.stat.exists
+                - _molecule_second_keyring.stat.exists
+                - _molecule_first_keyring.stat.checksum
+                  != _molecule_second_keyring.stat.checksum

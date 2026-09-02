@@ -2,7 +2,7 @@
 # Normalise `packages_keys` into `_packages_keys_normalised`: a list of
 # dicts, one per input entry, with these fields always set:
 #
-#   index      0-based position in the original packages_keys list
+#   item       the raw entry from packages_keys
 #   state      'present' (default) or 'absent'
 #   dispatch   'url-direct' | 'url-dearmor' | 'keyserver' | 'data'
 #              | 'unknown' (entry has no valid combination)
@@ -14,12 +14,16 @@
 # the same `default(...)` Jinja expression that the original eight
 # tasks needed.
 
+- name: Reset normalised key dispatch list
+  ansible.builtin.set_fact:
+      _packages_keys_normalised: []
+
 - name: Build normalised key dispatch list
   ansible.builtin.set_fact:
       _packages_keys_normalised: >-
           {{
             _packages_keys_normalised | default([]) + [{
-              'index':    _pkg_keys_index,
+              'item':     _pkg_keys_item,
               'state':    _pkg_key_state,
               'dispatch': _pkg_key_dispatch,
               'label':    _pkg_key_label,
@@ -30,7 +34,6 @@
   loop: "{{ packages_keys }}"
   loop_control:
       loop_var: _pkg_keys_item
-      index_var: _pkg_keys_index
       label: >-
           {{ _pkg_keys_item.name
              | default(_pkg_keys_item.id | default('custom'))

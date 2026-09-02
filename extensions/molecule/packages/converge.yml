@@ -19,6 +19,16 @@
         ansible.builtin.include_role:
             name: arillso.system.packages
 
+      # The dearmor branch below shells out to gpg, which the bookworm
+      # image does not ship. Installing it here keeps the two includes
+      # exercising different dispatch types (url-direct vs url-dearmor) —
+      # the mismatch this scenario guards against was only visible because
+      # the two keys took different branches.
+      - name: Ensure gpg is available for the dearmor branch
+        ansible.builtin.package:
+            name: gnupg
+            state: present
+
       # Two consecutive `keys` includes, one key each, mirror how consuming
       # roles call this role (tailscale sets its key, alloy then sets
       # grafana's). `_packages_keys_normalised` used to survive between the
@@ -35,9 +45,16 @@
                   keyring: /usr/share/keyrings/molecule-first-keyring.gpg
                   name: molecule-first
 
-      - name: Record normalised list after the first key
-        ansible.builtin.set_fact:
-            _molecule_keys_after_first: "{{ _packages_keys_normalised }}"
+      # Asserted here rather than in verify.yml: molecule runs converge and
+      # verify as separate ansible-playbook processes, and this scenario
+      # configures no fact cache, so a non-cacheable set_fact would be
+      # undefined by the time verify runs.
+      - name: Assert the first include saw only its own entry
+        ansible.builtin.assert:
+            that:
+                - _packages_keys_normalised | length == 1
+                - _packages_keys_normalised[0].label == 'molecule-first'
+                - "'tailscale' in _packages_keys_normalised[0].item.url"
 
       - name: Apply second signing key
         ansible.builtin.include_role:
@@ -51,6 +68,14 @@
                   name: molecule-second
                   dearmor: true
 
-      - name: Record normalised list after the second key
-        ansible.builtin.set_fact:
-            _molecule_keys_after_second: "{{ _packages_keys_normalised }}"
+      - name: Assert the first entry did not leak into the second include
+        ansible.builtin.assert:
+            that:
+                - _packages_keys_normalised | length == 1
+                - _packages_keys_normalised[0].label == 'molecule-second'
+
+      - name: Assert url and keyring belong to the same key
+        ansible.builtin.assert:
+            that:
+                - "'molecule-second' in _packages_keys_normalised[0].keyring"
+                - "'grafana' in _packages_keys_normalised[0].item.url"

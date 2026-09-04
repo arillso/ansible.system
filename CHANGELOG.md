@@ -7,14 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-09-04
+
+### Fixed
+
+- **packages**: `_packages_keys_normalised` is a `set_fact`, so it survived
+  between `tasks_from: keys` includes. A second consuming role re-processed the
+  first role's entry and wrote one vendor's key into the other's keyring, which
+  broke `apt update`. The normalised list is now reset at the start of
+  `_keys_normalise.yml`, and each entry carries its own raw `item` instead of an
+  `index` back into the caller's `packages_keys`.
+
 ### Changed
 
 - **ci**: reusable workflow refs and the Renovate preset pin now point at the
-  `2026-08-17` tag of `arillso/.github`. That tag derives the controller Python
-  version from the ansible-core branch, so sanity tests run on 3.14 for
-  `stable-2.20` and on 3.13 for `stable-2.18`/`stable-2.19` instead of being
-  capped at 3.12, and the preset raises the `ansible-core` `allowedVersions`
-  ceiling from `<3.14` to `<3.15`.
+  `2026-08-31` tag of `arillso/.github`. The `2026-08-17` tag derives the
+  controller Python version from the ansible-core branch, so sanity tests run on
+  3.14 for `stable-2.20` and on 3.13 for `stable-2.18`/`stable-2.19` instead of
+  being capped at 3.12, and the preset raises the `ansible-core`
+  `allowedVersions` ceiling from `<3.14` to `<3.15`.
 
 ## [2.0.1] - 2026-08-16
 

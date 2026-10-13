@@ -4,8 +4,8 @@ ansible-lint>=26.9.0
 
 # Linting and Formatting
 yamllint>=1.38.0
-ruff>=0.16.10
-black>=26.10.0
+ruff>=0.17.0
+black>=26.10.1
 
 # Testing
 molecule>=26.9.0

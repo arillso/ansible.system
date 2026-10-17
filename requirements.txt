@@ -1,6 +1,6 @@
 # Ansible
 ansible-core>=2.18.0
-ansible-lint>=26.10.0
+ansible-lint>=26.10.1
 
 # Linting and Formatting
 yamllint>=1.38.0

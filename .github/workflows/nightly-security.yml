@@ -31,6 +31,10 @@ jobs:
         uses: arillso/.github/.github/workflows/security-code.yml@2026-10-24
         with:
             languages: '["python"]'
+            # The reusable defaults to 3.12, but requirements.txt needs >=3.13
+            # (sphinx>=9.2.0). Kept in step with pull-request.yml / merge.yml.
+            # renovate: datasource=github-releases depName=python/cpython extractVersion=^v(?<version>3\.\d+)
+            python-version: "3.13"
             concurrency-suffix: security-code
 
     security-config:

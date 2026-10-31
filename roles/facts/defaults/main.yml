@@ -53,6 +53,7 @@ facts_cloud_providers_enabled:
     - "digitalocean"
     - "hetzner"
     - "gcp"
+    - "vultr"
     - "generic"
 
 # Security facts configuration

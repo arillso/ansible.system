@@ -7,12 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.3] - 2026-10-31
+
 ### Fixed
 
+- **shell**: the MOTD printed two conflicting node types. The header line is
+  dropped; the footer's `shell_node_type` is the only one shown.
+- **shell**: memory below 1 GB rendered as `.8 GB` because `bc` drops the
+  leading zero. The value is now formatted with `awk`.
+- **shell**: the footer, including its error fallback, showed placeholder
+  security and support contacts. `enterprise_security_contact` and
+  `enterprise_support_contact` now render only when set, and their values are
+  passed as quoted `printf` arguments.
+- **facts**: the cloud fact reported provider `auto`. The provider is now
+  resolved at template time from the gathered DMI facts, limited to
+  `facts_cloud_providers_enabled`; containers stay `generic`. `vultr` is added
+  to the default `facts_cloud_providers_enabled`, so Vultr hosts are detected
+  without extra configuration. Hosts with a cache from 2.0.2 keep the old
+  values until `facts_cache_ttl_cloud` expires.
+- **facts**: GCP metadata requests now send `Metadata-Flavor: Google`, AWS
+  requests use an IMDSv2 token, `curl` fails on HTTP errors, and
+  `metadata_available` is `true` only when the instance ID was fetched.
+- **facts**: `facts_enable_cloud_metadata: false` had no effect because the
+  script read a shell variable of that name. The Ansible variable is now
+  templated into the script.
 - **ci**: the nightly CodeQL job installed `requirements.txt` on Python 3.12,
   the default of `security-code.yml`, and failed once `sphinx>=9.2.0` (requires
   Python 3.13 or newer) landed. `nightly-security.yml` now pins
   `python-version: "3.13"`, matching `pull-request.yml` and `merge.yml`.
+
+### Changed
+
+- **ci**: reusable workflow refs and the Renovate preset pin now point at the
+  `2026-10-31` tag of `arillso/.github`.
+- **deps**: Python development dependencies, molecule image digests and the
+  pinned `.python-version` (3.15.1) were updated by Renovate.
 
 ## [2.0.2] - 2026-09-04
 
@@ -606,7 +635,9 @@ Users need to migrate to the new role structure. See role documentation for migr
 
 For releases prior to this changelog format change, see: <https://github.com/arillso/ansible.system/releases>
 
-[Unreleased]: https://github.com/arillso/ansible.system/compare/2.0.1...HEAD
+[Unreleased]: https://github.com/arillso/ansible.system/compare/2.0.3...HEAD
+[2.0.3]: https://github.com/arillso/ansible.system/compare/2.0.2...2.0.3
+[2.0.2]: https://github.com/arillso/ansible.system/compare/2.0.1...2.0.2
 [2.0.1]: https://github.com/arillso/ansible.system/compare/2.0.0...2.0.1
 [2.0.0]: https://github.com/arillso/ansible.system/compare/1.1.6...2.0.0
 [1.1.6]: https://github.com/arillso/ansible.system/compare/1.1.5...1.1.6

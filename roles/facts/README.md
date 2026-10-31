@@ -35,7 +35,7 @@ For detailed documentation including all variables, examples, and usage instruct
 | `facts_cache_dir`                  | `/var/cache/ansible-facts`                   | Cache directory                       |
 | `facts_cache_default_ttl`          | `300`                                        | Default cache TTL in seconds          |
 | `facts_enable_cloud_metadata`      | `true`                                       | Collect cloud provider metadata       |
-| `facts_cloud_providers_enabled`    | `[aws, digitalocean, hetzner, gcp, generic]` | Cloud providers to probe              |
+| `facts_cloud_providers_enabled`    | `[aws, digitalocean, hetzner, gcp, vultr, generic]` | Cloud providers to probe              |
 | `facts_enable_security_updates`    | `true`                                       | Collect pending security update facts |
 | `facts_enable_container_detection` | `true`                                       | Detect container runtimes             |
 | `facts_timeout_default`            | `5`                                          | Default probe timeout in seconds      |

@@ -163,7 +163,7 @@ argument_specs:
             facts_cloud_providers_enabled:
                 type: list
                 elements: str
-                default: ["aws", "digitalocean", "hetzner", "gcp", "generic"]
+                default: ["aws", "digitalocean", "hetzner", "gcp", "vultr", "generic"]
                 description: "List of cloud providers to detect and support"
 
             # Security facts configuration

@@ -12,7 +12,7 @@ readonly TIMEOUT="{{ facts_timeout_default | default(5) }}"
 readonly MAX_RETRIES="{{ facts_max_retries | default(1) }}"
 readonly METADATA_BASE_URL="{{ facts_cloud_metadata_base_url | default('http://169.254.169.254') }}"
 readonly DEBUG_ENABLED="{{ facts_debug_enabled | default(false) }}"
-{#- Default provider from the gathered DMI facts; containers report the host's DMI, so they stay generic #}
+{# Default provider from the gathered DMI facts; containers report the host's DMI, so they stay generic #}
 {%- set _vendor = ansible_facts['system_vendor'] | default('') | lower %}
 {%- set _bios = ansible_facts['bios_version'] | default('') | lower %}
 {%- set _detected = 'generic' %}
@@ -111,31 +111,6 @@ write_cache() {
 }
 
 # Network operations with proper error handling
-check_url_with_retry() {
-    local url="$1"
-    local retries="${2:-$MAX_RETRIES}"
-    local timeout="${3:-$TIMEOUT}"
-
-    for ((i=0; i<=retries; i++)); do
-        local http_code
-        http_code=$(curl -s --connect-timeout "$timeout" --max-time "$timeout" \
-                    -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
-
-        if [[ "$http_code" == "200" ]]; then
-            log_debug "URL check successful: $url (attempt $((i+1)))"
-            return 0
-        fi
-
-        if [[ $i -lt $retries ]]; then
-            log_debug "URL check failed: $url (attempt $((i+1))), retrying..."
-            sleep 0.5
-        fi
-    done
-
-    log_debug "URL check failed after $((retries+1)) attempts: $url"
-    return 1
-}
-
 fetch_metadata_with_retry() {
     local url="$1"
     local retries="${2:-$MAX_RETRIES}"
@@ -160,30 +135,6 @@ fetch_metadata_with_retry() {
     done
 
     log_debug "Metadata fetch failed after $((retries+1)) attempts: $url"
-    return 1
-}
-
-# Enhanced check for specific provider identification
-check_provider_specific() {
-    local provider="$1"
-    local url="$2"
-    local expected_content="${3:-}"
-
-    local response
-    response=$(curl -s --connect-timeout "$TIMEOUT" --max-time "$TIMEOUT" "$url" 2>/dev/null || echo "")
-
-    if [[ -n "$response" && "$response" != "null" ]]; then
-        if [[ -n "$expected_content" ]]; then
-            if echo "$response" | grep -q "$expected_content"; then
-                log_debug "Provider $provider confirmed with expected content in response"
-                return 0
-            fi
-        else
-            log_debug "Provider $provider confirmed with valid response"
-            return 0
-        fi
-    fi
-    log_debug "Provider $provider check failed or no valid response"
     return 1
 }
 
@@ -280,7 +231,7 @@ get_cloud_metadata() {
 # Main execution with caching logic
 main() {
     # Check if cloud metadata is disabled
-    if [[ "${facts_enable_cloud_metadata:-true}" != "true" ]]; then
+    if [[ "{{ facts_enable_cloud_metadata | default(true) | bool | lower }}" != "true" ]]; then
         jq -n \
             --arg hostname "$(hostname -f)" \
             --arg timestamp "$(date -Iseconds)" \

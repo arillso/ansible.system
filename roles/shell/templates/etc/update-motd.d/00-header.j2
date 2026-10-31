@@ -106,17 +106,6 @@ display_banner() {
     esac
 }
 
-# Node type display with colors
-display_node_info() {
-    local node_type="{% endraw %}{{ role | default('gateway') }}{% raw %}"
-    local color="$BLUE"
-
-    debug_log "Displaying node_type: $node_type"
-
-    echo
-    echo -e "${color}Node Type: ${node_type}${NC}"
-}
-
 # Security notice display
 display_security_notice() {
     debug_log "Displaying security notice"
@@ -145,7 +134,7 @@ main() {
     debug_log "Debug mode: $DEBUG_MODE"
 
     display_banner "$COMPANY_NAME" "$BANNER_STYLE" "$FIGLET_FONT"
-    display_node_info
+    echo
     display_security_notice
     display_system_info
 
@@ -160,7 +149,6 @@ main 2>/dev/null || {
     echo "                           Enterprise Platform"
     echo "================================================================================"
     echo
-    echo "Node Type: generic"
     echo "**AUTHORIZED ACCESS ONLY**"
     echo
 

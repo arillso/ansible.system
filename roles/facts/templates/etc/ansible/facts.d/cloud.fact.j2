@@ -173,9 +173,25 @@ check_provider_specific() {
     return 1
 }
 
+# Resolve "auto" from the DMI system vendor, which needs no network call
+detect_provider() {
+    local vendor
+    vendor=$(cat /sys/class/dmi/id/sys_vendor 2>/dev/null || echo "")
+
+    case "$vendor" in
+        Hetzner*) echo "hetzner" ;;
+        Vultr*) echo "vultr" ;;
+        DigitalOcean*) echo "digitalocean" ;;
+        "Amazon EC2"*) echo "aws" ;;
+        Google*) echo "gcp" ;;
+        *) echo "generic" ;;
+    esac
+}
+
 # Optimized metadata collection with minimal calls
 get_cloud_metadata() {
     local provider="$1"
+    [[ "$provider" == "auto" ]] && provider=$(detect_provider)
     local hostname="unknown"
     local instance_id="unknown"
     local region="unknown"

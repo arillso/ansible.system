@@ -281,8 +281,8 @@ main "$@" 2>/dev/null || {
     echo
     printf "System Status     : ${RED}Information unavailable${NC}\n"
     printf "Generated         : ${BLUE}%s${NC}\n" "$(date '+%Y-%m-%d %H:%M:%S %Z')"
-    printf "Support           : {% endraw %}{{ enterprise_support_contact | default('Contact system administrator') }}{% raw %}\n"
-    echo
+{% endraw %}{% if enterprise_support_contact is defined %}    printf "Support           : %s\n" {{ enterprise_support_contact | quote }}
+{% endif %}{% raw %}    echo
     exit 1
 }
 {% endraw %}

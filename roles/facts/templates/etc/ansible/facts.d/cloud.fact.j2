@@ -12,7 +12,20 @@ readonly TIMEOUT="{{ facts_timeout_default | default(5) }}"
 readonly MAX_RETRIES="{{ facts_max_retries | default(1) }}"
 readonly METADATA_BASE_URL="{{ facts_cloud_metadata_base_url | default('http://169.254.169.254') }}"
 readonly DEBUG_ENABLED="{{ facts_debug_enabled | default(false) }}"
-readonly CLOUD_PROVIDER="{{ provider | default(ansible_cloud_provider) | default('auto') }}"
+{#- Default provider from the gathered DMI facts; containers report the host's DMI, so they stay generic #}
+{%- set _vendor = ansible_facts['system_vendor'] | default('') | lower %}
+{%- set _bios = ansible_facts['bios_version'] | default('') | lower %}
+{%- set _detected = 'generic' %}
+{%- if ansible_facts['virtualization_role'] | default('') == 'guest'
+      and ansible_facts['virtualization_type'] | default('') in ['docker', 'podman', 'lxc', 'container', 'containerd', 'openvz', 'systemd-nspawn'] %}
+{%- elif 'hetzner' in _vendor %}{% set _detected = 'hetzner' %}
+{%- elif 'vultr' in _vendor %}{% set _detected = 'vultr' %}
+{%- elif 'digitalocean' in _vendor %}{% set _detected = 'digitalocean' %}
+{%- elif 'amazon' in _vendor or 'amazon' in _bios %}{% set _detected = 'aws' %}
+{%- elif 'google' in _vendor %}{% set _detected = 'gcp' %}
+{%- endif %}
+{%- if _detected not in facts_cloud_providers_enabled | default([]) %}{% set _detected = 'generic' %}{% endif %}
+readonly CLOUD_PROVIDER="{{ provider | default(ansible_cloud_provider | default(_detected)) }}"
 
 # Logging with proper levels (harmonized with universal debug configuration)
 log_debug() {
@@ -130,8 +143,9 @@ fetch_metadata_with_retry() {
 
     for ((i=0; i<=retries; i++)); do
         local result
-        result=$(curl -s --connect-timeout "$timeout" --max-time "$timeout" \
-                 "$url" 2>/dev/null || echo "")
+        # -f: an HTTP error body (e.g. GCP 403 without header) must not count as data
+        result=$(curl -sf --connect-timeout "$timeout" --max-time "$timeout" \
+                 ${METADATA_HEADERS[@]+"${METADATA_HEADERS[@]}"} "$url" 2>/dev/null || echo "")
 
         if [[ -n "$result" && "$result" != "null" ]]; then
             log_debug "Metadata fetch successful: $url (attempt $((i+1)))"
@@ -173,34 +187,29 @@ check_provider_specific() {
     return 1
 }
 
-# Resolve "auto" from the DMI system vendor, which needs no network call
-detect_provider() {
-    local vendor
-    vendor=$(cat /sys/class/dmi/id/sys_vendor 2>/dev/null || echo "")
-
-    case "$vendor" in
-        Hetzner*) echo "hetzner" ;;
-        Vultr*) echo "vultr" ;;
-        DigitalOcean*) echo "digitalocean" ;;
-        "Amazon EC2"*) echo "aws" ;;
-        Google*) echo "gcp" ;;
-        *) echo "generic" ;;
-    esac
-}
+# Extra curl headers some metadata services require (GCP flavor, AWS IMDSv2 token)
+METADATA_HEADERS=()
 
 # Optimized metadata collection with minimal calls
 get_cloud_metadata() {
     local provider="$1"
-    [[ "$provider" == "auto" ]] && provider=$(detect_provider)
     local hostname="unknown"
     local instance_id="unknown"
     local region="unknown"
 
     case "$provider" in
         aws)
-            hostname=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/latest/meta-data/hostname" || echo "unknown")
-            instance_id=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/latest/meta-data/instance-id" || echo "unknown")
-            region=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/latest/meta-data/placement/region" || echo "unknown")
+            local token
+            token=$(curl -sf -X PUT --connect-timeout "$TIMEOUT" --max-time "$TIMEOUT" \
+                    -H "X-aws-ec2-metadata-token-ttl-seconds: 60" \
+                    "${METADATA_BASE_URL}/latest/api/token" 2>/dev/null || echo "")
+            # No IMDSv2 token means the endpoint is unreachable: skip the fetches instead of stalling
+            if [[ -n "$token" ]]; then
+                METADATA_HEADERS=(-H "X-aws-ec2-metadata-token: $token")
+                hostname=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/latest/meta-data/hostname" || echo "unknown")
+                instance_id=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/latest/meta-data/instance-id" || echo "unknown")
+                region=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/latest/meta-data/placement/region" || echo "unknown")
+            fi
             ;;
         digitalocean)
             hostname=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/metadata/v1/hostname" || echo "unknown")
@@ -218,6 +227,7 @@ get_cloud_metadata() {
             region=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/v1/region" || echo "unknown")
             ;;
         gcp)
+            METADATA_HEADERS=(-H "Metadata-Flavor: Google")
             hostname=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/computeMetadata/v1/instance/hostname" || echo "unknown")
             instance_id=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/computeMetadata/v1/instance/id" || echo "unknown")
             region=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/computeMetadata/v1/instance/zone" || echo "unknown")
@@ -249,7 +259,7 @@ get_cloud_metadata() {
         --arg iso_timestamp "$iso_timestamp" \
         --arg human_timestamp "$human_timestamp" \
         --arg epoch_timestamp "$epoch_timestamp" \
-        --arg metadata_available "$([ "$provider" != "generic" ] && echo "true" || echo "false")" \
+        --arg metadata_available "$([ "$provider" != "generic" ] && [ "$instance_id" != "unknown" ] && echo "true" || echo "false")" \
         '{
             provider: $provider,
             hostname: $hostname,

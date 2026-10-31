@@ -266,9 +266,9 @@ main() {
 
     # Enterprise compliance footer
     echo
-{% endraw %}{% if enterprise_security_contact is defined %}    printf "Security Contact  : {{ enterprise_security_contact }}\n"
-{% endif %}{% if enterprise_support_contact is defined %}    printf "Support Contact   : {{ enterprise_support_contact }}\n"
-    echo
+{% endraw %}{% if enterprise_security_contact is defined %}    printf "Security Contact  : %s\n" {{ enterprise_security_contact | quote }}
+{% endif %}{% if enterprise_support_contact is defined %}    printf "Support Contact   : %s\n" {{ enterprise_support_contact | quote }}
+{% endif %}{% if enterprise_security_contact is defined or enterprise_support_contact is defined %}    echo
 {% endif %}{% raw %}    printf "Generated         : ${BLUE}%s${NC}\n" "$(date '+%Y-%m-%d %H:%M:%S %Z')"
     echo
     printf "Notice: All activities are logged and monitored per corporate policy.\n"

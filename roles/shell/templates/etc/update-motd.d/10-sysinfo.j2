@@ -145,9 +145,9 @@ get_memory_info() {
     # Format memory display
     local mem_total_display mem_usable_display
     if [ $mem_total_mb -gt 1024 ]; then
-        # Convert to GB with one decimal place
-        mem_total_display=$(echo "scale=1; $mem_total_mb/1024" | bc 2>/dev/null || echo "$((mem_total_mb/1024))")
-        mem_usable_display=$(echo "scale=1; $mem_usable_mb/1024" | bc 2>/dev/null || echo "$((mem_usable_mb/1024))")
+        # Convert to GB with one decimal place (awk keeps the leading zero bc drops)
+        mem_total_display=$(awk -v mb="$mem_total_mb" 'BEGIN { printf "%.1f", mb / 1024 }')
+        mem_usable_display=$(awk -v mb="$mem_usable_mb" 'BEGIN { printf "%.1f", mb / 1024 }')
 
         # Remove trailing .0 if whole number
         mem_total_display=$(echo "$mem_total_display" | sed 's/\.0$//')

@@ -266,10 +266,10 @@ main() {
 
     # Enterprise compliance footer
     echo
-    printf "Security Contact  : {% endraw %}{{ enterprise_security_contact | default('system administrator') }}{% raw %}\n"
-    printf "Support Contact   : {% endraw %}{{ enterprise_support_contact | default('helpdesk@company.com') }}{% raw %}\n"
-    echo
-    printf "Generated         : ${BLUE}%s${NC}\n" "$(date '+%Y-%m-%d %H:%M:%S %Z')"
+{% endraw %}{% if enterprise_security_contact is defined %}    printf "Security Contact  : %s\n" {{ enterprise_security_contact | quote }}
+{% endif %}{% if enterprise_support_contact is defined %}    printf "Support Contact   : %s\n" {{ enterprise_support_contact | quote }}
+{% endif %}{% if enterprise_security_contact is defined or enterprise_support_contact is defined %}    echo
+{% endif %}{% raw %}    printf "Generated         : ${BLUE}%s${NC}\n" "$(date '+%Y-%m-%d %H:%M:%S %Z')"
     echo
     printf "Notice: All activities are logged and monitored per corporate policy.\n"
     printf "Unauthorized access is prohibited. Report incidents immediately.\n"

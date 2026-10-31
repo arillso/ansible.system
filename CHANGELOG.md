@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **ci**: the nightly CodeQL job installed `requirements.txt` on Python 3.12,
+  the default of `security-code.yml`, and failed once `sphinx>=9.2.0` (requires
+  Python 3.13 or newer) landed. `nightly-security.yml` now pins
+  `python-version: "3.13"`, matching `pull-request.yml` and `merge.yml`.
+
 ## [2.0.2] - 2026-09-04
 
 ### Fixed

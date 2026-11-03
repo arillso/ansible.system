@@ -26,8 +26,10 @@ debug_log() {
 }
 
 # Fast status retrieval from cache
+# Usage: get_cached_data <cache_file> [max_age]; max_age 0 disables the age check
 get_cached_data() {
     local cache_file="$1"
+    local max_age="${2:-$CACHE_MAX_AGE}"
     debug_log "Checking cache file: $cache_file"
 
     if [ ! -f "$cache_file" ]; then
@@ -38,9 +40,9 @@ get_cached_data() {
 
     local cache_age
     cache_age=$(($(date +%s) - $(stat -c %Y "$cache_file" 2>/dev/null || echo 0)))
-    debug_log "Cache age: $cache_age seconds (max: $CACHE_MAX_AGE)"
+    debug_log "Cache age: $cache_age seconds (max: $max_age)"
 
-    if [ $cache_age -gt $CACHE_MAX_AGE ]; then
+    if [ "$max_age" -gt 0 ] && [ "$cache_age" -gt "$max_age" ]; then
         debug_log "Cache expired"
         echo "{}"
         return 1
@@ -102,7 +104,8 @@ get_system_data() {
 get_run_data() {
     debug_log "Getting run data"
     local run_json
-    run_json=$(get_cached_data "$RUN_CACHE_FILE")
+    # The deployment timestamp is historical, not cache freshness: no age limit
+    run_json=$(get_cached_data "$RUN_CACHE_FILE" 0)
 
     local timestamp
     timestamp=$(get_json_value "$run_json" ".timestamp" "")
@@ -112,7 +115,7 @@ get_run_data() {
         debug_log "No valid run cache, trying to refresh"
         if execute_fact_script "/etc/ansible/facts.d/run.fact"; then
             debug_log "Run fact script executed, re-reading cache"
-            run_json=$(get_cached_data "$RUN_CACHE_FILE")
+            run_json=$(get_cached_data "$RUN_CACHE_FILE" 0)
         else
             debug_log "Failed to refresh run cache"
         fi

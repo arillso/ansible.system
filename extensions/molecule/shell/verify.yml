@@ -38,6 +38,18 @@
                   name: jq
                   update_cache: true
 
+            # The scenario runs without the facts role, so there is no real
+            # deployment record the fixture below could overwrite.
+            - name: Stat an existing last_run.json
+              ansible.builtin.stat:
+                  path: /var/cache/ansible-facts/last_run.json
+              register: _last_run
+
+            - name: Assert no real last_run.json exists
+              ansible.builtin.assert:
+                  that:
+                      - not _last_run.stat.exists
+
             - name: Create the facts cache directory
               ansible.builtin.file:
                   path: /var/cache/ansible-facts
@@ -66,7 +78,10 @@
             - name: Assert the old deployment is shown
               ansible.builtin.assert:
                   that:
+                      - "'Last Deployment   : ' in _footer_old.stdout"
                       - "'molecule' in _footer_old.stdout"
+                      - "'Playbook          : ' in _footer_old.stdout"
+                      - "'site' in _footer_old.stdout"
                       - "'No recent deployments' not in _footer_old.stdout"
 
             - name: Remove the last_run.json fixture

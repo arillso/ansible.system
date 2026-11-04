@@ -21,3 +21,81 @@
                 - _banner.stat.exists
                 - _banner.stat.size > 0
             success_msg: "shell role rendered the /etc/issue.net banner"
+
+      # The footer must show the last deployment however old it is: the
+      # timestamp in last_run.json is historical, not cache freshness. The
+      # footer is only deployed on the Debian family.
+      - name: Stat the MOTD footer
+        ansible.builtin.stat:
+            path: /etc/update-motd.d/90-footer
+        register: _footer
+
+      - name: Check the footer against a deployment older than 24 h
+        when: _footer.stat.exists
+        block:
+            - name: Install jq for the footer
+              ansible.builtin.apt:
+                  name: jq
+                  update_cache: true
+
+            # The scenario runs without the facts role, so there is no real
+            # deployment record the fixture below could overwrite.
+            - name: Stat an existing last_run.json
+              ansible.builtin.stat:
+                  path: /var/cache/ansible-facts/last_run.json
+              register: _last_run
+
+            - name: Assert no real last_run.json exists
+              ansible.builtin.assert:
+                  that:
+                      - not _last_run.stat.exists
+
+            - name: Create the facts cache directory
+              ansible.builtin.file:
+                  path: /var/cache/ansible-facts
+                  state: directory
+                  mode: "0700"
+
+            - name: Write a last_run.json fixture
+              ansible.builtin.copy:
+                  dest: /var/cache/ansible-facts/last_run.json
+                  mode: "0600"
+                  content: >-
+                      {"timestamp": "2026-01-01T07:00:00+00:00",
+                      "timestamp_human": "2026-01-01 07:00:00 UTC",
+                      "user": "molecule", "playbook": "site"}
+
+            - name: Age the fixture by 30 days
+              ansible.builtin.command: touch -d "30 days ago" /var/cache/ansible-facts/last_run.json
+              changed_when: false
+
+            - name: Run the footer with an old last_run.json
+              ansible.builtin.command: /etc/update-motd.d/90-footer
+              register: _footer_old
+              changed_when: false
+
+            # Match the user alone: ANSI codes sit between "by" and the user.
+            - name: Assert the old deployment is shown
+              ansible.builtin.assert:
+                  that:
+                      - "'Last Deployment   : ' in _footer_old.stdout"
+                      - "'molecule' in _footer_old.stdout"
+                      - "'Playbook          : ' in _footer_old.stdout"
+                      - "'site' in _footer_old.stdout"
+                      - "'No recent deployments' not in _footer_old.stdout"
+
+            - name: Remove the last_run.json fixture
+              ansible.builtin.file:
+                  path: /var/cache/ansible-facts/last_run.json
+                  state: absent
+
+            - name: Run the footer without last_run.json
+              ansible.builtin.command: /etc/update-motd.d/90-footer
+              register: _footer_missing
+              changed_when: false
+
+            - name: Assert a missing last_run.json still renders
+              ansible.builtin.assert:
+                  that:
+                      - _footer_missing.rc == 0
+                      - "'No recent deployments' in _footer_missing.stdout"

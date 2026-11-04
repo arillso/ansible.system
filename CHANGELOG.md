@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **shell**: the MOTD showed `Last Deployment : No recent deployments` as soon
+  as the last run was older than 24 hours. The footer now reads
+  `last_run.json` without an age limit; `system.json` and `cloud.json` keep
+  the 24-hour limit.
+
 ## [2.0.3] - 2026-10-31
 
 ### Fixed

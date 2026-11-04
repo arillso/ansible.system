@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.4] - 2026-11-04
+
 ### Fixed
 
 - **shell**: the MOTD showed `Last Deployment : No recent deployments` as soon
@@ -642,7 +644,8 @@ Users need to migrate to the new role structure. See role documentation for migr
 
 For releases prior to this changelog format change, see: <https://github.com/arillso/ansible.system/releases>
 
-[Unreleased]: https://github.com/arillso/ansible.system/compare/2.0.3...HEAD
+[Unreleased]: https://github.com/arillso/ansible.system/compare/2.0.4...HEAD
+[2.0.4]: https://github.com/arillso/ansible.system/compare/2.0.3...2.0.4
 [2.0.3]: https://github.com/arillso/ansible.system/compare/2.0.2...2.0.3
 [2.0.2]: https://github.com/arillso/ansible.system/compare/2.0.1...2.0.2
 [2.0.1]: https://github.com/arillso/ansible.system/compare/2.0.0...2.0.1

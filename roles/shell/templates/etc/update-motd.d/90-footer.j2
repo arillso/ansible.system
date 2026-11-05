@@ -100,28 +100,12 @@ get_system_data() {
     echo "$system_json"
 }
 
-# Get run data with auto-refresh
+# Get run data (no refresh: last_run.json is written by last.fact, not run.fact)
 get_run_data() {
     debug_log "Getting run data"
-    local run_json
     # The deployment timestamp is historical, not cache freshness: no age limit
-    run_json=$(get_cached_data "$RUN_CACHE_FILE" 0)
-
-    local timestamp
-    timestamp=$(get_json_value "$run_json" ".timestamp" "")
-    debug_log "Run timestamp: $timestamp"
-
-    if [ -z "$timestamp" ]; then
-        debug_log "No valid run cache, trying to refresh"
-        if execute_fact_script "/etc/ansible/facts.d/run.fact"; then
-            debug_log "Run fact script executed, re-reading cache"
-            run_json=$(get_cached_data "$RUN_CACHE_FILE" 0)
-        else
-            debug_log "Failed to refresh run cache"
-        fi
-    fi
-
-    echo "$run_json"
+    # Missing cache prints "{}" and returns 1; swallow it, the caller runs under set -e
+    get_cached_data "$RUN_CACHE_FILE" 0 || true
 }
 
 # Get cloud data with auto-refresh

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **shell**: the MOTD scripts parse every JSON value with `jq`, but the role
+  relied on the `facts` role to install it. With `shell_facts_dependency: false`
+  every value silently fell back to its default. The role now installs `jq`
+  itself whenever `shell_motd_enabled` is set.
+
 ## [2.0.4] - 2026-11-04
 
 ### Fixed

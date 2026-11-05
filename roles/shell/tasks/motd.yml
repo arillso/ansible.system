@@ -1,6 +1,15 @@
 ---
 # MOTD configuration - Message of the Day setup and management
 
+- name: "Install jq for the MOTD scripts"
+  ansible.builtin.package:
+      name: jq
+      state: present
+  become: true
+  tags:
+      - motd
+      - packages
+
 - name: "Install MOTD utility functions"
   ansible.builtin.template:
       src: usr/local/bin/motd-utils.sh.j2

@@ -22,6 +22,20 @@
                 - _banner.stat.size > 0
             success_msg: "shell role rendered the /etc/issue.net banner"
 
+      # The scenario runs without the facts role, so jq must come from the
+      # shell role itself — the MOTD scripts parse every JSON value with it.
+      - name: Check jq is installed
+        ansible.builtin.command: jq --version
+        register: _jq
+        changed_when: false
+        failed_when: false
+
+      - name: Assert the shell role installed jq
+        ansible.builtin.assert:
+            that:
+                - _jq.rc == 0
+            success_msg: "shell role installed jq"
+
       # The footer must show the last deployment however old it is: the
       # timestamp in last_run.json is historical, not cache freshness. The
       # footer is only deployed on the Debian family.
@@ -33,11 +47,6 @@
       - name: Check the footer against a deployment older than 24 h
         when: _footer.stat.exists
         block:
-            - name: Install jq for the footer
-              ansible.builtin.apt:
-                  name: jq
-                  update_cache: true
-
             # The scenario runs without the facts role, so there is no real
             # deployment record the fixture below could overwrite.
             - name: Stat an existing last_run.json

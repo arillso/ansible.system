@@ -5,8 +5,8 @@ Installs the Bitwarden Secrets Manager CLI (`bws`) for secret management.
 ## Features
 
 - **Binary Installation**: Downloads and installs the `bws` CLI tool
-- **Version Management**: Install specific versions or latest
-- **Multi-Architecture**: Supports x86_64, aarch64, armv7l
+- **Version Management**: Installs a pinned version, verified against the upstream SHA-256 list
+- **Multi-Architecture**: Supports x86_64 and aarch64; other architectures fail early
 - **Idempotent**: Only downloads if version doesn't match
 - **Uninstall Support**: Clean removal when needed
 
@@ -36,13 +36,15 @@ For detailed documentation including all variables, examples, and usage instruct
 | `bitwarden_secrets_state`            | `present`        | `present` to install, `absent` to remove |
 | `bitwarden_secrets_force_install`    | `false`          | Force re-download regardless of version  |
 | `bitwarden_secrets_download_timeout` | `120`            | Download timeout in seconds              |
+| `bitwarden_secrets_checksum_url`     | upstream list    | SHA-256 list; `''` skips verification    |
+| `bitwarden_secrets_checksum`         | `""`             | Fixed SHA-256, e.g. for air-gapped hosts |
 | `bitwarden_secrets_retry_count`      | `3`              | Download retry attempts                  |
 
 See [`defaults/main.yml`](defaults/main.yml) for the complete list and [the guide](https://guide.arillso.io/collections/arillso/system/bitwarden_secrets_role.html) for detailed docs.
 
 ## Check Mode
 
-This role is partially `--check` compatible. The installed-version probe (`bws --version`) returns no output in check mode, so the "needs install" decision and download steps cannot be evaluated accurately on a host where the binary is not yet present.
+This role supports `--check`. On a host that needs an install, it reports `changed` without downloading anything.
 
 ## License
 

@@ -27,30 +27,36 @@
       - completion
 
 # Earlier versions overwrote the package's hook with one that only sources
-# /etc/bash_completion, which EL lacks. On Debian that file still works.
+# /etc/bash_completion, which EL lacks, and calls shopt in sh and zsh logins.
+# grep exits 0 for that hook and 2 for a missing file (a restore that failed
+# after the rm below); both restore the package's hook.
 - name: "Check for the bash completion hook from earlier versions"
   ansible.builtin.command:
       cmd: grep -q 'arillso.system.ui' /etc/profile.d/bash_completion.sh
   register: _shell_old_completion_hook
-  failed_when: _shell_old_completion_hook.rc > 1
+  failed_when: false
   changed_when: false
   check_mode: false
   when:
       - shell_terminal_completion_enabled
-      - ansible_facts['os_family'] == "RedHat"
+      - ansible_facts['pkg_mgr'] in _shell_completion_reinstall
   tags:
       - terminal
       - completion
 
+# The hook is a config file: removing it first makes the reinstall write the
+# packaged version (dpkg only with --force-confmiss).
 - name: "Restore the bash completion hook from the package"
   ansible.builtin.shell:
-      cmd: rm -f /etc/profile.d/bash_completion.sh && dnf -y reinstall bash-completion
+      cmd: "rm -f /etc/profile.d/bash_completion.sh && {{ _shell_completion_reinstall[ansible_facts['pkg_mgr']] }}"
+  environment:
+      DEBIAN_FRONTEND: noninteractive
   become: true
   changed_when: true
   when:
       - shell_terminal_completion_enabled
-      - ansible_facts['os_family'] == "RedHat"
-      - _shell_old_completion_hook.rc == 0
+      - ansible_facts['pkg_mgr'] in _shell_completion_reinstall
+      - _shell_old_completion_hook.rc != 1
   tags:
       - terminal
       - completion

@@ -37,6 +37,7 @@
       group: root
   become: true
   when: _shell_sshd_dropin_dir.stat.isdir | default(false)
+  register: _shell_banner_dropin
   notify: "shell: restart ssh"
   tags:
       - ssh
@@ -49,18 +50,22 @@
       state: absent
   become: true
   when: _shell_sshd_dropin_dir.stat.isdir | default(false)
+  register: _shell_banner_legacy_line
   notify: "shell: restart ssh"
   tags:
       - ssh
       - config
 
+# Only after a change, so an unrelated sshd problem does not fail every run.
 - name: "Verify SSH configuration is valid"
   ansible.builtin.command:
       cmd: sshd -t
   become: true
   changed_when: false
   check_mode: false
-  when: _shell_sshd_dropin_dir.stat.isdir | default(false)
+  when: >-
+      (_shell_banner_dropin | default({})) is changed
+      or (_shell_banner_legacy_line | default({})) is changed
   tags:
       - ssh
       - validation

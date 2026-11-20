@@ -17,8 +17,8 @@ _shell_required_packages:
 # MOTD scripts for Debian-based systems, keyed by the flag that enables them
 _shell_motd_scripts:
     00-header: true
-    10-sysinfo: "{{ shell_motd_show_system_info }}"
-    90-footer: "{{ shell_motd_show_footer }}"
+    10-sysinfo: "{{ shell_motd_show_system_info | bool }}"
+    90-footer: "{{ shell_motd_show_footer | bool }}"
 
 # Files and cron jobs from earlier role versions, removed on every run
 _shell_obsolete_files:
@@ -26,6 +26,14 @@ _shell_obsolete_files:
     - /usr/local/bin/system-status-precompute.sh
     - /var/cache/ansible-facts/system-status.json
     - /var/cache/arillso-system-shell
+
+# Commands that reinstall bash-completion, by package manager; the profile.d
+# hook is only restored on these
+_shell_completion_reinstall:
+    apt: apt-get install -y --reinstall -o Dpkg::Options::=--force-confmiss bash-completion
+    dnf: dnf -y reinstall bash-completion
+    dnf5: dnf5 -y reinstall bash-completion
+    yum: yum -y reinstall bash-completion
 
 # Unwanted default MOTD scripts to remove
 _shell_unwanted_motd_scripts:

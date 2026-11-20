@@ -240,8 +240,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **shell**: `/etc/profile.d/bash_history.sh` and `custom_prompt.sh` only act in
   bash, so sh and zsh logins no longer print `shopt: not found`.
 - **shell**: bash completion comes from the `bash-completion` package's own
-  hook instead of a template that broke completion on EL. EL hosts with the old
-  hook get the package hook restored.
+  hook instead of a template that broke completion on EL and called `shopt` in
+  sh and zsh logins. Hosts with the old hook (apt, dnf, yum) get the package
+  hook restored.
 - **shell**: `/etc/motd` shows a static banner on non-Debian hosts instead of
   being emptied.
 - **shell**: `shell_ssh_banner_show_legal_notice: false` hides the legal notice.

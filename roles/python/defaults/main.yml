@@ -1,7 +1,6 @@
 ---
 # Entry Point Controls
 python_pip_enabled: true
-python_virtualenv_enabled: true
 
 # Python Packages
 python_packages: []
@@ -12,16 +11,22 @@ python_packages: []
 #     state: present
 #     virtualenv: /opt/venv
 #     virtualenv_command: python3 -m venv
-#     virtualenv_python: python3
 #     extra_args: ""
 #     executable: pip3
 
 python_pip_executable: pip3
 python_pip_extra_args: ""
 python_upgrade_pip: false
+# Debian 12+ and Ubuntu 23.04+ mark the system Python as externally managed
+# (PEP 668), so system-wide pip installs and python_upgrade_pip fail with
+# "externally-managed-environment". true passes break_system_packages to
+# the pip module. Prefer a virtualenv where possible.
+python_pip_break_system_packages: false
 python_virtualenv_command: python3 -m venv
 python_virtualenv_site_packages: false
-python_virtualenv_python: python3
+# Empty: the pip module chooses the interpreter. Set it only with the
+# standalone virtualenv tool; the venv module rejects it.
+python_virtualenv_python: ""
 
 # System Package Installation
 python_install_packages: true

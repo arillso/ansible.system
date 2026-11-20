@@ -46,10 +46,6 @@ argument_specs:
                     executable: &opt_executable
                         description: "Pip executable to use"
                         type: str
-            python_virtualenv_enabled:
-                description: "Enable virtualenv management"
-                type: bool
-                default: true
             python_pip_executable:
                 description: "Default pip executable"
                 type: str
@@ -62,6 +58,12 @@ argument_specs:
                 description: "Upgrade pip before installing packages"
                 type: bool
                 default: false
+            python_pip_break_system_packages:
+                description:
+                    - "Pass break_system_packages to pip"
+                    - "Needed for system-wide installs and python_upgrade_pip on PEP 668 distros (Debian 12+, Ubuntu 23.04+)"
+                type: bool
+                default: false
             python_virtualenv_command:
                 description: "Command to create virtualenvs"
                 type: str
@@ -71,21 +73,21 @@ argument_specs:
                 type: bool
                 default: false
             python_virtualenv_python:
-                description: "Python interpreter for virtualenvs"
+                description:
+                    - "Python interpreter for virtualenvs; empty lets the pip module choose"
+                    - "Only for the standalone virtualenv tool, the venv module rejects it"
                 type: str
-                default: python3
+                default: ""
             python_install_packages:
                 description: "Install Python system packages"
                 type: bool
                 default: true
             python_system_packages:
-                description: "System packages to install for Python"
+                description:
+                    - "System packages to install for Python"
+                    - "Default: python3, python3-pip, python3-venv; RedHat omits python3-venv"
                 type: list
                 elements: str
-                default:
-                    - python3
-                    - python3-pip
-                    - python3-venv
             python_dev_packages:
                 description: "Development packages to install"
                 type: list

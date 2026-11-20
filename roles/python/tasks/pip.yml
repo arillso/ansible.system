@@ -1,40 +1,5 @@
 ---
-- name: Manage Python packages via pip
-  ansible.builtin.pip:
-      name: "{{ _python_package_item.name }}"
-      version: "{{ _python_package_item.version | default(omit) }}"
-      state: "{{ _python_package_item.state | default('present') }}"
-      virtualenv: "{{ _python_package_item.virtualenv | default(omit) }}"
-      virtualenv_command: "{{ _python_package_item.virtualenv_command | default(python_virtualenv_command) }}"
-      virtualenv_site_packages: >-
-          {{ _python_package_item.virtualenv_site_packages |
-             default(python_virtualenv_site_packages) }}
-      # virtualenv_python is rejected when the venv/pyvenv module is the
-      # virtualenv_command — those create the venv with a fixed interpreter,
-      # so passing virtualenv_python fails with "virtualenv_python should
-      # not be used when using the venv module or pyvenv". Omit it whenever
-      # the effective command contains "venv" or "pyvenv"; keep it for the
-      # standalone `virtualenv` tool, which honours it.
-      virtualenv_python: >-
-          {{ omit
-             if ((_python_package_item.virtualenv_command | default(python_virtualenv_command))
-                 is search('venv|pyvenv'))
-             else (_python_package_item.virtualenv_python | default(python_virtualenv_python)) }}
-      extra_args: "{{ _python_package_item.extra_args | default(python_pip_extra_args) | default(omit) }}"
-      # executable and virtualenv are mutually exclusive in ansible.builtin.pip.
-      # When a virtualenv is requested, pip runs from that venv's interpreter,
-      # so an explicit executable must be omitted — otherwise the module fails
-      # with "parameters are mutually exclusive: executable|virtualenv".
-      executable: >-
-          {{ omit
-             if (_python_package_item.virtualenv | default(false))
-             else (_python_package_item.executable | default(python_pip_executable)) }}
-  become: true
-  loop: "{{ python_packages }}"
-  loop_control:
-      loop_var: _python_package_item
-      label: "{{ _python_package_item.name }}"
-  retries: "{{ python_retry_count }}"
-  delay: "{{ python_retry_delay }}"
-  register: _python_pip_result
-  until: _python_pip_result is succeeded
+- name: Manage Python packages
+  ansible.builtin.include_tasks: install.yml
+  vars:
+      _python_pip_items: "{{ python_packages }}"

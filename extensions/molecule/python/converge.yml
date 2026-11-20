@@ -14,6 +14,17 @@
             state: present
             virtualenv: /opt/molecule-venv
             virtualenv_command: python3 -m venv
+          # System-wide: needs python_pip_break_system_packages on Debian 12
+          # (PEP 668).
+          - name: python-dotenv
+            state: present
+      # Default virtualenv_command/virtualenv_python and executable: covers
+      # the executable|virtualenv and venv|virtualenv_python guards.
+      python_requirements_files:
+          - path: /opt/molecule-requirements.txt
+            virtualenv: /opt/molecule-req-venv
+      python_upgrade_pip: true
+      python_pip_break_system_packages: true
 
   tasks:
       - name: Apply python role

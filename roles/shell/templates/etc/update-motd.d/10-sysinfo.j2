@@ -245,7 +245,7 @@ main() {
     # Show interfaces with IPs and external IP if different
     local interfaces_line
     interfaces_line=$(get_network_interfaces)
-    if [ "$external_ip" != "unknown" ] && [[ "$interfaces_line" != *"$external_ip"* ]]; then
+    if [ "$external_ip" != "unknown" ] && ! ip -4 -o addr show 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | grep -xF "$external_ip" >/dev/null; then
         printf "IP                : %s (external: ${BLUE}%s${NC})\n" "$interfaces_line" "$external_ip"
     else
         printf "IP                : %s\n" "$interfaces_line"

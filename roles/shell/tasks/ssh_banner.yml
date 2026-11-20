@@ -18,16 +18,36 @@
       - ssh
       - banner
 
-- name: "Check for the sshd drop-in directory"
+- name: "Check if SSH configuration file exists"
   ansible.builtin.stat:
-      path: /etc/ssh/sshd_config.d
-  register: _shell_sshd_dropin_dir
+      path: /etc/ssh/sshd_config
+  register: _shell_sshd_config_stat
   tags:
       - ssh
       - config
 
-# A drop-in instead of editing sshd_config, which the access role renders as a
-# whole. Hosts without sshd_config.d (EL 8, OpenSSH < 8.2) get no Banner line.
+- name: "Read SSH configuration"
+  ansible.builtin.slurp:
+      src: /etc/ssh/sshd_config
+  become: true
+  register: _shell_sshd_config_content
+  when: _shell_sshd_config_stat.stat.exists
+  tags:
+      - ssh
+      - config
+
+# A drop-in keeps sshd_config untouched, which the access role renders as a
+# whole. It only works where sshd_config includes sshd_config.d.
+- name: "Decide where the Banner line goes"
+  ansible.builtin.set_fact:
+      _shell_sshd_uses_dropins: >-
+          {{ _shell_sshd_config_stat.stat.exists
+             and (_shell_sshd_config_content.content | b64decode)
+                 is search('(?m)^\s*Include\s+\S*sshd_config\.d/') }}
+  tags:
+      - ssh
+      - config
+
 - name: "Configure SSH banner drop-in"
   ansible.builtin.copy:
       dest: /etc/ssh/sshd_config.d/50-arillso-shell-banner.conf
@@ -36,36 +56,43 @@
       owner: root
       group: root
   become: true
-  when: _shell_sshd_dropin_dir.stat.isdir | default(false)
+  when: _shell_sshd_uses_dropins | bool
   register: _shell_banner_dropin
   notify: "shell: restart ssh"
   tags:
       - ssh
       - config
 
-- name: "Remove Banner line written to sshd_config by earlier versions"
+# Without an Include (EL 8, or access_ssh_include_dir: ""), the line goes into
+# sshd_config before any Match block. If the access role renders that file,
+# set Banner through access_ssh_config_extra instead and disable this role's
+# banner, or the two roles rewrite the file on every run.
+- name: "Configure SSH banner in sshd_config"
   ansible.builtin.lineinfile:
       path: /etc/ssh/sshd_config
+      regexp: "^#?Banner\\s"
       line: "Banner /etc/issue.net"
-      state: absent
+      insertbefore: "^Match\\s"
+      validate: "sshd -t -f %s"
   become: true
-  when: _shell_sshd_dropin_dir.stat.isdir | default(false)
-  register: _shell_banner_legacy_line
+  when:
+      - _shell_sshd_config_stat.stat.exists
+      - not (_shell_sshd_uses_dropins | bool)
   notify: "shell: restart ssh"
   tags:
       - ssh
       - config
 
-# Only after a change, so an unrelated sshd problem does not fail every run.
+# The drop-in cannot be validated on its own. A failure here stops the play
+# before the restart handler runs, so sshd is never restarted on a broken
+# config.
 - name: "Verify SSH configuration is valid"
   ansible.builtin.command:
       cmd: sshd -t
   become: true
   changed_when: false
   check_mode: false
-  when: >-
-      (_shell_banner_dropin | default({})) is changed
-      or (_shell_banner_legacy_line | default({})) is changed
+  when: (_shell_banner_dropin | default({})) is changed
   tags:
       - ssh
       - validation

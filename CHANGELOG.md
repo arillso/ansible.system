@@ -234,9 +234,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **network**: handlers set `become: true`.
 
 - **shell**: the SSH banner is set via the drop-in
-  `/etc/ssh/sshd_config.d/50-arillso-shell-banner.conf` instead of editing
-  `sshd_config`, so it no longer conflicts with the access role or lands inside
-  a `Match` block. Hosts without `sshd_config.d` (EL 8) get no banner line.
+  `/etc/ssh/sshd_config.d/50-arillso-shell-banner.conf` when `sshd_config`
+  includes that directory, so it no longer conflicts with the access role.
+  Without an `Include` (EL 8) the `Banner` line goes before the first `Match`
+  block instead of the end of the file.
 - **shell**: `/etc/profile.d/bash_history.sh` and `custom_prompt.sh` only act in
   bash, so sh and zsh logins no longer print `shopt: not found`.
 - **shell**: bash completion comes from the `bash-completion` package's own

@@ -24,7 +24,7 @@ _shell_motd_scripts:
 _shell_obsolete_files:
     - /usr/local/bin/motd-utils.sh
     - /usr/local/bin/system-status-precompute.sh
-    - /var/cache/ansible-facts/system-status.json
+    - "{{ facts_cache_dir | default('/var/cache/ansible-facts') }}/system-status.json"
     - /var/cache/arillso-system-shell
 
 # Commands that reinstall bash-completion, by package manager; the profile.d

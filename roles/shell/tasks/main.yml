@@ -35,7 +35,8 @@
       - shell
       - cleanup
 
-# Only where the old script exists, so hosts without crontab are not touched.
+# Only where the old script exists: the cron module fails on hosts whose root
+# crontab cannot be read, and the role deletes the script only after this task.
 - name: "Remove system status cron job from earlier versions"
   ansible.builtin.cron:
       name: "system-status-precompute"

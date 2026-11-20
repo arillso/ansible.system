@@ -1,15 +1,67 @@
 ---
+# Only read under --check: there the package install is simulated, so a fresh
+# host has no unit yet and systemd would fail on the unknown service. The
+# disabled path and the restart handler use the same result.
+- name: Probe whether zramswap.service is installed
+  ansible.builtin.command:
+      cmd: systemctl list-unit-files --no-legend zramswap.service
+  register: _zram_unit
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+# zram_enabled: false disables zramswap but does not stop it: stopping runs
+# swapoff, which fails or stalls the host when the pages held in zram do not
+# fit back into RAM. zram stays active until the next reboot.
+- name: Disable zramswap when the role is disabled
+  ansible.builtin.systemd:
+      name: zramswap
+      enabled: false
+  become: true
+  register: _zram_disabled
+  when:
+      - not zram_enabled | bool
+      - (_zram_unit.stdout | default('')) | length > 0
+
+- name: Report that zram stays active until the next reboot
+  ansible.builtin.debug:
+      msg: >-
+          zramswap.service is disabled. zram swap stays active until the next
+          reboot; run `systemctl stop zramswap` once enough RAM is free to
+          switch it off now.
+  when:
+      - _zram_disabled is changed
+      - _zram_disabled.status.ActiveState | default('') == 'active'
+
+- name: End the role when zram is disabled
+  ansible.builtin.meta: end_role
+  when: not zram_enabled | bool
+
+- name: Check zram variables and competing zram setups
+  ansible.builtin.include_tasks: preflight.yml
+
 - name: Bootstrap zram kernel module on host
   ansible.builtin.include_tasks: bootstrap.yml
-  when: zram_enabled
 
 - name: Validate zram configuration against kernel capabilities
   ansible.builtin.include_tasks: validate.yml
   # Skipped in check mode: the module is not actually loaded under --check,
   # so /sys/block/zram0/comp_algorithm may not exist and the slurp would fail.
-  when:
-      - zram_enabled
-      - not ansible_check_mode
+  when: not ansible_check_mode
+
+# Deployed before zram-tools is installed: the package's postinst starts
+# zramswap, and apt keeps an existing conffile (force-confold), so a fresh
+# host comes up with these settings instead of the package defaults. The
+# restart handler skips a zram swap that already holds data, which on a fresh
+# host is likely by the time handlers run.
+- name: Deploy zramswap configuration
+  ansible.builtin.template:
+      src: etc/default/zramswap.j2
+      dest: /etc/default/zramswap
+      owner: root
+      group: root
+      mode: "0644"
+  become: true
 
 - name: Install zram tools package via packages role
   ansible.builtin.include_role:
@@ -21,18 +73,6 @@
              | map('community.general.dict_kv', 'name')
              | map('combine', {'state': 'present'})
              | list }}
-  when: zram_enabled
-
-- name: Deploy zramswap configuration
-  ansible.builtin.template:
-      src: etc/default/zramswap.j2
-      dest: /etc/default/zramswap
-      owner: root
-      group: root
-      mode: "0644"
-  become: true
-  notify: "zram: restart zramswap"
-  when: zram_enabled
 
 - name: Manage zramswap service via systemd role
   ansible.builtin.include_role:
@@ -44,4 +84,23 @@
             enabled: true
             state: started
             daemon_reload: true
-  when: zram_enabled
+  when: not ansible_check_mode or (_zram_unit.stdout | default('')) | length > 0
+
+# The template does not notify the restart itself. A fresh install starts
+# zramswap after the config is written, so it needs no restart, and a restart
+# the handler deferred because zram held data must be retried on later runs,
+# when the template no longer reports changed. Comparing the config mtime with
+# the service start covers both. TZ=UTC keeps the timestamp parseable by date.
+- name: Check whether zramswap runs with an older config than /etc/default/zramswap
+  ansible.builtin.shell:
+      cmd: >-
+          set -e;
+          started=$(TZ=UTC systemctl show -p ActiveEnterTimestamp --value zramswap.service);
+          [ -n "$started" ];
+          [ "$(stat -c %Y /etc/default/zramswap)" -gt "$(date -d "$started" +%s)" ]
+      executable: /bin/bash
+  register: _zram_restart_pending
+  changed_when: _zram_restart_pending.rc == 0
+  failed_when: false
+  notify: "zram: restart zramswap"
+  when: not ansible_check_mode

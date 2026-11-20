@@ -4,22 +4,38 @@
       name: arillso.system.packages
       tasks_from: cache
   vars:
-      packages_update_cache: true
       packages_cache_valid_time: 3600
 
-# Debian ships the zram module in the stock kernel (linux-image-*) and has no
-# linux-modules-extra-* package, so the install only runs where the resolved
-# package name is non-empty — i.e. on distributions that actually split the
-# module out (Ubuntu cloud images with linux-image-virtual).
-- name: Install kernel module package providing zram
+# Built-in modules, Debian stock kernels and custom kernels already provide
+# zram; a guessed linux-modules-extra-<kernel> name does not exist there.
+- name: Probe whether the zram kernel module is available
+  ansible.builtin.command:
+      cmd: modinfo -n zram
+  register: _zram_modinfo
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+# The running-kernel package only when the module is missing; the opt-in
+# metapackage whenever it is set.
+- name: Install kernel module packages providing zram
   ansible.builtin.include_role:
       name: arillso.system.packages
       tasks_from: packages
   vars:
-      packages_list:
-          - name: "{{ zram_kernel_module_package }}"
-            state: present
-  when: zram_kernel_module_package | length > 0
+      _zram_kernel_packages: >-
+          {{ ([zram_kernel_module_package]
+              if zram_kernel_module_package | length > 0
+                 and _zram_modinfo.rc != 0
+              else [])
+             + ([zram_kernel_module_meta_package]
+                if zram_kernel_module_meta_package | length > 0 else []) }}
+      packages_list: >-
+          {{ _zram_kernel_packages
+             | map('community.general.dict_kv', 'name')
+             | map('combine', {'state': 'present'})
+             | list }}
+  when: _zram_kernel_packages | length > 0
 
 # num_devices=1 is the kernel default, but stating it explicitly guarantees
 # /sys/block/zram0 exists for the algorithm validation in validate.yml — a host

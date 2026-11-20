@@ -32,7 +32,9 @@ logging_logrotate_compress: true
 logging_logrotate_delaycompress: false
 logging_logrotate_notifempty: true
 # Ubuntu ships /var/log as root:syslog 0775, which logrotate refuses without su.
-logging_logrotate_su: "{{ 'root adm' if ansible_facts['distribution'] == 'Ubuntu' else '' }}"
+# The distro defaults use .get(): the argument spec check renders them before
+# tasks/main.yml gathers facts for plays with `gather_facts: false`.
+logging_logrotate_su: "{{ 'root adm' if ansible_facts.get('distribution') == 'Ubuntu' else '' }}"
 logging_logrotate_include_dir: /etc/logrotate.d
 logging_logrotate_extra_options: []
 logging_logrotate_packages:
@@ -51,7 +53,7 @@ logging_rsyslog_entries: []
 
 logging_rsyslog_preserve_fqdn: false
 logging_rsyslog_work_directory: >-
-    {{ '/var/lib/rsyslog' if ansible_facts['os_family'] == 'RedHat'
+    {{ '/var/lib/rsyslog' if ansible_facts.get('os_family') == 'RedHat'
        else '/var/spool/rsyslog' }}
 logging_rsyslog_include_config: /etc/rsyslog.d/*.conf
 logging_rsyslog_main_queue_size: 10000
@@ -59,8 +61,8 @@ logging_rsyslog_main_queue_type: LinkedList
 logging_rsyslog_main_queue_worker_threads: 2
 logging_rsyslog_file_owner: root
 # EL keeps log files root-only (/var/log/secure holds auth logs).
-logging_rsyslog_file_group: "{{ 'root' if ansible_facts['os_family'] == 'RedHat' else 'adm' }}"
-logging_rsyslog_file_create_mode: "{{ '0600' if ansible_facts['os_family'] == 'RedHat' else '0640' }}"
+logging_rsyslog_file_group: "{{ 'root' if ansible_facts.get('os_family') == 'RedHat' else 'adm' }}"
+logging_rsyslog_file_create_mode: "{{ '0600' if ansible_facts.get('os_family') == 'RedHat' else '0640' }}"
 logging_rsyslog_dir_create_mode: "0755"
 logging_rsyslog_traditional_log_format: false
 logging_rsyslog_klog_permit_non_kernel_facility: false
@@ -74,7 +76,7 @@ logging_rsyslog_remote_servers: []
 # EL reads local and kernel messages from the journal (imjournal); Debian and
 # Ubuntu take them from the syslog socket and the kernel ring buffer.
 logging_rsyslog_modules: >-
-    {{ ['imuxsock', 'imjournal'] if ansible_facts['os_family'] == 'RedHat'
+    {{ ['imuxsock', 'imjournal'] if ansible_facts.get('os_family') == 'RedHat'
        else ['imuxsock', 'imklog'] }}
 logging_rsyslog_service_state: started
 logging_rsyslog_service_enabled: true

@@ -183,11 +183,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the included files, not only the include.
 - **logging**: an rsyslog entry whose `priority` changes no longer leaves its
   old `<priority>-<name>.conf` behind, and `state: absent` removes the file
-  whatever its priority. Only files the role wrote are touched; files written
-  by earlier versions carry no marker and are left alone.
+  whatever its priority. Files left behind by a priority change are only
+  removed if the role wrote them; files written by earlier versions carry no
+  marker and are left alone.
 - **logging**: `logrotate.conf` is validated before it is written
-  (`logrotate -d`), and the rsyslog configuration is checked with
-  `rsyslogd -N1` before the restart handler runs.
+  (`logrotate -d`). A changed rsyslog configuration is checked with
+  `rsyslogd -N1` before the restart handler runs; if it fails, the backups are
+  restored and entries created in that run are removed.
+- **logging**: plays with `gather_facts: false` work; the role gathers the
+  minimal facts it needs for the distro defaults.
 - **access**: with `exclusive: true`, each key removed the keys written before
   it, so only the last key stayed in `authorized_keys`. All present keys of a
   user with an exclusive key, from `access_users[].ssh_keys` and

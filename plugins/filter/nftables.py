@@ -7,6 +7,7 @@ Hierarchical merge: firewall_tables → firewall_global → firewall_group → f
 import json
 import os
 
+from ansible.errors import AnsibleFilterError
 from ansible.module_utils.parsing.convert_bool import boolean
 
 
@@ -41,7 +42,8 @@ class FilterModule:
         Tables match on (family, name), chains and sets on name. A later level
         overrides chain settings and sets, and appends its rules to the chain.
         `replace: true` on a table drops everything earlier levels defined for
-        it. Rules marked `final: true` move to the end of their chain.
+        it. Rules are then sorted by `order` (default 0, stable), so a later
+        level can place a rule before or after the rules it inherits.
         """
         self._debug_enabled = debug or self._should_debug()
 
@@ -67,11 +69,14 @@ class FilterModule:
                     chain.setdefault("type", "filter")
                     chain.setdefault("priority", 0)
                     chain.setdefault("policy", "accept")
-                chain["rules"].sort(
-                    key=lambda rule: (
-                        isinstance(rule, dict) and boolean(rule.get("final", False), strict=False)
+                elif any(key in chain for key in self.BASE_CHAIN_KEYS):
+                    # A regular chain ignores these; silently dropping a
+                    # `policy: drop` would leave the host unfiltered.
+                    raise AnsibleFilterError(
+                        f"nftables chain {table['family']} {table['name']} {chain['name']}: "
+                        "type, priority and policy need a hook"
                     )
-                )
+                chain["rules"].sort(key=self._rule_order)
             # Regular chains first, so jump/goto targets precede their callers.
             table["chains"].sort(key=lambda chain: "hook" in chain)
             result.append({"table": table})
@@ -79,6 +84,11 @@ class FilterModule:
         if self._debug_enabled:
             self._debug_print(f"Final result: {json.dumps(result, indent=2, default=str)}")
         return result
+
+    @staticmethod
+    def _rule_order(rule):
+        # Inventory values can be strings such as "10".
+        return int(rule.get("order", 0)) if isinstance(rule, dict) else 0
 
     def _merge_table(self, base, override):
         """Merge one validated table into another in place."""

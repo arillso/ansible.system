@@ -19,24 +19,37 @@
              | zip(_firewall_tables | map(attribute='table.name'))
              | map('join', ' ') | list }}
 
-# The previous config names the tables the last run managed. Tables no
-# longer in the YAML are deleted by the new config instead of staying in
-# the kernel.
+# /etc/nftables.managed lists the tables the last successful reload loaded;
+# the reload handler writes it. Tables listed there but gone from the YAML
+# are deleted by the new config. Before the first reload with this file
+# (fresh host, upgrade) the previous nftables.conf stands in.
+- name: Read managed table list
+  ansible.builtin.slurp:
+      src: /etc/nftables.managed
+  register: _firewall_managed_file
+  failed_when: false
+  become: true
+
 - name: Read previous nftables.conf
   ansible.builtin.slurp:
       src: /etc/nftables.conf
   register: _firewall_previous_conf
   failed_when: false
   become: true
+  when: _firewall_managed_file.content is not defined
 
-# Only `table ... {` definitions match; the template writes its reset lines
-# as `add table`, so a removed table is deleted once and then dropped.
+- name: Collect tables the last reload loaded
+  ansible.builtin.set_fact:
+      _firewall_managed_tables: >-
+          {{ (_firewall_managed_file.content | b64decode).splitlines() | select | list
+             if _firewall_managed_file.content is defined
+             else (_firewall_previous_conf.content | default('') | b64decode
+                   | regex_findall('(?m)^table ([^ ]+ [^ ]+) [{]')) }}
+
 - name: Collect tables to reset
   ansible.builtin.set_fact:
       _firewall_reset_tables: >-
-          {{ (_firewall_previous_conf.content | default('') | b64decode
-              | regex_findall('(?m)^table ([^ ]+ [^ ]+) [{]'))
-             | union(_firewall_table_ids) }}
+          {{ (_firewall_managed_tables | default([])) | union(_firewall_table_ids) }}
 
 # Validate before install: a broken file would otherwise replace a working
 # one and fail to load.
@@ -51,3 +64,14 @@
       validate: /usr/sbin/nft -c -f %s
   become: true
   notify: "firewall: reload"
+
+# A failed reload leaves the managed list behind the YAML while the file on
+# disk is already current, so the template alone would not notify again.
+- name: Reload until a reload has loaded the current tables
+  ansible.builtin.debug:
+      msg: "Last loaded tables {{ _firewall_managed_tables }} differ from {{ _firewall_table_ids }}"
+  changed_when: true
+  notify: "firewall: reload"
+  when:
+      - _firewall_managed_file.content is defined
+      - _firewall_managed_tables | sort != _firewall_table_ids | sort

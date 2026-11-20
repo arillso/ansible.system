@@ -142,10 +142,13 @@ argument_specs:
                                                 description: Rule comment/description
                                                 type: str
                                                 required: false
-                                            final:
-                                                description: Keep the rule at the end of its chain after merging
-                                                type: bool
-                                                default: false
+                                            order:
+                                                description:
+                                                    - Sort key within the chain after merging (stable, ascending)
+                                                    - Negative values place a rule before inherited rules;
+                                                      the default log-and-drop rule uses 1000
+                                                type: int
+                                                default: 0
                                             iifname:
                                                 description: Input interface name
                                                 type: str

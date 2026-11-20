@@ -47,9 +47,10 @@ For detailed documentation including all variables, examples, and usage instruct
 
 Tables match on `family` and `name`, chains and sets on `name`. A later level
 sets the chain keys it names (`type`, `hook`, `priority`, `policy`), replaces
-sets with the same name and appends its rules. Rules with `final: true` stay
-last, which keeps the default log-and-drop rule behind added rules. Set
-`replace: true` on a table to drop what earlier levels defined for it.
+sets with the same name and appends its rules. Rules are then sorted by
+`order` (default `0`, stable): a negative value puts a host rule before the
+rules it inherits, and the default log-and-drop rule uses `1000` to stay last.
+Set `replace: true` on a table to drop what earlier levels defined for it.
 
 ```yaml
 firewall_host:
@@ -65,13 +66,18 @@ firewall_host:
                       action: accept
 ```
 
-A chain without `hook` is a regular chain for `jump`/`goto`. Named sets go
+A chain without `hook` is a regular chain for `jump`/`goto`; setting `type`,
+`priority` or `policy` on it fails. Named sets go
 under `sets` (`name`, `type`, optional `flags`, `elements`) and are referenced
 as `@name`, e.g. `ip_saddr_set: "@trusted"`.
 
-Tables removed from the YAML are deleted on the next run, and stopping the
-service deletes the managed tables. Tables of other sources (Docker,
-kube-proxy) are not touched.
+Every change deletes and recreates the managed tables in one transaction.
+Runtime state in them is lost on each change: set elements added by other
+tools (fail2ban, crowdsec), rules inserted by them, counters. Keep such
+tools in their own tables. Tables of other sources (Docker, kube-proxy) are
+not touched. Tables removed from the YAML are deleted on the next run; the
+managed list in `/etc/nftables.managed` keeps a removed table until a reload
+has succeeded. Stopping the service deletes the managed tables.
 
 Raise `firewall_ssh_rate_limit` on hosts that legitimately open many short-lived SSH connections (CI runners, bastions) rather than removing the rule.
 

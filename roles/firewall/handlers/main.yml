@@ -9,3 +9,15 @@
       daemon_reload: true
   become: true
   listen: "firewall: reload"
+
+# Runs only after the reload succeeded (handlers run in file order and stop
+# on failure); tasks/config.yml reads it on the next run.
+- name: Record the tables the reload loaded
+  ansible.builtin.copy:
+      dest: /etc/nftables.managed
+      content: "{{ _firewall_table_ids | join('\n') }}\n"
+      mode: "0644"
+      owner: root
+      group: root
+  become: true
+  listen: "firewall: reload"

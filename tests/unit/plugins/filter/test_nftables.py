@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from ansible.errors import AnsibleFilterError
 from ansible_collections.arillso.system.plugins.filter.nftables import FilterModule
 
 
@@ -148,7 +149,7 @@ class TestMergeNftablesStructure:
         base_chain.update(hook="input", policy="drop")
         base_chain["rules"] = [
             {"tcp_dport": 22, "action": "accept"},
-            {"log_prefix": "drop: ", "action": "drop", "final": True},
+            {"log_prefix": "drop: ", "action": "drop", "order": 1000},
         ]
         cfg["firewall_host"] = [
             {
@@ -169,6 +170,7 @@ class TestMergeNftablesStructure:
 
     def test_override_changes_chain_settings(self, fm):
         cfg = self._base()
+        cfg["firewall_tables"][0]["table"]["chains"][0]["hook"] = "input"
         cfg["firewall_group"] = [
             {
                 "table": {
@@ -233,17 +235,41 @@ class TestMergeNftablesStructure:
             {"name": "trusted", "type": "ipv4_addr", "flags": [], "elements": ["192.0.2.1"]}
         ]
 
-    def test_string_false_does_not_replace_or_finalize(self, fm):
+    def test_string_false_does_not_replace(self, fm):
         cfg = self._base()
-        cfg["firewall_tables"][0]["table"]["chains"][0]["rules"] = [
-            {"action": "drop", "final": "false"},
-            {"action": "accept"},
-        ]
         cfg["firewall_host"] = [
             {"table": {"name": "filter", "family": "inet", "replace": "false", "chains": []}},
         ]
+        chains = fm.merge_nftables_structure(cfg)[0]["table"]["chains"]
+        assert [c["name"] for c in chains] == ["input"]
+
+    def test_negative_order_puts_host_rule_before_inherited(self, fm):
+        cfg = self._base()
+        cfg["firewall_tables"][0]["table"]["chains"][0]["rules"] = [
+            {"tcp_dport": 8080, "action": "drop"},
+        ]
+        cfg["firewall_host"] = [
+            {
+                "table": {
+                    "name": "filter",
+                    "family": "inet",
+                    "chains": [
+                        {
+                            "name": "input",
+                            "rules": [{"tcp_dport": 8080, "ip_saddr": "10.0.0.5", "order": "-10"}],
+                        },
+                    ],
+                },
+            },
+        ]
         rules = fm.merge_nftables_structure(cfg)[0]["table"]["chains"][0]["rules"]
-        assert [r["action"] for r in rules] == ["drop", "accept"]
+        assert [r.get("ip_saddr") for r in rules] == ["10.0.0.5", None]
+
+    def test_policy_without_hook_fails(self, fm):
+        cfg = self._base()
+        cfg["firewall_tables"][0]["table"]["chains"][0]["policy"] = "drop"
+        with pytest.raises(AnsibleFilterError, match="need a hook"):
+            fm.merge_nftables_structure(cfg)
 
     def test_new_chain_twice_in_one_table_is_merged(self, fm):
         cfg = self._base()

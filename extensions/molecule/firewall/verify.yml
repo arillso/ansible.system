@@ -38,7 +38,13 @@
             that:
                 - _nft_ssh_rule in _nft_text
                 - _nft_log_rule in _nft_text
-            fail_msg: "Expected rate-limit and log-on-drop rules missing from /etc/nftables.conf"
+                # The host-level jump lands before the final log-and-drop.
+                - _nft_text.index('jump web') < _nft_text.index(_nft_log_rule)
+                - "'delete table ip stale' in _nft_text"
+                - "'set trusted' in _nft_text"
+                - "'chain web {' in _nft_text"
+                - "'table ip nat' in _nft_text"
+            fail_msg: "Expected rules, sets, chains or reset lines missing from /etc/nftables.conf"
 
       # See converge.yml: `nft -c -f` dry-runs against the kernel and exits
       # 2 with an empty stderr on a container missing conntrack modules,

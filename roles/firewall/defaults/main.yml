@@ -47,11 +47,11 @@ firewall_tables:
                       burst: "{{ firewall_ssh_rate_burst }}"
                       action: accept
                     # Anything reaching here is dropped by the chain policy
-                    # anyway; this rule only makes the drop visible. `final`
-                    # keeps it last when other levels add rules to this
-                    # chain — an earlier log-and-drop would shadow them.
+                    # anyway; this rule only makes the drop visible. The high
+                    # `order` keeps it last when other levels add rules to
+                    # this chain — an earlier log-and-drop would shadow them.
                     - comment: "Log packets before the chain policy drops them"
-                      final: true
+                      order: 1000
                       limit: "{{ firewall_log_drop_rate_limit }}"
                       log_prefix: "{{ firewall_log_drop_prefix }}"
                       log_level: info

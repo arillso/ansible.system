@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `elements`), referenced as `@name` in rules.
 - **firewall**: a chain without `hook` is a regular chain for `jump`/`goto`.
 - **firewall**: `replace: true` on a table drops what earlier levels defined
-  for it; `final: true` on a rule keeps it at the end of its chain.
+  for it; `order` on a rule sorts it within its chain after merging (the
+  default log-and-drop rule uses `1000`).
 - **firewall**: `reject_with` accepts `icmpv6-*`, `icmpx-*` and `tcp-reset`.
 
 ### Changed
@@ -45,8 +46,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rules now get them twice; set `replace: true` on the table for the old
   behaviour.
 - **firewall** (breaking): a chain without `hook` no longer defaults to the
-  input hook. `type`, `hook`, `priority` and `policy` are optional in the
-  argument spec.
+  input hook; setting `type`, `priority` or `policy` without `hook` fails.
+- **firewall** (breaking): every config change deletes and recreates the
+  managed tables. Runtime state in them (set elements added by fail2ban or
+  crowdsec, rules inserted by other tools, counters) is lost; keep such tools
+  in their own tables.
 - **firewall**: config changes reload nftables (`firewall: reload`) instead of
   restarting it, so the host is never left without rules between stop and
   start.

@@ -100,7 +100,7 @@ get_system_data() {
     echo "$system_json"
 }
 
-# Get run data (no refresh: last_run.json is written by last.fact, not run.fact)
+# Get run data (no refresh: last_run.json is written by the facts role, not run.fact)
 get_run_data() {
     debug_log "Getting run data"
     # The deployment timestamp is historical, not cache freshness: no age limit

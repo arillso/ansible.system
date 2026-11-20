@@ -164,7 +164,8 @@ collect_system_facts() {
     platform=$(safe_exec "cat /etc/os-release | grep '^PRETTY_NAME=' | cut -d'=' -f2 | tr -d '\"'" "{{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}")
     architecture=$(safe_exec "uname -m" "{{ ansible_facts['architecture'] }}")
     kernel=$(safe_exec "uname -r" "{{ ansible_facts['kernel'] }}")
-    virtualization_type=$(safe_exec "systemd-detect-virt" "{{ ansible_facts['virtualization_type'] | default('unknown') }}")
+    # systemd-detect-virt prints "none" and exits 1 on bare metal: keep that answer
+    virtualization_type=$(safe_exec "systemd-detect-virt || [ \$? -eq 1 ]" "{{ ansible_facts['virtualization_type'] | default('unknown') }}")
     python_version=$(safe_exec "python3 --version 2>/dev/null | awk '{print \$2}'" "{{ ansible_facts['python_version'] | default('unknown') }}")
     managed_by="ansible"
     collection="{{ facts_collection_name }}"

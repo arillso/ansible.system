@@ -141,8 +141,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **facts**: a failed probe in `system.fact` and `security.fact` returned its
   partial output plus the default, e.g. `virtualization_type: "none\n…"` on
   bare metal.
-- **facts**: `cloud.fact` cached failed metadata lookups for an hour and kept
-  serving a cache written for another provider.
+- **facts**: `cloud.fact` cached failed metadata lookups for the full
+  `facts_cache_ttl_cloud` and kept serving a cache written for another
+  provider. Failed lookups now expire after `facts_cache_default_ttl`.
 - **facts**: the local facts refresh had no tag and was skipped with
   `--tags facts`.
 - **facts**: the README example used the nonexistent `facts_cache_ttl`.

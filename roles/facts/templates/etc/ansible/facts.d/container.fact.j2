@@ -100,7 +100,7 @@ get_cached_data() {
 
 cache_data() {
     if [[ "${CACHE_ENABLED}" == "true" ]]; then
-        echo "$1" > "${CACHE_FILE}.tmp"
+        (umask 077 && echo "$1" > "${CACHE_FILE}.tmp")
         mv "${CACHE_FILE}.tmp" "${CACHE_FILE}"
         chmod 600 "${CACHE_FILE}"
     fi

@@ -32,6 +32,10 @@ is_cache_valid() {
     local cache_file="$1"
     local ttl="$2"
 
+    if [[ "$CACHE_ENABLED" != "true" ]]; then
+        return 1
+    fi
+
     if [[ ! -f "$cache_file" ]]; then
         log_debug "Cache file does not exist: $cache_file"
         return 1
@@ -80,6 +84,10 @@ read_cache() {
 write_cache() {
     local cache_file="$1"
     local data="$2"
+
+    if [[ "$CACHE_ENABLED" != "true" ]]; then
+        return 0
+    fi
 
     if create_cache_dir; then
         echo "$data" > "$cache_file" 2>/dev/null || {
@@ -198,7 +206,7 @@ main() {
     fi
 
     # Try to use cached data first (short TTL)
-    if [[ "$CACHE_ENABLED" == "true" ]] && is_cache_valid "$CACHE_FILE" "$CACHE_TTL"; then
+    if is_cache_valid "$CACHE_FILE" "$CACHE_TTL"; then
         if read_cache "$CACHE_FILE"; then
             return 0
         fi
@@ -209,9 +217,7 @@ main() {
     security_facts=$(collect_security_facts)
 
     # Update cache with fresh data
-    if [[ "$CACHE_ENABLED" == "true" ]]; then
-        write_cache "$CACHE_FILE" "$security_facts" || log_error "Cache write failed, but continuing with output"
-    fi
+    write_cache "$CACHE_FILE" "$security_facts" || log_error "Cache write failed, but continuing with output"
 
     # Always output the collected security facts
     echo "$security_facts"

@@ -7,7 +7,7 @@
 set -euo pipefail
 
 # Configuration
-readonly STATUS_CACHE_FILE="/var/cache/ansible-facts/system.json"
+readonly STATUS_CACHE_FILE="{% endraw %}{{ facts_cache_dir | default('/var/cache/ansible-facts') }}{% raw %}/system.json"
 readonly STATUS_MAX_AGE=86400
 readonly DEBUG_MODE="${MOTD_DEBUG:-0}"
 

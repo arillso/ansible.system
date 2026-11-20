@@ -9,10 +9,11 @@ set +e
 # Universal configuration variables from Ansible (harmonized across all facts scripts)
 readonly CACHE_DIR="{{ facts_cache_dir | default('/var/cache/ansible-facts') }}"
 readonly LAST_RUN_FILE="${CACHE_DIR}/last_run.json"
+readonly DEBUG_ENABLED="{{ facts_debug_enabled | bool | lower }}"
 
 # Logging functions
 log_debug() {
-    [[ "${DEBUG:-false}" == "true" ]] && echo "[DEBUG] $*" >&2
+    [[ "${DEBUG_ENABLED}" == "true" ]] && echo "[DEBUG] $*" >&2
 }
 
 log_warn() {

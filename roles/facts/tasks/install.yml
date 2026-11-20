@@ -67,7 +67,8 @@
       group: root
       content: >-
           {{ {
-              'timestamp': ansible_facts['date_time']['iso8601'],
+              'timestamp': ansible_facts['date_time']['date'] ~ 'T' ~ ansible_facts['date_time']['time']
+                  ~ ansible_facts['date_time']['tz_offset'][:3] ~ ':' ~ ansible_facts['date_time']['tz_offset'][3:],
               'timestamp_human': ansible_facts['date_time']['date'] ~ ' '
                   ~ ansible_facts['date_time']['time'] ~ ' ' ~ ansible_facts['date_time']['tz'],
               'epoch': ansible_facts['date_time']['epoch'] | int,

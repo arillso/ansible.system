@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # Configuration
-readonly STATUS_CACHE_DIR="/var/cache/ansible-facts"
+readonly STATUS_CACHE_DIR="{{ facts_cache_dir | default('/var/cache/ansible-facts') }}"
 readonly STATUS_CACHE_FILE="${STATUS_CACHE_DIR}/system-status.json"
 readonly LOG_RETENTION_DAYS=7
 readonly MAX_LOG_LINES=1000

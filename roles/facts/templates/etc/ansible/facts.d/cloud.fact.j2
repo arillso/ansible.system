@@ -51,6 +51,10 @@ is_cache_valid() {
     local cache_file="$1"
     local ttl="$2"
 
+    if [[ "$CACHE_ENABLED" != "true" ]]; then
+        return 1
+    fi
+
     if [[ ! -f "$cache_file" ]]; then
         log_debug "Cache file does not exist: $cache_file"
         return 1
@@ -99,6 +103,10 @@ read_cache() {
 write_cache() {
     local cache_file="$1"
     local data="$2"
+
+    if [[ "$CACHE_ENABLED" != "true" ]]; then
+        return 0
+    fi
 
     if create_cache_dir; then
         echo "$data" > "$cache_file" 2>/dev/null || {
@@ -257,12 +265,12 @@ main() {
     # must not pin "unknown" for the whole TTL, yet an unreachable metadata
     # service must not be re-probed on every fact gather and MOTD login
     local ttl="$CACHE_TTL"
-    if ! jq -e '.metadata_available or .provider == "generic"' "$CACHE_FILE" >/dev/null 2>&1; then
+    if [[ "$CACHE_ENABLED" == "true" ]] && ! jq -e '.metadata_available or .provider == "generic"' "$CACHE_FILE" >/dev/null 2>&1; then
         ttl="$FAILED_LOOKUP_TTL"
     fi
 
     # Use the cache only if it was written for the current provider
-    if [[ "$CACHE_ENABLED" == "true" ]] && is_cache_valid "$CACHE_FILE" "$ttl" \
+    if is_cache_valid "$CACHE_FILE" "$ttl" \
         && jq -e --arg p "$CLOUD_PROVIDER" '.provider == $p' "$CACHE_FILE" >/dev/null 2>&1; then
         if read_cache "$CACHE_FILE"; then
             return 0
@@ -272,9 +280,7 @@ main() {
     local metadata
     metadata=$(get_cloud_metadata "$CLOUD_PROVIDER")
 
-    if [[ "$CACHE_ENABLED" == "true" ]]; then
-        write_cache "$CACHE_FILE" "$metadata" || log_error "Cache write failed, but continuing with output"
-    fi
+    write_cache "$CACHE_FILE" "$metadata" || log_error "Cache write failed, but continuing with output"
 
     # Always output the collected metadata
     echo "$metadata"

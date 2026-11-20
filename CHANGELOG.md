@@ -129,7 +129,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **facts**: `facts_enable_security_updates` and `facts_enable_static_cache`
   were read as shell variables and had no effect.
 - **facts**: `facts_cache_enabled` was ignored by the cloud, security and system
-  facts.
+  facts. With `false` the shell MOTD now runs `security.fact` and `cloud.fact`
+  on every login, which adds their probe time to each SSH login.
+- **facts**: `facts_debug_enabled` had no effect on `run.fact`.
+- **shell**: the MOTD scripts read the facts cache from the hardcoded
+  `/var/cache/ansible-facts` and ignored `facts_cache_dir`.
 - **facts**: a timed-out container probe aborted `container.fact` without
   output.
 - **facts**: `container.fact` reset the cache directory to `0755` on every

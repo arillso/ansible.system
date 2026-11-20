@@ -14,7 +14,9 @@ argument_specs:
                 type: "int"
                 required: false
                 default: 10
-                description: "Delay in seconds before the first connection attempt"
+                description: |
+                    Delay in seconds before the first connection attempt,
+                    before and after a reboot triggered by cloud-init
 
             ready_ssh_timeout:
                 type: "int"

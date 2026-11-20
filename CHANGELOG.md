@@ -35,8 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- **ready**: `ready_ssh_port`, `ready_check_retries`, `ready_check_delay` and
-  `ready_rescue_pause`. Use `ready_cloud_init_timeout` for the cloud-init wait.
 - **access**: `access_sudoers_validate` was never read. Use
   `access_validate_sudoers`.
 - **ansible**: unused `ansible_debug_mode`, internal arch vars and the
@@ -44,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **bitwarden_secrets**: `armv7l` support (no upstream release asset exists),
   `bitwarden_secrets_state: latest` (it was accepted but never installed
   anything) and the unused `bitwarden_secrets_debug_mode`.
+- **ready**: `ready_ssh_port`, `ready_check_retries`, `ready_check_delay` and
+  `ready_rescue_pause`. Use `ready_cloud_init_timeout` for the cloud-init wait.
 
 ### Fixed
 
@@ -66,8 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **access**: a sudoers entry without `commands` failed to render on
   ansible-core 2.19+; it defaults to `ALL` again.
 
-- **ready**: a reboot by cloud-init made the host unreachable, which the
-  `rescue` path never caught. The role now waits for the connection again and
+- **ready**: a reboot during the cloud-init run made the host unreachable,
+  which the `rescue` path never caught. The role now waits for the connection again and
   repeats the cloud-init check.
 - **ready**: the role reported a host as ready while cloud-init was still
   running, between two stages or after `rescue`, and ignored cloud-init errors.

@@ -57,26 +57,32 @@ argument_specs:
             network_resolved_llmnr:
                 description: "LLMNR setting for systemd-resolved, bool or string"
                 type: raw
+                choices: [true, false, "yes", "no", "resolve"]
                 default: false
             network_resolved_multicast_dns:
                 description: "Multicast DNS setting for systemd-resolved, bool or string"
                 type: raw
+                choices: [true, false, "yes", "no", "resolve"]
                 default: false
             network_resolved_dnssec:
                 description: "DNSSEC setting for systemd-resolved, bool or string"
                 type: raw
+                choices: [true, false, "yes", "no", "allow-downgrade"]
                 default: "allow-downgrade"
             network_resolved_dns_over_tls:
                 description: "DNS-over-TLS setting for systemd-resolved, bool or string"
                 type: raw
+                choices: [true, false, "yes", "no", "opportunistic"]
                 default: false
             network_resolved_cache:
                 description: "DNS cache setting for systemd-resolved, bool or string"
                 type: raw
+                choices: [true, false, "yes", "no", "no-negative"]
                 default: true
             network_resolved_dnsstublistener:
                 description: "DNS stub listener setting for systemd-resolved, bool or string"
                 type: raw
+                choices: [true, false, "yes", "no", "udp", "tcp"]
                 default: true
             network_resolved_manage_networkmanager:
                 description: "Set dns=systemd-resolved in NetworkManager when it is installed"
@@ -168,26 +174,32 @@ argument_specs:
             network_resolved_llmnr:
                 description: "LLMNR setting for systemd-resolved, bool or string"
                 type: raw
+                choices: [true, false, "yes", "no", "resolve"]
                 default: false
             network_resolved_multicast_dns:
                 description: "Multicast DNS setting for systemd-resolved, bool or string"
                 type: raw
+                choices: [true, false, "yes", "no", "resolve"]
                 default: false
             network_resolved_dnssec:
                 description: "DNSSEC setting for systemd-resolved, bool or string"
                 type: raw
+                choices: [true, false, "yes", "no", "allow-downgrade"]
                 default: "allow-downgrade"
             network_resolved_dns_over_tls:
                 description: "DNS-over-TLS setting for systemd-resolved, bool or string"
                 type: raw
+                choices: [true, false, "yes", "no", "opportunistic"]
                 default: false
             network_resolved_cache:
                 description: "DNS cache setting for systemd-resolved, bool or string"
                 type: raw
+                choices: [true, false, "yes", "no", "no-negative"]
                 default: true
             network_resolved_dnsstublistener:
                 description: "DNS stub listener setting for systemd-resolved, bool or string"
                 type: raw
+                choices: [true, false, "yes", "no", "udp", "tcp"]
                 default: true
             network_resolved_manage_networkmanager:
                 description: "Set dns=systemd-resolved in NetworkManager when it is installed"

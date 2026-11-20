@@ -79,6 +79,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **python**: `python_virtualenv_python` defaults to `""` instead of `python3`;
   the pip module then chooses the interpreter. A value set together with the
   venv module now fails with the module's error instead of being dropped.
+- **packages**: `packages_apt_get_assume_yes` and `packages_apt_fix_broken`
+  default to `false`. Both wrote host-wide APT settings, so manual
+  `apt-get remove` ran without confirmation. The role's own apt calls do not
+  need them.
+- **packages**: a package without `install_recommends` follows
+  `packages_apt_install_recommends` instead of always forcing `yes`.
+- **packages**: a failed cache update fails the play, including `NO_PUBKEY`
+  errors that were only printed as a warning before.
+- **packages**: `packages_apt_conf` values are written in double quotes, as
+  apt.conf requires; block values (`{ … }`) and already quoted values stay as
+  given, and a value with a stray `"` fails with a clear message.
 
 ### Removed
 
@@ -104,6 +115,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `facts_concurrent_execution` and `facts_cache_compression_enabled`.
 - **python**: `python_virtualenv_enabled` was never read.
 - **python**: unused `_python_common_packages` and `vars/main.yml`.
+- **packages**: `packages_gpg_keyservers` was never read. Keyserver imports use
+  the `keyserver` of each `packages_keys` entry.
 
 ### Fixed
 
@@ -193,6 +206,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **python**: the argument spec no longer declares a Debian-only default for
   `python_system_packages` (`python3-venv` does not exist on EL).
 - **python**: an empty `python_pip_extra_args` is omitted instead of passed.
+- **packages**: `packages_apt_conf` failed on every entry (the template read
+  `item` instead of the loop variable). The defaults example now uses
+  `settings:`, matching the argument spec.
+- **packages**: `packages_unattended_upgrades_version_pins` failed to render
+  and used `>>`, which APT pins do not support. Each pin now allows
+  versions starting with the pinned value (with optional epoch, e.g. `15`
+  matches `15+248`) and blocks every other version. An unquoted decimal such as
+  `1.20` fails with a clear message.
+- **packages**: a `packages_list` entry without `state` failed the install task.
+- **packages**: `packages_unattended_upgrades_download_only: true` disabled the
+  download and still installed upgrades. It now downloads only.
+- **packages**: `packages_unattended_upgrades_install: false` removed the
+  package before stopping its unit, which failed the play. The unit is stopped
+  first, and only if it exists.
+- **packages**: changes to the APT configuration, proxy, mirror or lists
+  directory refresh the cache before packages are installed, not at the end of
+  the play. The cache is no longer refreshed twice after repository or key
+  changes.
+- **packages**: `packages_upgrade: true` (or unquoted `yes`) was skipped
+  silently; it now runs a safe upgrade.
+- **packages**: `packages_apt_conf` was skipped when `packages_cache_enabled`
+  was false and applied twice when the clean entry point ran.
 
 ### Security
 
@@ -252,6 +287,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now reports `public_ipv4` from the metadata service and the MOTD reads it
   from `cloud.json`. `10-sysinfo` also aborted under `set -e` when
   `system.json` was missing.
+- **packages**: armored keys were staged as root at a fixed path
+  `/tmp/<label>-armored.asc`, which a local user could replace with a symlink.
+  They are now staged in a fresh temporary file that is always removed.
 
 ## [2.0.4] - 2026-11-04
 

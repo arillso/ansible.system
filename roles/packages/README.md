@@ -48,7 +48,7 @@ See [`defaults/main.yml`](defaults/main.yml) for the complete list and [the guid
 
 ## Check Mode
 
-This role supports `--check` mode. GPG key import shell tasks use `creates:` (skipped when the keyring exists), and cache probes are `changed_when: false`, so no system changes occur in check mode.
+This role supports `--check` mode. Key imports that need `gpg` (dearmor and keyserver) are skipped in check mode or when the keyring exists, and cache updates are `changed_when: false`, so no system changes occur in check mode.
 
 ## License
 

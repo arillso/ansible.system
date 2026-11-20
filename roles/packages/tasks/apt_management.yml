@@ -8,6 +8,7 @@
       mode: "0644"
       backup: true
   become: true
+  register: _packages_apt_system_conf
   notify: "packages: update cache"
 
 - name: Configure APT proxy
@@ -19,6 +20,7 @@
       mode: "0644"
   become: true
   when: packages_apt_proxy_enabled
+  register: _packages_apt_proxy_conf
   notify: "packages: update cache"
 
 - name: Remove APT proxy configuration
@@ -27,6 +29,7 @@
       state: absent
   become: true
   when: not packages_apt_proxy_enabled
+  register: _packages_apt_proxy_removed
   notify: "packages: update cache"
 
 - name: Configure APT periodic updates
@@ -55,7 +58,6 @@
       mode: "0644"
   become: true
   when: packages_apt_preferences | length > 0
-  notify: "packages: update cache"
 
 - name: Remove APT preferences if not configured
   ansible.builtin.file:
@@ -74,6 +76,7 @@
       backup: true
   become: true
   when: packages_apt_mirror_enabled
+  register: _packages_apt_mirror_conf
   notify: "packages: update cache"
 
 - name: Clean APT lists if requested
@@ -82,4 +85,15 @@
       state: absent
   become: true
   when: packages_apt_clean_lists
+  register: _packages_apt_lists_cleaned
   notify: "packages: update cache"
+
+# cache.yml refreshes the index right away when this flag is set; the
+# handler alone would only run at the end of the play, after installs.
+- name: Track APT configuration changes
+  ansible.builtin.set_fact:
+      packages_apt_conf_changed: true
+  when: >-
+      [_packages_apt_system_conf, _packages_apt_proxy_conf,
+       _packages_apt_proxy_removed, _packages_apt_mirror_conf,
+       _packages_apt_lists_cleaned] | select('changed') | list | length > 0

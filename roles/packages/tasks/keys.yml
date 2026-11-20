@@ -60,6 +60,7 @@
   when: _pkg_norm.state == 'absent'
   register: _packages_keys_removed
   become: true
+  notify: "packages: update cache"
 
 - name: Track keyring removals in packages_keys_changed
   ansible.builtin.set_fact:

@@ -25,10 +25,6 @@ packages_keys: []
 # When true, existing keyrings are removed before re-downloading,
 # allowing key rotation or renewal without manual cleanup.
 packages_keys_force_update: false
-packages_gpg_keyservers:
-    - keyserver.ubuntu.com
-    - keys.openpgp.org
-    - pgp.mit.edu
 
 # APT Configuration Management
 packages_apt_conf: []
@@ -36,7 +32,7 @@ packages_apt_conf: []
 # packages_apt_conf:
 #   - name: custom
 #     priority: 99
-#     config:
+#     settings:
 #       - key: "APT::Install-Recommends"
 #         value: "false"
 
@@ -60,7 +56,7 @@ packages_apt_mirror_components:
 # APT Behavior Configuration
 packages_apt_install_recommends: true
 packages_apt_install_suggests: false
-packages_apt_fix_broken: true
+packages_apt_fix_broken: false
 packages_apt_fix_missing: true
 packages_apt_force_confold: true
 packages_apt_force_confnew: false
@@ -105,7 +101,7 @@ packages_apt_lists_dir: "/var/lib/apt/lists"
 packages_apt_clean_lists: false
 
 # APT Authentication
-packages_apt_get_assume_yes: true
+packages_apt_get_assume_yes: false
 packages_apt_get_allow_unauthenticated: false
 
 # APT Language/Translation

@@ -5,9 +5,7 @@
 
 - name: Configure APT settings
   ansible.builtin.include_tasks: apt_config.yml
-  when:
-      - packages_apt_conf | length > 0
-      - packages_cache_enabled | default(true) | bool
+  when: packages_apt_conf | length > 0
   tags: ["packages", "config"]
 
 - name: Configure APT repositories
@@ -34,7 +32,7 @@
 - name: Upgrade packages
   ansible.builtin.include_tasks: upgrade.yml
   when:
-      - packages_upgrade
+      - _packages_upgrade_mode in ['yes', 'safe', 'full', 'dist']
       - packages_upgrade_enabled | default(false) | bool
   tags: ["packages", "upgrade"]
 
@@ -45,6 +43,8 @@
 
 - name: Clean package cache
   ansible.builtin.include_tasks: clean.yml
+  vars:
+      _packages_apt_conf_applied: true
   when:
       - packages_autoclean or packages_autoremove
       - packages_clean_enabled | default(false) | bool

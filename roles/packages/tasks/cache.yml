@@ -1,74 +1,40 @@
 ---
-- name: Check APT cache age
+# The apt module checks the cache age against update-success-stamp. Without
+# the stamp it would fall back to the lists directory mtime, which is fresh
+# right after `rm -rf /var/lib/apt/lists/*`, so a missing stamp forces a
+# refresh. Any repository, key or APT configuration change does too. A failed update
+# fails the play, including NO_PUBKEY: installing against a stale index
+# hides the broken repository.
+- name: Check APT update stamp
   ansible.builtin.stat:
       path: /var/lib/apt/periodic/update-success-stamp
-  register: _packages_apt_cache_stat
+  register: _packages_apt_stamp
 
-- name: Calculate cache age
-  ansible.builtin.set_fact:
-      _packages_cache_age: "{{ ansible_facts['date_time'].epoch | int - _packages_apt_cache_stat.stat.mtime | default(0) | int }}"
-  when: _packages_apt_cache_stat.stat.exists
-
-- name: Set cache age to max if stamp doesn't exist
-  ansible.builtin.set_fact:
-      _packages_cache_age: "{{ packages_cache_valid_time + 1 }}"
-  when: not _packages_apt_cache_stat.stat.exists
-
-- name: Update APT cache (only when needed)
+- name: Update APT cache
   ansible.builtin.apt:
       update_cache: true
-      cache_valid_time: 0
+      cache_valid_time: >-
+          {{ 0 if (packages_force_cache_update
+                   or not _packages_apt_stamp.stat.exists
+                   or _packages_cache_stale | bool)
+             else packages_cache_valid_time | int }}
   become: true
   register: _packages_cache_updated
   retries: "{{ packages_cache_update_retries }}"
   delay: "{{ packages_cache_update_delay }}"
   until: _packages_cache_updated is succeeded
-  when: >
-      packages_force_cache_update or
-      (_packages_cache_age | int > packages_cache_valid_time | int)
   changed_when: false
-  failed_when: >
-      _packages_cache_updated is failed and
-      'NO_PUBKEY' not in (_packages_cache_updated.msg | default(''))
 
-- name: Handle GPG key errors in cache update
-  ansible.builtin.debug:
-      msg: |
-          Warning: APT cache update failed due to missing GPG keys.
-          This is usually caused by repositories being added before their GPG keys.
-          Missing keys: {{ _packages_cache_updated.msg | regex_findall('NO_PUBKEY ([A-F0-9]+)') | join(', ') }}
-          Please ensure all repository GPG keys are properly configured.
-  when: >
-      _packages_cache_updated is defined and
-      _packages_cache_updated is failed and
-      'NO_PUBKEY' in (_packages_cache_updated.msg | default(''))
-
-- name: Update APT cache (forced by configuration changes)
-  ansible.builtin.apt:
-      update_cache: true
-      cache_valid_time: 0
+# apt only writes this stamp through an optional Post-Invoke hook
+# (update-notifier-common); without it every run would refresh.
+- name: Record the successful cache update
+  ansible.builtin.file:
+      path: /var/lib/apt/periodic/update-success-stamp
+      state: touch
+      mode: "0644"
   become: true
-  register: _packages_cache_force_updated
-  retries: "{{ packages_cache_update_retries }}"
-  delay: "{{ packages_cache_update_delay }}"
-  until: _packages_cache_force_updated is succeeded
-  when: >
-      packages_repositories_changed | default(false) or
-      packages_keys_changed | default(false) or
-      packages_apt_conf_changed | default(false)
+  when: _packages_cache_updated.cache_updated | default(false)
   changed_when: false
-  failed_when: >
-      _packages_cache_force_updated is failed and
-      'NO_PUBKEY' not in (_packages_cache_force_updated.msg | default(''))
 
-- name: Handle GPG key errors in forced cache update
-  ansible.builtin.debug:
-      msg: |
-          Warning: Forced APT cache update failed due to missing GPG keys.
-          This is usually caused by repositories being added before their GPG keys.
-          Missing keys: {{ _packages_cache_force_updated.msg | regex_findall('NO_PUBKEY ([A-F0-9]+)') | join(', ') }}
-          Please ensure all repository GPG keys are properly configured.
-  when: >
-      _packages_cache_force_updated is defined and
-      _packages_cache_force_updated is failed and
-      'NO_PUBKEY' in (_packages_cache_force_updated.msg | default(''))
+- name: Reset change flags
+  ansible.builtin.include_tasks: _cache_flags_reset.yml

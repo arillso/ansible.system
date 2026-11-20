@@ -1,0 +1,8 @@
+---
+# Shared by cache.yml and the cache handler: once the index is refreshed, a
+# later include or play must not force another refresh for the same change.
+- name: Reset APT change flags after the cache update
+  ansible.builtin.set_fact:
+      packages_repositories_changed: false
+      packages_keys_changed: false
+      packages_apt_conf_changed: false

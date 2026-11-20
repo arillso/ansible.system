@@ -13,7 +13,15 @@ _packages_supported_os_families:
 _packages_supported_package_managers:
     - "apt"
 
-# Internal state tracking
-_packages_repositories_changed: false
-_packages_keys_changed: false
-_packages_apt_conf_changed: false
+# packages_upgrade as apt module mode; boolean true (also unquoted YAML
+# `yes`) means a safe upgrade
+_packages_upgrade_mode: >-
+    {{ 'yes' if packages_upgrade | string | lower == 'true'
+       else packages_upgrade | string | lower }}
+
+# Set by repository, key and APT configuration changes; cache.yml and the
+# cache handler refresh the index when true and reset the flags afterwards.
+_packages_cache_stale: >-
+    {{ packages_repositories_changed | default(false) | bool
+       or packages_keys_changed | default(false) | bool
+       or packages_apt_conf_changed | default(false) | bool }}

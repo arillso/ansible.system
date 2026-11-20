@@ -1,14 +1,24 @@
 ---
+# An unquoted 1.20 is the float 1.2; its pin would match no version while
+# `version *` blocks all of them. Integers such as 15 are safe.
+- name: Check that version pins are not floats
+  ansible.builtin.assert:
+      that: packages_unattended_upgrades_version_pins.values() | select('float') | list | length == 0
+      fail_msg: 'Quote decimal versions in packages_unattended_upgrades_version_pins, e.g. nginx: "1.20"'
+      quiet: true
+  when: packages_unattended_upgrades_install
+
 - name: Install unattended-upgrades package
   ansible.builtin.apt:
       name: unattended-upgrades
-      state: "{{ 'present' if packages_unattended_upgrades_install else 'absent' }}"
+      state: present
       update_cache: false
   become: true
   retries: "{{ packages_retry_count }}"
   delay: "{{ packages_retry_delay }}"
   register: _packages_unattended_install
   until: _packages_unattended_install is succeeded
+  when: packages_unattended_upgrades_install
 
 - name: Configure unattended-upgrades
   when: packages_unattended_upgrades_install
@@ -39,7 +49,6 @@
             mode: "0644"
             backup: true
         become: true
-        notify: "packages: update cache"
 
       - name: Configure auto-updates settings
         ansible.builtin.template:
@@ -97,6 +106,16 @@
 - name: Remove unattended-upgrades configuration
   when: not packages_unattended_upgrades_install
   block:
+      # The unit is missing on hosts that never had the package; stopping
+      # a missing unit fails inside the systemd role, so look first.
+      - name: Check whether the unattended-upgrades unit exists
+        ansible.builtin.command:
+            cmd: systemctl list-unit-files --no-legend unattended-upgrades.service
+        register: _packages_unattended_unit
+        changed_when: false
+        failed_when: false
+        check_mode: false
+
       - name: Stop and disable unattended-upgrades service via systemd role
         ansible.builtin.include_role:
             name: arillso.system.systemd
@@ -106,10 +125,7 @@
                 - name: unattended-upgrades
                   enabled: false
                   state: stopped
-        # The role disables unattended-upgrades from any prior state.
-        # The unit may not exist (fresh install never had it) or may
-        # already be stopped; either is acceptable here.
-        failed_when: false
+        when: _packages_unattended_unit.stdout | trim | length > 0
 
       - name: Remove unattended-upgrades configuration files
         ansible.builtin.file:
@@ -120,3 +136,14 @@
             - /etc/apt/apt.conf.d/50unattended-upgrades
             - /etc/apt/apt.conf.d/20auto-upgrades
             - /etc/apt/preferences.d/99unattended-upgrades-pins
+
+      # Removed last: the stop above needs the unit file the package ships.
+      - name: Remove unattended-upgrades package
+        ansible.builtin.apt:
+            name: unattended-upgrades
+            state: absent
+        become: true
+        retries: "{{ packages_retry_count }}"
+        delay: "{{ packages_retry_delay }}"
+        register: _packages_unattended_remove
+        until: _packages_unattended_remove is succeeded

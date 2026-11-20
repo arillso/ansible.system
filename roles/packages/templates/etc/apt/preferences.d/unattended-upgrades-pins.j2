@@ -1,23 +1,19 @@
 # {{ ansible_managed }}
 # APT Preferences for Version Pinning
-# This file controls which package versions can be automatically upgraded
-# Format: Pin package to major.minor version, block newer major versions
+# APT applies the first specific-form record that matches a version, so the
+# allow record must come before the block record of the same package.
+# The optional "N:" prefix matches Debian epochs such as docker-ce's "5:";
+# any non-digit may follow the version (15 matches 15+248, 1.24 matches 1.24.0-1).
 
 {% for package, version in packages_unattended_upgrades_version_pins.items() %}
-# Pin {{ package }} to version {{ version }}.*
+# Allow {{ package }} {{ version }}
 Package: {{ package }}
-Pin: version {{ version }}.*
+Pin: version /^([0-9]+:)?{{ version | string | regex_escape }}([^0-9]|$)/
 Pin-Priority: 990
 
-# Block newer major versions of {{ package }}
+# Block every other version of {{ package }}
 Package: {{ package }}
-Pin: version >> {{ version }}
+Pin: version *
 Pin-Priority: -1
 
 {% endfor %}
-
-# Explanation:
-# - Pin-Priority 990: Prefer this version
-# - Pin-Priority -1: Never install this version
-# - version {{ version }}.*: Allow minor/patch updates within major version
-# - version >> {{ version }}: Block versions greater than pinned major version

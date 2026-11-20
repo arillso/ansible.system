@@ -5,7 +5,6 @@
 #
 #   _pkg_key.dispatch    one of: url-direct, url-dearmor, keyserver, data
 #   _pkg_key.keyring     absolute keyring path on the host
-#   _pkg_key.armored     /tmp staging path (only used for dearmor flows)
 #   _pkg_key.label       short identifier for loop labels
 #
 # Each branch sets _pkg_key_changed: true when the host saw a write,
@@ -28,6 +27,7 @@
   become: true
   when: _pkg_key.dispatch == 'url-direct'
   register: _packages_key_apply_get
+  notify: "packages: update cache"
 
 - name: "Stat target keyring before staging ({{ _pkg_key.label }})"
   ansible.builtin.stat:
@@ -36,47 +36,71 @@
   register: _packages_key_target_stat
   changed_when: false
 
-- name: "Stage armored key from URL into /tmp ({{ _pkg_key.label }})"
-  ansible.builtin.get_url:
-      url: "{{ _pkg_key_item.url }}"
-      dest: "{{ _pkg_key.armored }}"
-      mode: "0600"
-      timeout: 30
-  become: true
+# The block below cannot run in check mode (no tempfile), so report the
+# pending keyring write here instead of a silent skip.
+- name: "Report keyring that would be written ({{ _pkg_key.label }})"
+  ansible.builtin.debug:
+      msg: "{{ _pkg_key.keyring }} would be written"
+  changed_when: true
   when:
-      - _pkg_key.dispatch == 'url-dearmor'
+      - ansible_check_mode
+      - _pkg_key.dispatch in ['url-dearmor', 'data']
       - (not (_packages_key_target_stat.stat.exists | default(false)))
         or packages_keys_force_update
 
-- name: "Stage armored key from data into /tmp ({{ _pkg_key.label }})"
-  ansible.builtin.copy:
-      content: "{{ _pkg_key_item.data | default('') }}"
-      dest: "{{ _pkg_key.armored }}"
-      mode: "0600"
-  become: true
+# The armored key is staged in a fresh mktemp file: a fixed /tmp path
+# lets a local user plant a symlink that root then writes through.
+- name: "Dearmor key into host keyring ({{ _pkg_key.label }})"
   when:
-      - _pkg_key.dispatch == 'data'
+      - _pkg_key.dispatch in ['url-dearmor', 'data']
       - (not (_packages_key_target_stat.stat.exists | default(false)))
         or packages_keys_force_update
-
-- name: "Dearmor staged key into host keyring ({{ _pkg_key.label }})"
-  vars:
-      _keyring: "{{ _pkg_key.keyring }}"
-      _armored: "{{ _pkg_key.armored }}"
-  ansible.builtin.shell:
-      # Block-literal (`|`) keeps each shell statement on its own line
-      # so a folded scalar can't merge the redirection into the next
-      # command — this was the regression behind 1.1.4's empty keyring.
-      cmd: |
-          set -e
-          _tmp={{ _armored | quote }}
-          trap 'rm -f "$_tmp"' EXIT
-          gpg --dearmor -o {{ _keyring | quote }} < "$_tmp"
-      executable: /bin/bash
-      creates: "{{ _keyring }}"
+      # tempfile does not run in check mode, so there is no path to stage to
+      - not ansible_check_mode
   become: true
-  when: _pkg_key.dispatch in ['url-dearmor', 'data']
-  register: _packages_key_apply_dearmor
+  block:
+      - name: "Create staging file for armored key ({{ _pkg_key.label }})"
+        ansible.builtin.tempfile:
+            state: file
+            suffix: .asc
+        register: _packages_key_staging
+
+      - name: "Stage armored key from URL ({{ _pkg_key.label }})"
+        ansible.builtin.get_url:
+            url: "{{ _pkg_key_item.url }}"
+            dest: "{{ _packages_key_staging.path }}"
+            mode: "0600"
+            force: true
+            timeout: 30
+        when: _pkg_key.dispatch == 'url-dearmor'
+
+      - name: "Stage armored key from data ({{ _pkg_key.label }})"
+        ansible.builtin.copy:
+            content: "{{ _pkg_key_item.data | default('') }}"
+            dest: "{{ _packages_key_staging.path }}"
+            mode: "0600"
+        when: _pkg_key.dispatch == 'data'
+
+      - name: "Dearmor staged key into host keyring ({{ _pkg_key.label }})"
+        ansible.builtin.command:
+            argv:
+                - gpg
+                - --batch
+                - --yes
+                - --dearmor
+                - -o
+                - "{{ _pkg_key.keyring }}"
+                - "{{ _packages_key_staging.path }}"
+        register: _packages_key_apply_dearmor
+        notify: "packages: update cache"
+        # the block only runs when the keyring is missing or forced
+        changed_when: true
+  always:
+      - name: "Remove staging file ({{ _pkg_key.label }})"
+        ansible.builtin.file:
+            path: "{{ _packages_key_staging.path }}"
+            state: absent
+        when: _packages_key_staging.path is defined
 
 - name: "Fetch key from keyserver into host keyring ({{ _pkg_key.label }})"
   vars:
@@ -96,6 +120,7 @@
   become: true
   when: _pkg_key.dispatch == 'keyserver'
   register: _packages_key_apply_keyserver
+  notify: "packages: update cache"
 
 - name: "Normalise keyring permissions ({{ _pkg_key.label }})"
   ansible.builtin.file:

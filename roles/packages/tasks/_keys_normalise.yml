@@ -8,7 +8,6 @@
 #              | 'unknown' (entry has no valid combination)
 #   label      short tag for loop labels
 #   keyring    absolute /usr/share/keyrings/... path
-#   armored    /tmp/...-armored.asc staging path (only for dearmor flows)
 #
 # Keeping the normalisation in one place removes the seven copies of
 # the same `default(...)` Jinja expression that the original eight
@@ -28,7 +27,6 @@
               'dispatch': _pkg_key_dispatch,
               'label':    _pkg_key_label,
               'keyring':  _pkg_key_keyring,
-              'armored':  '/tmp/' + _pkg_key_label + '-armored.asc',
             }]
           }}
   loop: "{{ packages_keys }}"

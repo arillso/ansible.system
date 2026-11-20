@@ -184,13 +184,15 @@ argument_specs:
                 type: str
                 default: root
             logging_rsyslog_file_group:
-                description: "Group for log files created by rsyslog"
+                description: >-
+                    Group for log files created by rsyslog. Defaults to `root`
+                    on EL and `adm` elsewhere.
                 type: str
-                default: adm
             logging_rsyslog_file_create_mode:
-                description: "File creation mode for log files"
+                description: >-
+                    File creation mode for log files. Defaults to `0600` on EL
+                    and `0640` elsewhere.
                 type: str
-                default: "0640"
             logging_rsyslog_dir_create_mode:
                 description: "Directory creation mode for log directories"
                 type: str
@@ -422,13 +424,15 @@ argument_specs:
                 type: str
                 default: root
             logging_rsyslog_file_group:
-                description: "Group for log files created by rsyslog"
+                description: >-
+                    Group for log files created by rsyslog. Defaults to `root`
+                    on EL and `adm` elsewhere.
                 type: str
-                default: adm
             logging_rsyslog_file_create_mode:
-                description: "File creation mode for log files"
+                description: >-
+                    File creation mode for log files. Defaults to `0600` on EL
+                    and `0640` elsewhere.
                 type: str
-                default: "0640"
             logging_rsyslog_dir_create_mode:
                 description: "Directory creation mode for log directories"
                 type: str

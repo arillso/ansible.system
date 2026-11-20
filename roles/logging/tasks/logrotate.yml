@@ -9,21 +9,6 @@
   register: _logging_logrotate_install
   until: _logging_logrotate_install is succeeded
 
-- name: Deploy global logrotate configuration
-  ansible.builtin.template:
-      src: etc/logrotate.conf.j2
-      dest: /etc/logrotate.conf
-      owner: root
-      group: root
-      mode: "0644"
-      validate: logrotate -d %s
-      backup: "{{ logging_backup_configs }}"
-  become: true
-  retries: "{{ logging_retry_count }}"
-  delay: "{{ logging_retry_delay }}"
-  register: _logging_logrotate_config
-  until: _logging_logrotate_config is succeeded
-
 - name: Deploy logrotate entries
   ansible.builtin.template:
       src: etc/logrotate.d/entry.j2
@@ -49,3 +34,20 @@
       loop_var: _logging_logrotate_item
       label: "{{ _logging_logrotate_item.name }}"
   when: _logging_logrotate_item.state | default('present') == 'absent'
+
+# Last, so `validate` sees the entries of this run in the include directory
+# and a fixed or removed entry no longer blocks the global configuration.
+- name: Deploy global logrotate configuration
+  ansible.builtin.template:
+      src: etc/logrotate.conf.j2
+      dest: /etc/logrotate.conf
+      owner: root
+      group: root
+      mode: "0644"
+      validate: logrotate -d %s
+      backup: "{{ logging_backup_configs }}"
+  become: true
+  retries: "{{ logging_retry_count }}"
+  delay: "{{ logging_retry_delay }}"
+  register: _logging_logrotate_config
+  until: _logging_logrotate_config is succeeded

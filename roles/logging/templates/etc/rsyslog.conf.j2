@@ -61,6 +61,8 @@ mail.*                                    -/var/log/maillog
 cron.*                                    /var/log/cron
 uucp,news.crit                            /var/log/spooler
 local7.*                                  /var/log/boot.log
+{% elif ansible_facts['distribution'] == 'Ubuntu' %}
+# Ubuntu ships these rules in /etc/rsyslog.d/50-default.conf.
 {% else %}
 auth,authpriv.*                 /var/log/auth.log
 *.*;auth,authpriv.none          -/var/log/syslog
@@ -68,4 +70,6 @@ kern.*                          -/var/log/kern.log
 mail.*                          -/var/log/mail.log
 mail.err                        /var/log/mail.err
 {% endif %}
+{% if ansible_facts['distribution'] != 'Ubuntu' %}
 *.emerg                         :omusrmsg:*
+{% endif %}

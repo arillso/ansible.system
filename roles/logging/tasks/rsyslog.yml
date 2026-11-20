@@ -41,20 +41,24 @@
   notify: "logging: restart rsyslog"
 
 # Files are named "<priority>-<name>.conf". Matching on the name removes the
-# file of an absent entry and the old file after a priority change.
+# file of an absent entry and the old file after a priority change; the marker
+# from entry.j2 keeps package files such as 20-ufw.conf out of reach.
 - name: Find rsyslog entry files
   ansible.builtin.find:
       paths: /etc/rsyslog.d
       patterns: '^[0-9]+-.+\.conf$'
       use_regex: true
+      contains: '^# Managed by arillso\.system\.logging$'
+  become: true
   register: _logging_rsyslog_found
+  when: logging_rsyslog_entries | length > 0
 
 - name: Remove absent or renamed rsyslog entries
   ansible.builtin.file:
       path: "{{ _logging_rsyslog_path }}"
       state: absent
   become: true
-  loop: "{{ _logging_rsyslog_found.files | map(attribute='path') | list }}"
+  loop: "{{ _logging_rsyslog_found.files | default([]) | map(attribute='path') | list }}"
   loop_control:
       loop_var: _logging_rsyslog_path
   vars:
@@ -83,6 +87,8 @@
   ansible.builtin.include_role:
       name: arillso.system.systemd
       tasks_from: service
+      apply:
+          tags: ["logging", "rsyslog", "syslog"]
   vars:
       systemd_services:
           - name: rsyslog

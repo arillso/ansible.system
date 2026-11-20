@@ -104,6 +104,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   given, and a value with a stray `"` fails with a clear message.
 - **logging**: `logging_rsyslog_modules` defaults to `[imuxsock, imjournal]` on
   EL, and `logging_logrotate_su` defaults to `root adm` on Ubuntu.
+- **logging**: on EL, rsyslog creates log files as `root` with mode `0600`
+  (`logging_rsyslog_file_group`, `logging_rsyslog_file_create_mode`), as the
+  distro does, so `/var/log/secure` is no longer readable by `adm`.
 
 ### Removed
 
@@ -161,7 +164,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **logging**: `rsyslog.conf` writes the EL log files (`/var/log/messages`,
   `secure`, `maillog`, `cron`) on EL instead of the Debian ones, and reads the
-  journal there, so EL hosts no longer lose local logs.
+  journal there, so EL hosts no longer lose local logs. On Ubuntu it leaves
+  the standard rules to `/etc/rsyslog.d/50-default.conf`, which wrote every
+  message twice.
 - **logging**: `logrotate.conf` no longer rotates `/var/log/wtmp` and `btmp`,
   which every supported distro already ships in `/etc/logrotate.d`; logrotate
   failed with `duplicate log entry`.
@@ -178,7 +183,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the included files, not only the include.
 - **logging**: an rsyslog entry whose `priority` changes no longer leaves its
   old `<priority>-<name>.conf` behind, and `state: absent` removes the file
-  whatever its priority.
+  whatever its priority. Only files the role wrote are touched; files written
+  by earlier versions carry no marker and are left alone.
 - **logging**: `logrotate.conf` is validated before it is written
   (`logrotate -d`), and the rsyslog configuration is checked with
   `rsyslogd -N1` before the restart handler runs.

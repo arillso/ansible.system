@@ -42,7 +42,7 @@ logging_logrotate_packages:
 logging_rsyslog_entries: []
 # Example:
 # logging_rsyslog_entries:
-#   - name: 50-myapp
+#   - name: myapp
 #     priority: 50
 #     content: |
 #       # MyApp logging
@@ -58,8 +58,9 @@ logging_rsyslog_main_queue_size: 10000
 logging_rsyslog_main_queue_type: LinkedList
 logging_rsyslog_main_queue_worker_threads: 2
 logging_rsyslog_file_owner: root
-logging_rsyslog_file_group: adm
-logging_rsyslog_file_create_mode: "0640"
+# EL keeps log files root-only (/var/log/secure holds auth logs).
+logging_rsyslog_file_group: "{{ 'root' if ansible_facts['os_family'] == 'RedHat' else 'adm' }}"
+logging_rsyslog_file_create_mode: "{{ '0600' if ansible_facts['os_family'] == 'RedHat' else '0640' }}"
 logging_rsyslog_dir_create_mode: "0755"
 logging_rsyslog_traditional_log_format: false
 logging_rsyslog_klog_permit_non_kernel_facility: false

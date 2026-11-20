@@ -80,27 +80,32 @@
           --force
   when: ansible_install_roles | bool
 
-- name: Build ExecStartPre commands for pull mode
+# ansible-pull installs no requirements, so the checkout has to exist before
+# the galaxy installs. No shell: systemd passes each argument as is.
+# "-" on clone: fails harmlessly once the repo exists. "-" on fetch: a git
+# host outage keeps the existing checkout. checkout has no "-", so a run
+# without any checkout stops here. core.sshCommand mirrors ansible-pull
+# --accept-host-key for these two commands only.
+# ponytail: ansible_branch must be a branch or tag here, not a commit SHA.
+- name: Build ExecStartPre commands
   ansible.builtin.set_fact:
-      ansible_role_exec_start_pre_pull: >-
-          {{ (ansible_install_collections | bool | ternary([ansible_role_galaxy_collections_cmd], [])) +
-             (ansible_install_roles | bool | ternary([ansible_role_galaxy_roles_cmd], [])) }}
-  when: ansible_mode == 'pull'
-
-- name: Build ExecStartPre commands for playbook mode
-  ansible.builtin.set_fact:
-      ansible_role_exec_start_pre_playbook: >-
-          {{ ['-/usr/bin/git -C ' + ansible_checkout_dir + '/repo pull origin ' + ansible_branch] +
+      ansible_role_exec_start_pre: >-
+          {{ ['-/usr/bin/git -c "core.sshCommand=ssh -o StrictHostKeyChecking=accept-new" clone --no-checkout ' +
+              ansible_repo + ' ' + ansible_checkout_dir + '/repo',
+              '-/usr/bin/git -c "core.sshCommand=ssh -o StrictHostKeyChecking=accept-new" -C ' +
+              ansible_checkout_dir + '/repo fetch origin ' + ansible_branch,
+              '/usr/bin/git -C ' + ansible_checkout_dir + '/repo checkout --force --detach FETCH_HEAD'] +
              (ansible_install_collections | bool | ternary([ansible_role_galaxy_collections_cmd], [])) +
              (ansible_install_roles | bool | ternary([ansible_role_galaxy_roles_cmd], [])) }}
-  when: ansible_mode == 'playbook'
 
 - name: Build environment variables for systemd
   ansible.builtin.set_fact:
+      # Quote each assignment so values with spaces survive.
+      # ponytail: values containing " or \ are not escaped (backslash handling
+      # in Jinja literals differs across ansible-core versions).
       ansible_role_env_list: >-
-          {{ ansible_environment.keys() | zip(ansible_environment.values()) |
-             map('join', '=') | list }}
-  when: ansible_environment | length > 0
+          {{ ansible_environment.keys() | zip(ansible_environment.values()) | map('join', '=')
+             | map('regex_replace', '^|$', '"') | list }}
 
 - name: Deploy ansible systemd units via systemd role
   ansible.builtin.include_role:
@@ -120,16 +125,15 @@
                 Service:
                     Type: oneshot
                     EnvironmentFile: "-/etc/ansible/ansible.env"
-                    ExecStartPre: >-
-                        {{ ansible_role_exec_start_pre_pull if ansible_mode == 'pull'
-                           else ansible_role_exec_start_pre_playbook }}
+                    ExecStartPre: "{{ ansible_role_exec_start_pre }}"
                     ExecStart: >-
                         {{ ansible_role_exec_start_pull if ansible_mode == 'pull'
                            else ansible_role_exec_start_playbook }}
+                    # "-": the checkout only exists after the first ExecStartPre clone
                     WorkingDirectory: >-
                         {{ ansible_checkout_dir if ansible_mode == 'pull'
-                           else ansible_checkout_dir + '/repo' }}
-                    Environment: "{{ ansible_role_env_list | default(omit) }}"
+                           else '-' + ansible_checkout_dir + '/repo' }}
+                    Environment: "{{ ansible_role_env_list }}"
                 Install:
                     WantedBy: multi-user.target
 
@@ -138,7 +142,6 @@
             unit:
                 Unit:
                     Description: Ansible Automation Timer
-                    Requires: "{{ ansible_service_name }}.service"
                 Timer:
                     OnCalendar: "{{ ansible_schedule }}"
                     RandomizedDelaySec: "{{ ansible_random_delay }}"

@@ -143,6 +143,14 @@ argument_specs:
                 type: bool
                 default: true
 
+            ansible_ssh_git_hosts:
+                description: Git hosts in /root/.ssh/config that authenticate with the deploy key
+                type: list
+                elements: str
+                default:
+                    - github.com
+                    - gitlab.com
+
             ansible_pipx_inject_packages:
                 description: >-
                     Additional Python packages to inject into ansible pipx environment
@@ -175,6 +183,19 @@ argument_specs:
                 description: Deployment environment tag
                 type: str
                 default: production
+
+            ansible_otel_workload_type:
+                description: Value of the workload.type OpenTelemetry resource attribute
+                type: str
+                default: ansible
+
+            ansible_otel_extra_callbacks:
+                description: >-
+                    Callbacks enabled next to community.general.opentelemetry. The role sets
+                    ANSIBLE_CALLBACKS_ENABLED, which replaces callbacks_enabled from ansible.cfg.
+                type: list
+                elements: str
+                default: []
 
             ansible_environment:
                 description: Additional environment variables for Ansible execution
@@ -217,8 +238,3 @@ argument_specs:
                 description: Delay in seconds between retry attempts
                 type: int
                 default: 10
-
-            ansible_debug_mode:
-                description: Enable debug output for troubleshooting
-                type: bool
-                default: false

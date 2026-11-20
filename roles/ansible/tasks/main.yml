@@ -1,4 +1,10 @@
 ---
+- name: Assert OpenTelemetry libraries can be installed
+  ansible.builtin.assert:
+      that: not ansible_otel_enabled or ansible_install_method == 'pipx'
+      fail_msg: ansible_otel_enabled requires ansible_install_method pipx (the OpenTelemetry libraries are injected via pipx)
+  tags: ["ansible"]
+
 - name: Install Ansible
   ansible.builtin.include_tasks: install.yml
   when: ansible_install_enabled | default(true) | bool

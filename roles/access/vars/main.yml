@@ -29,3 +29,11 @@ _access_ssh_validation_commands:
     Suse: sshd -t -f %s
     Alpine: sshd -t -f %s
     default: sshd -t -f %s
+
+# SSH keys handled by tasks/ssh_keys.yml; users.yml passes _access_ssh_key_list
+_access_ssh_keys: "{{ _access_ssh_key_list | default(access_ssh_keys) }}"
+
+# Users with at least one exclusive key; their keys go into one call
+_access_ssh_exclusive_users: >-
+    {{ _access_ssh_keys | selectattr('exclusive', 'defined') | selectattr('exclusive')
+       | map(attribute='user') | unique | list }}

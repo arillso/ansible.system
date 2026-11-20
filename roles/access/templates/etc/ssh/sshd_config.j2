@@ -10,6 +10,7 @@ ListenAddress {{ address }}
 {% endif %}
 
 # Authentication
+UsePAM {{ 'yes' if access_ssh_use_pam else 'no' }}
 PermitRootLogin {{ access_ssh_permit_root_login }}
 PubkeyAuthentication {{ 'yes' if access_ssh_pubkey_authentication else 'no' }}
 PasswordAuthentication {{ 'yes' if access_ssh_password_authentication else 'no' }}
@@ -63,3 +64,8 @@ Subsystem sftp {{ access_ssh_subsystem_sftp }}
 {% for key, value in access_ssh_config_extra.items() %}
 {{ key }} {{ value }}
 {% endfor %}
+{% if access_ssh_include_dir | length > 0 %}
+
+# Drop-ins (cloud-init, packages); options set above take precedence
+Include {{ access_ssh_include_dir }}/*.conf
+{% endif %}

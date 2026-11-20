@@ -6,11 +6,11 @@
       uid: "{{ _access_user_item.uid | default(omit) }}"
       group: "{{ _access_user_item.group | default(omit) }}"
       groups: "{{ _access_user_item.groups | default(omit) }}"
-      # append nur setzen wenn auch groups uebergeben wurde — sonst warnt
+      # append nur setzen wenn auch groups übergeben wurde — sonst warnt
       # Ansible "'append' is set, but no 'groups' are specified" (wird in
       # Ansible 2.14 zum Fehler). Single-line "{{ ... }}" statt >-Block-
       # Scalar, damit der `omit`-Placeholder nicht durch eine YAML-String-
-      # Konversion laeuft, bevor Ansible ihn matcht.
+      # Konversion läuft, bevor Ansible ihn matcht.
       append: "{{ _access_user_item.append | default(true) if _access_user_item.groups is defined else omit }}"
       shell: "{{ _access_user_item.shell | default(access_user_shell_default) }}"
       home: "{{ _access_user_item.home | default(omit) }}"
@@ -32,17 +32,16 @@
   until: _access_users_result is succeeded
 
 - name: Manage SSH keys for users (from user definition)
-  ansible.posix.authorized_key:
-      user: "{{ _access_user_ssh_item.0.name }}"
-      key: "{{ _access_user_ssh_item.1.key }}"
-      key_options: "{{ _access_user_ssh_item.1.key_options | default(omit) }}"
-      state: "{{ _access_user_ssh_item.1.state | default('present') }}"
-      exclusive: "{{ _access_user_ssh_item.1.exclusive | default(false) }}"
-  become: true
-  loop: "{{ access_users | subelements('ssh_keys', skip_missing=True) }}"
-  loop_control:
-      loop_var: _access_user_ssh_item
-      label: "{{ _access_user_ssh_item.0.name }}"
-  when:
-      - _access_user_ssh_item.0.state | default('present') == 'present'
-      - _access_user_ssh_item.1.key is defined
+  ansible.builtin.include_tasks: ssh_keys.yml
+  vars:
+      # Flatten access_users[].ssh_keys into the access_ssh_keys format; a
+      # per-key `user` overrides the parent user's name.
+      _access_ssh_key_list: >-
+          {%- set _keys = [] -%}
+          {%- for _u in access_users if _u.state | default('present') == 'present' -%}
+          {%- for _k in _u.ssh_keys | default([]) if _k.key is defined -%}
+          {%- set _ = _keys.append(_k | combine({'user': _k.user | default(_u.name)})) -%}
+          {%- endfor -%}
+          {%- endfor -%}
+          {{ _keys }}
+  when: access_users | selectattr('ssh_keys', 'defined') | list | length > 0

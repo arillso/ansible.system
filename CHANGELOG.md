@@ -7,7 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **access**: `access_ssh_subsystem_sftp` defaults to `internal-sftp` instead of
+  the Debian-only `/usr/lib/openssh/sftp-server`, so sftp works on EL 8/9.
+- **access**: `sshd_config` now sets `UsePAM yes` (`access_ssh_use_pam`) and
+  includes `/etc/ssh/sshd_config.d/*.conf` at the end (`access_ssh_include_dir`,
+  empty string disables). The role's own settings keep precedence over drop-ins.
+- **access**: the argument spec entry point `ssh` is renamed to `ssh_server` to
+  match `tasks/ssh_server.yml`.
+
+### Removed
+
+- **access**: `access_sudoers_validate` was never read. Use
+  `access_validate_sudoers`.
+
 ### Fixed
+
+- **access**: with `exclusive: true`, each key removed the keys written before
+  it, so only the last key stayed in `authorized_keys`. All present keys of a
+  user with an exclusive key are now written in one call.
+- **access**: the per-key `user` in `access_users[].ssh_keys` was ignored and
+  the key went to the parent user.
+- **access**: `append` in `access_users` is now declared in the argument spec;
+  `append: false` was rejected by validation.
+- **access**: groups with `state: absent` are removed after users, so removing
+  a user and its primary group in one run no longer fails.
+- **access**: sudoers entries are checked before deployment. A name with `.` or
+  `~` (silently ignored by sudo) or `/`, and an entry with neither or both of
+  `user` and `group`, now fail with a clear message.
+- **access**: a sudoers entry without `commands` failed to render on
+  ansible-core 2.19+; it defaults to `ALL` again.
 
 - **shell**: the MOTD scripts parse every JSON value with `jq`, but the role
   relied on the `facts` role to install it. With `shell_facts_dependency: false`

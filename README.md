@@ -86,7 +86,7 @@ collections:
 ## Dependencies
 
 - ansible.posix >= 2.0.0
-- community.general >= 10.7.0
+- community.general >= 9.0.0
 - community.crypto >= 2.0.0
 
 ## Documentation

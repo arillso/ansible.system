@@ -19,11 +19,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   precedence over drop-ins; list options such as `AllowUsers` add up.
 - **access**: the argument spec entry point `ssh` is renamed to `ssh_server` to
   match `tasks/ssh_server.yml`.
+- **ansible**: `/root/.ssh/config` is now managed as a marked block instead of
+  being overwritten, and the hosts come from the new `ansible_ssh_git_hosts`
+  (default `github.com`, `gitlab.com`). The unmarked stanza written by earlier
+  versions is removed.
+- **ansible**: with `ansible_otel_enabled: true` the role sets
+  `ANSIBLE_CALLBACKS_ENABLED`, which replaces `callbacks_enabled` from the
+  repo's `ansible.cfg`; keep others via `ansible_otel_extra_callbacks`.
+  OpenTelemetry now requires `ansible_install_method: pipx`.
 
 ### Removed
 
 - **access**: `access_sudoers_validate` was never read. Use
   `access_validate_sudoers`.
+- **ansible**: unused `ansible_debug_mode`, internal arch vars and the
+  `ansible: daemon-reload` handler.
 
 ### Fixed
 
@@ -50,6 +60,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   relied on the `facts` role to install it. With `shell_facts_dependency: false`
   every value silently fell back to its default. The role now installs `jq`
   itself whenever `shell_motd_enabled` is set.
+- **ansible**: `ansible_otel_enabled: true` failed on the undefined
+  `ansible_otel_workload_type` (now defaults to `ansible`) and never enabled
+  the `community.general.opentelemetry` callback.
+- **ansible**: the service now clones or updates the checkout (fetch plus
+  forced checkout, via `/usr/local/sbin/<service>-sync`) before the galaxy
+  installs; a failed fetch keeps the existing checkout. Playbook mode never
+  cloned the repo, and pull mode installed requirements from the previous
+  revision.
+- **ansible**: an empty `ansible_environment` rendered an omit placeholder as
+  `Environment=`; values are now quoted, so spaces survive.
+- **ansible**: the timer no longer `Requires=` the service, which started
+  ansible-pull immediately on every timer start, bypassing the schedule and
+  `RandomizedDelaySec`.
 
 ## [2.0.4] - 2026-11-04
 

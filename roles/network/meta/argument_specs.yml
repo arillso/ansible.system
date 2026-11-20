@@ -185,6 +185,26 @@ argument_specs:
                 description: "DNS stub listener setting for systemd-resolved"
                 type: str
                 default: "yes"
+            network_restart_services:
+                description: "Master switch for the role's service restarts and reloads"
+                type: bool
+                default: true
+            network_systemd_resolved_restart:
+                description: "Restart systemd-resolved after DNS changes"
+                type: bool
+                default: true
+            network_retry_count:
+                description: "Number of retry attempts for tasks"
+                type: int
+                default: 3
+            network_retry_delay:
+                description: "Delay in seconds between retry attempts"
+                type: int
+                default: 5
+            network_backup_configs:
+                description: "Create backups before modifying configuration files"
+                type: bool
+                default: true
 
     netplan:
         short_description: "Netplan configuration entry point"

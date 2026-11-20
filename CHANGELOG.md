@@ -206,8 +206,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **network**: with systemd-resolved, `network_dns_nameservers`,
   `network_dns_search` and `network_dns_domain` now fill `DNS=` and `Domains=`
   unless `network_resolved_dns` / `network_resolved_domains` are set.
-- **network**: `systemd-resolved` is installed where it is a separate package
-  (Debian 12, Ubuntu 24.04, EL 9).
+- **network**: `systemd-resolved` is installed when it is missing, as on
+  Debian 12, Ubuntu 24.04 and EL 9 where it is a separate package.
 - **network**: `netplan generate` validates the new file before it is written,
   so an invalid config no longer stays in `/etc/netplan`.
 - **network**: `/etc/resolv.conf` links to `/run/systemd/resolve/resolv.conf`

@@ -17,6 +17,13 @@
         register: _network_resolved_config
         until: _network_resolved_config is succeeded
 
+      # Debian 12, Ubuntu 24.04 and EL 9 ship systemd-resolved as its own
+      # package; older releases include it in systemd.
+      - name: Check whether systemd-resolved is installed
+        ansible.builtin.stat:
+            path: /lib/systemd/systemd-resolved
+        register: _network_resolved_binary
+
       # Installed after the config is in place, so the package's first start
       # already uses it.
       - name: Install systemd-resolved package
@@ -28,7 +35,7 @@
         delay: "{{ network_retry_delay }}"
         register: _network_resolved_install
         until: _network_resolved_install is succeeded
-        when: _network_resolved_package | bool
+        when: not _network_resolved_binary.stat.exists
 
       - name: Check whether NetworkManager is installed
         ansible.builtin.stat:
@@ -51,10 +58,13 @@
         notify: "network: reload NetworkManager"
         when: _network_nm_binary.stat.exists
 
+      # In check mode a package that would be installed is still missing, so
+      # the service cannot be found yet.
       - name: Ensure systemd-resolved is enabled and started via systemd role
         ansible.builtin.include_role:
             name: arillso.system.systemd
             tasks_from: service
+        when: not (ansible_check_mode and _network_resolved_install is changed)
         vars:
             systemd_services:
                 - name: systemd-resolved
@@ -75,6 +85,15 @@
 - name: Configure traditional /etc/resolv.conf
   when: not (network_use_systemd_resolved | default(true) | bool)
   block:
+      # Left in place, NetworkManager would keep sending DNS to
+      # systemd-resolved after a switch to the traditional path.
+      - name: Remove the NetworkManager systemd-resolved DNS drop-in
+        ansible.builtin.file:
+            path: /etc/NetworkManager/conf.d/90-arillso-dns-resolved.conf
+            state: absent
+        become: true
+        notify: "network: reload NetworkManager"
+
       - name: Deploy resolv.conf
         ansible.builtin.template:
             src: etc/resolv.conf.j2

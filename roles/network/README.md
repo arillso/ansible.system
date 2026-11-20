@@ -49,7 +49,7 @@ See [`defaults/main.yml`](defaults/main.yml) for the complete list and [the guid
 ## systemd-resolved
 
 With `network_use_systemd_resolved: true` the role installs `systemd-resolved`
-where it is a separate package (Debian 12, Ubuntu 24.04, EL 9), links
+when it is missing (a separate package on Debian 12, Ubuntu 24.04, EL 9), links
 `/etc/resolv.conf` to it, and, if NetworkManager is installed, sets
 `dns=systemd-resolved` in `/etc/NetworkManager/conf.d/90-arillso-dns-resolved.conf`.
 

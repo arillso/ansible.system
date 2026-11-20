@@ -9,10 +9,11 @@
       - network_systemd_resolved_restart | bool
   listen: "network: restart resolved"
 
+# try-reload-or-restart leaves a stopped NetworkManager stopped; the systemd
+# module's state: reloaded would start it and let it take over interfaces.
 - name: Reload NetworkManager to apply DNS mode changes
-  ansible.builtin.systemd:
-      name: NetworkManager
-      state: reloaded
+  ansible.builtin.command: systemctl try-reload-or-restart NetworkManager
   become: true
+  changed_when: true
   when: network_restart_services | bool
   listen: "network: reload NetworkManager"

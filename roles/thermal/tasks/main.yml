@@ -1,12 +1,24 @@
 ---
 # Main tasks for thermal management role
 
+- name: Gather CPU facts for the support check
+  ansible.builtin.setup:
+      gather_subset:
+          - hardware
+      filter:
+          - ansible_architecture
+          - ansible_processor
+  when:
+      - thermal_enabled
+      - "'architecture' not in ansible_facts or 'processor' not in ansible_facts"
+
 - name: Report unsupported CPU
   ansible.builtin.debug:
       msg: >-
           Skipping thermal management: thermald and coretemp need an Intel
           x86_64 CPU, this host has {{ ansible_facts['architecture'] | default('unknown') }}
-          ({{ ansible_facts['processor'][1] | default('unknown vendor') }}).
+          ({{ ansible_facts['processor'] | default([]) | select('in', ['GenuineIntel', 'AuthenticAMD'])
+          | first | default('unknown vendor') }}).
   when:
       - thermal_enabled
       - not _thermal_cpu_supported
@@ -29,13 +41,16 @@
             quiet: true
         loop:
             - zone: acpitz
+              enabled: "{{ thermal_enable_acpitz }}"
               passive: "{{ thermal_acpitz_passive_temp }}"
               active: "{{ thermal_acpitz_active_temp }}"
             - zone: cpu
+              enabled: "{{ thermal_enable_cpu_temp }}"
               passive: "{{ thermal_cpu_passive_temp }}"
               active: "{{ thermal_cpu_active_temp }}"
         loop_control:
             label: "{{ item.zone }}"
+        when: item.enabled | bool
 
       - name: Install thermal management packages
         ansible.builtin.include_tasks: packages.yml
@@ -48,5 +63,4 @@
 
       - name: Manage thermal services
         ansible.builtin.include_tasks: service.yml
-        # In check mode a fresh host has no thermald unit yet.
-        when: not (ansible_check_mode and _thermal_packages_result is changed)
+        when: not _thermal_service_unavailable

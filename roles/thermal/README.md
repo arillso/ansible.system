@@ -47,9 +47,9 @@ See [`defaults/main.yml`](defaults/main.yml) for the complete list and [the guid
 
 ## Check Mode
 
-This role supports `--check` mode. On a host without thermald the service step is
-skipped, since the package is not really installed. `sensors-detect` does not run
-in check mode.
+This role supports `--check` mode. On a host without thermald the service step and
+the restart handler are skipped, since the package is not really installed.
+`sensors-detect` does not run in check mode.
 
 ## Thresholds
 

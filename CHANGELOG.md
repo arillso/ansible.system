@@ -383,7 +383,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **thermal**: `sensors-detect` reports a change when it edits `/etc/modules`
   and fails when the binary is missing or the probe crashes.
 - **thermal**: `--check` on a host without thermald no longer fails at the
-  service step.
+  service step or the restart handler.
 - **thermal**: the platform name is escaped in `thermal-conf.xml`, so names
   with `&`, `<` or `--` give valid XML.
 

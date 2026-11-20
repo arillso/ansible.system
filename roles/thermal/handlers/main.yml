@@ -6,4 +6,5 @@
       name: thermald
       state: restarted
   become: true
+  when: not _thermal_service_unavailable
   listen: "thermal: restart thermald"

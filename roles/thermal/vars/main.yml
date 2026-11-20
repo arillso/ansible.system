@@ -3,3 +3,7 @@
 _thermal_cpu_supported: >-
     {{ ansible_facts['architecture'] | default('') == 'x86_64'
        and 'GenuineIntel' in ansible_facts['processor'] | default([]) }}
+
+# In check mode a fresh host has no thermald unit yet; the systemd module
+# fails on a missing unit even in check mode.
+_thermal_service_unavailable: "{{ ansible_check_mode and _thermal_packages_result is changed }}"

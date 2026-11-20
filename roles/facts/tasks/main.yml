@@ -24,3 +24,16 @@
           - "local"
   tags:
       - facts
+
+- name: Fail on fact scripts without valid output
+  ansible.builtin.assert:
+      that:
+          - _facts_value is mapping
+      fail_msg: "{{ item }} returned no valid JSON: {{ _facts_value }}"
+      quiet: true
+  vars:
+      _facts_value: "{{ (ansible_local | default({}))[item | regex_replace('\\.fact$', '')] | default('no output') }}"
+  loop: "{{ _facts_collection_scripts }}"
+  when: facts_error_on_failure | bool
+  tags:
+      - facts

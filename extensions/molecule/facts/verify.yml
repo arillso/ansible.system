@@ -17,6 +17,11 @@
                 - _facts_cache.stat.isdir
                 - _facts_cache.stat.mode == '0700'
 
+      - name: Stat the stale cache fixture
+        ansible.builtin.stat:
+            path: /var/cache/ansible-facts/stale.json
+        register: _facts_stale
+
       - name: Stat the retired last.fact script
         ansible.builtin.stat:
             path: /etc/ansible/facts.d/last.fact
@@ -35,6 +40,9 @@
         ansible.builtin.assert:
             that:
                 - not _facts_last_fact.stat.exists
+                - not _facts_stale.stat.exists
+                - ansible_local.system.storage.root.size_mb > 0
+                - ansible_local.system.performance.load_average['1m'] is number
                 - ansible_local.security.meta.check_method == 'disabled'
                 - ansible_local.container.cache.enabled
                 - ansible_local.run.last_run.playbook == 'facts'

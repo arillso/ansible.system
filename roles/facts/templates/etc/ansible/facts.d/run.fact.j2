@@ -6,6 +6,12 @@
 set -uo pipefail
 set +e
 
+# Hard limit for the whole run (facts_script_execution_timeout)
+if [[ -z "${FACTS_TIMEOUT_WRAPPED:-}" ]]; then
+    export FACTS_TIMEOUT_WRAPPED=1
+    exec timeout {{ facts_script_execution_timeout | int }} "$0" "$@"
+fi
+
 # Universal configuration variables from Ansible (harmonized across all facts scripts)
 readonly CACHE_DIR="{{ facts_cache_dir | default('/var/cache/ansible-facts') }}"
 readonly LAST_RUN_FILE="${CACHE_DIR}/last_run.json"

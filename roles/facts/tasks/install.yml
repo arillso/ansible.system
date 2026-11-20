@@ -55,6 +55,32 @@
       - facts
       - cache
 
+- name: "Find stale facts cache files"
+  ansible.builtin.find:
+      paths: "{{ facts_cache_dir }}"
+      age: "{{ facts_cache_cleanup_age_days }}d"
+      excludes:
+          - last_run.json
+  register: _facts_stale_cache
+  become: true
+  when: facts_cache_cleanup_enabled | bool
+  tags:
+      - facts
+      - cache
+
+- name: "Remove stale facts cache files"
+  ansible.builtin.file:
+      path: "{{ item.path }}"
+      state: absent
+  loop: "{{ _facts_stale_cache.files | default([]) }}"
+  loop_control:
+      label: "{{ item.path }}"
+  become: true
+  when: facts_cache_cleanup_enabled | bool
+  tags:
+      - facts
+      - cache
+
 # Deployment record shown as "Last Deployment" in the MOTD and read by
 # run.fact. Written here, not by a fact script, so it changes only when
 # the role runs and not on every fact gather. Kept in this file after the

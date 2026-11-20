@@ -41,6 +41,23 @@ facts_cache_ttl_container: 300
 facts_cache_ttl_security: 300
 facts_cache_ttl_system: 86400
 
+# Delete files in facts_cache_dir older than this many days at every role run.
+# last_run.json is kept: it is the deployment record, not a cache.
+facts_cache_cleanup_enabled: true
+facts_cache_cleanup_age_days: 7
+
+# Hard limit in seconds for one run of a fact script (wrapped in `timeout`)
+facts_script_execution_timeout: 30
+# Fail the role when a fact script returns no valid JSON after the refresh
+facts_error_on_failure: false
+
+# Sections of system.fact; storage and performance are collected on every run
+facts_system_collect_hardware: true # processor_cores, memory_mb
+facts_system_collect_network: true # network_addresses, network_interfaces_count, ipv4, ipv6
+facts_system_collect_storage: true # storage.root: size, used, available, used_percent
+facts_system_collect_performance: true # performance: load_average, uptime_seconds
+facts_system_collect_virtualization: true # virtualization_type
+
 # Cloud metadata collection configuration
 facts_cloud_metadata_base_url: "http://169.254.169.254"
 facts_cloud_providers_enabled:

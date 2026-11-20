@@ -49,12 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **facts**: the handlers `facts: refresh`, `facts: restart ssh` and
   `facts: update motd` and the variable `facts_ssh_service_names`. No task
   notified them.
-- **facts**: variables that were never read: `facts_cache_ttl_network`,
-  `facts_security_check_method`, `facts_logging_level`,
-  `facts_error_on_failure`, `facts_concurrent_execution`,
-  `facts_script_execution_timeout`, `facts_cache_compression_enabled`,
-  `facts_cache_cleanup_enabled`, `facts_cache_cleanup_age_days`,
-  `facts_system_collect_*`, `facts_network_collect_*` and
+- **facts**: variables that were never read and have no sensible
+  implementation: `facts_cache_ttl_network`, `facts_security_check_method`,
+  `facts_logging_level`, `facts_concurrent_execution`,
+  `facts_cache_compression_enabled`, `facts_network_collect_*` and
   `facts_container_collect_*`.
 
 ### Fixed
@@ -151,6 +149,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **facts**: the local facts refresh had no tag and was skipped with
   `--tags facts`.
 - **facts**: the README example used the nonexistent `facts_cache_ttl`.
+- **facts**: settings that were documented but never read now work:
+  `facts_cache_cleanup_enabled`/`facts_cache_cleanup_age_days` delete stale
+  cache files (not `last_run.json`), `facts_script_execution_timeout` limits
+  each fact script, `facts_error_on_failure` fails the role on a fact script
+  without valid JSON, and `facts_system_collect_*` switch sections of
+  `system.fact`. `storage` (root filesystem) and `performance` (load average,
+  uptime) are new fields, collected on every run instead of from the 24-hour
+  cache.
 
 ## [2.0.4] - 2026-11-04
 

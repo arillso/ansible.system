@@ -125,6 +125,51 @@ argument_specs:
                 default: 86400
                 description: "Cache TTL for system facts (24 hours)"
 
+            facts_cache_cleanup_enabled:
+                type: bool
+                default: true
+                description: "Delete stale files in facts_cache_dir at every role run (last_run.json is kept)"
+
+            facts_cache_cleanup_age_days:
+                type: int
+                default: 7
+                description: "Age in days after which a cache file counts as stale"
+
+            facts_script_execution_timeout:
+                type: int
+                default: 30
+                description: "Hard limit in seconds for one run of a fact script"
+
+            facts_error_on_failure:
+                type: bool
+                default: false
+                description: "Fail the role when a fact script returns no valid JSON"
+
+            facts_system_collect_hardware:
+                type: bool
+                default: true
+                description: "Report processor_cores and memory_mb in system facts"
+
+            facts_system_collect_network:
+                type: bool
+                default: true
+                description: "Report network_addresses, network_interfaces_count, ipv4 and ipv6 in system facts"
+
+            facts_system_collect_storage:
+                type: bool
+                default: true
+                description: "Report root filesystem size and usage (storage.root), collected on every run"
+
+            facts_system_collect_performance:
+                type: bool
+                default: true
+                description: "Report load average and uptime (performance), collected on every run"
+
+            facts_system_collect_virtualization:
+                type: bool
+                default: true
+                description: "Report virtualization_type in system facts"
+
             # Cloud metadata configuration
             facts_cloud_metadata_base_url:
                 type: str

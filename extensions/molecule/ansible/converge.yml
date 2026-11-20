@@ -5,7 +5,7 @@
 
   vars:
       ansible_install_enabled: true
-      ansible_timer_enabled: false
+      ansible_timer_enabled: true
       ansible_mode: pull
       ansible_repo: https://example.com/placeholder.git
       ansible_install_method: pipx

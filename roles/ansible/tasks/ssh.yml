@@ -17,12 +17,14 @@
   become: true
   register: _ansible_ssh_key_result
 
-- name: Configure SSH for Git (GitHub/GitLab)
-  ansible.builtin.copy:
-      dest: /root/.ssh/config
+- name: Configure SSH for Git hosts
+  ansible.builtin.blockinfile:
+      path: /root/.ssh/config
+      create: true
       mode: "0600"
-      content: |
-          Host github.com gitlab.com
+      marker: "# {mark} ANSIBLE MANAGED BLOCK arillso.system.ansible"
+      block: |
+          Host {{ ansible_ssh_git_hosts | join(' ') }}
             IdentityFile {{ ansible_ssh_key_path }}
             StrictHostKeyChecking accept-new
   become: true

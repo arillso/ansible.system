@@ -38,6 +38,10 @@ ansible_ssh_key_enabled: true
 ansible_ssh_key_path: "/root/.ssh/ansible_automation_ed25519"
 ansible_ssh_key_type: "ed25519"
 ansible_ssh_key_prompt: true
+# Git hosts in /root/.ssh/config that use the deploy key
+ansible_ssh_git_hosts:
+    - github.com
+    - gitlab.com
 
 # Python Package Injection (pipx only)
 ansible_pipx_inject_packages: []
@@ -68,6 +72,7 @@ ansible_otel_endpoint: ""
 ansible_otel_headers: ""
 ansible_otel_service_name: "ansible-automation"
 ansible_otel_environment: "production"
+ansible_otel_workload_type: "ansible"
 
 # Environment Variables
 ansible_environment: {}
@@ -89,6 +94,3 @@ ansible_timer_state: started
 # Retry Configuration
 ansible_retry_count: 3
 ansible_retry_delay: 10
-
-# Debug Configuration
-ansible_debug_mode: false

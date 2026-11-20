@@ -16,11 +16,6 @@
                 - _pipx_home.stat.exists
                 - _pipx_home.stat.isdir
 
-      # The checkout directory (ansible_checkout_dir, /var/lib/ansible-
-      # automation) is only created by timer.yml, which the converge
-      # disables (ansible_timer_enabled: false) because the pull timer
-      # would try to clone the placeholder repo. It is intentionally
-      # absent here — the install path under test is pipx, asserted below.
       - name: Confirm ansible binary is installed via pipx
         ansible.builtin.command:
             cmd: /opt/pipx/bin/ansible --version
@@ -31,3 +26,33 @@
         ansible.builtin.assert:
             that:
                 - "'ansible' in _ansible_version.stdout"
+
+      # The timer starts without running the service (no Requires=), so the
+      # placeholder repo is never cloned; only the rendered unit is checked.
+      - name: Read rendered service unit
+        ansible.builtin.slurp:
+            src: /etc/systemd/system/ansible-pull.service
+        register: _service_unit
+
+      - name: Read rendered timer unit
+        ansible.builtin.slurp:
+            src: /etc/systemd/system/ansible-pull.timer
+        register: _timer_unit
+
+      - name: Assert units are rendered correctly
+        ansible.builtin.assert:
+            that:
+                - "'omit_place_holder' not in _service_unit.content | b64decode"
+                - "'git clone --branch main https://example.com/placeholder.git' in _service_unit.content | b64decode"
+                - '''Environment="GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new"'' in _service_unit.content | b64decode'
+                - "'Requires=' not in _timer_unit.content | b64decode"
+
+      - name: Check service did not run on timer start
+        ansible.builtin.stat:
+            path: /var/lib/ansible-automation/repo
+        register: _checkout
+
+      - name: Assert checkout was not created
+        ansible.builtin.assert:
+            that:
+                - not _checkout.stat.exists

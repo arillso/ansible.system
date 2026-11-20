@@ -62,15 +62,21 @@
       _tuning_final_cpu_governor: >-
           {%- if not _tuning_detected_cpu_info.cpufreq_supported -%}
           none{%- elif tuning_cpu_governor_override -%}
-          {{ tuning_cpu_governor_override }}{%- elif _tuning_detected_cpu_info.vendor == 'intel' -%}
+          {{ tuning_cpu_governor_override }}{%- elif tuning_cpu_governor | default('auto') != 'auto' -%}
+          {{ tuning_cpu_governor }}{%- elif _tuning_detected_cpu_info.vendor == 'intel' -%}
           powersave{%- else -%}
           ondemand{%- endif -%}
 
-      # Storage: einfache Regeln
+      # Storage: override > tuning_io_scheduler > auto (nvme -> none, else
+      # mq-deadline). tuning_io_scheduler_devices limits the devices.
       _tuning_optimized_storage_devices: >-
           {%- set devices = [] -%}
-          {%- for device in _tuning_detected_storage_devices -%}
-          {%- set scheduler = 'none' if 'nvme' in device.key else 'mq-deadline' -%}
+          {%- set fixed = tuning_io_scheduler_override
+                or (tuning_io_scheduler if tuning_io_scheduler | default('auto') != 'auto' else '') -%}
+          {%- for device in _tuning_detected_storage_devices
+                if not tuning_io_scheduler_devices | default([])
+                or device.key in tuning_io_scheduler_devices -%}
+          {%- set scheduler = fixed or ('none' if 'nvme' in device.key else 'mq-deadline') -%}
           {%- set _ = devices.append({'name': device.key, 'scheduler': scheduler}) -%}
           {%- endfor -%}
           {{ devices }}

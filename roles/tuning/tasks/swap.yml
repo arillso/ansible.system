@@ -24,30 +24,6 @@
                 - tuning_swap_file_size_mb | int >= 64
             fail_msg: "Invalid swap file size: {{ tuning_swap_file_size_mb | default('<undefined>') }}MB (minimum 64MB)"
 
-- name: Check available disk space using facts
-  block:
-      - name: Get mount point for swap file directory
-        ansible.builtin.set_fact:
-            _tuning_swap_mount_point: >-
-                {%- set swap_dir = tuning_swap_file_path | dirname -%}
-                {%- for mount in ansible_facts['mounts'] -%}
-                {%- if swap_dir.startswith(mount.mount) -%}
-                {{ mount.mount }}{%- endif -%}
-                {%- endfor -%}
-
-      - name: Get available space from mount facts
-        ansible.builtin.set_fact:
-            _tuning_available_space_mb: >-
-                {%- for mount in ansible_facts['mounts'] -%}
-                {%- if mount.mount == _tuning_swap_mount_point -%}
-                {{ (mount.size_available / 1024 / 1024) | int }}{%- endif -%}
-                {%- endfor -%}
-
-      - name: Ensure sufficient disk space
-        ansible.builtin.fail:
-            msg: "Insufficient disk space. Need {{ tuning_swap_file_size_mb }}MB, available {{ _tuning_available_space_mb }}MB"
-        when: (_tuning_available_space_mb | int) < (tuning_swap_file_size_mb | int + 100)
-
 - name: Check current swap status
   block:
       - name: Check if swap file exists
@@ -60,6 +36,7 @@
         register: _tuning_active_swaps
         changed_when: false
         failed_when: false
+        check_mode: false
 
       # Rundungs-Trick: swapon meldet die Swap-Datei-Grösse abzüglich des mkswap-Header-
       # Overheads (~4 KB). Eine reine Trunkierung würde z. B. 2048 MiB als 2047 MiB
@@ -93,6 +70,32 @@
                 {{ _tuning_current_swap_size != ""
                    and ((_tuning_current_swap_size | int)
                         - (tuning_swap_file_size_mb | int)) | abs > 1 }}
+
+# Only a swap file that is about to be written needs free space. On a resize
+# the old file is removed first, so its size counts as available.
+- name: Check available disk space using facts
+  when: not _tuning_swap_file_stat.stat.exists or (_tuning_swap_needs_resize | bool)
+  block:
+      # Longest mount point that contains the swap directory. A plain prefix
+      # match would also take `/boot` for `/bootstrap`; mounts are sorted so
+      # the deepest match is the last one set.
+      - name: Get available space on the swap file's filesystem
+        ansible.builtin.set_fact:
+            _tuning_available_space_mb: >-
+                {%- set swap_dir = tuning_swap_file_path | dirname -%}
+                {%- set ns = namespace(mount=none) -%}
+                {%- for mount in ansible_facts['mounts'] | sort(attribute='mount') -%}
+                {%- if swap_dir == mount.mount or swap_dir.startswith(mount.mount.rstrip('/') ~ '/') -%}
+                {%- set ns.mount = mount -%}
+                {%- endif -%}
+                {%- endfor -%}
+                {{ ((ns.mount.size_available if ns.mount else 0) / 1024 / 1024) | int
+                   + ((_tuning_swap_file_stat.stat.size | default(0)) / 1024 / 1024) | int }}
+
+      - name: Ensure sufficient disk space
+        ansible.builtin.fail:
+            msg: "Insufficient disk space. Need {{ tuning_swap_file_size_mb }}MB, available {{ _tuning_available_space_mb }}MB"
+        when: (_tuning_available_space_mb | int) < (tuning_swap_file_size_mb | int + 100)
 
 - name: Create or resize swap file
   block:
@@ -170,10 +173,13 @@
       - name: Fail if swap file creation failed
         ansible.builtin.fail:
             msg: "Failed to create swap file {{ tuning_swap_file_path }}"
-        when: not _tuning_new_swap_file_stat.stat.exists
+        when:
+            - not ansible_check_mode
+            - not _tuning_new_swap_file_stat.stat.exists
 
 - name: Configure swap file
   block:
+      # In check mode a new file is not created, so there is nothing to chmod.
       - name: Set swap file permissions
         ansible.builtin.file:
             path: "{{ tuning_swap_file_path }}"
@@ -181,6 +187,7 @@
             owner: root
             group: root
         become: true
+        when: _tuning_new_swap_file_stat.stat.exists
 
       - name: Verify swap file size
         ansible.builtin.shell: |
@@ -231,11 +238,14 @@
         ansible.builtin.command: swapon --show=NAME --noheadings
         register: _tuning_verify_swap
         changed_when: false
+        check_mode: false
 
       - name: Fail if swap activation failed
         ansible.builtin.fail:
             msg: "Swap file {{ tuning_swap_file_path }} is not active after swapon"
-        when: tuning_swap_file_path not in _tuning_verify_swap.stdout
+        when:
+            - not ansible_check_mode
+            - tuning_swap_file_path not in _tuning_verify_swap.stdout
 
 - name: Configure swap persistence
   block:

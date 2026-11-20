@@ -13,8 +13,9 @@
 - name: Configure kernel parameters in GRUB
   ansible.builtin.include_tasks: grub.yml
 
-- name: Configure swap settings
-  ansible.builtin.include_tasks: swap_config.yml
+- name: Configure swap file
+  ansible.builtin.include_tasks: swap.yml
+  when: tuning_swap_file_enabled | default(false)
 
 - name: Configure I/O scheduler
   ansible.builtin.include_tasks: io_scheduler.yml

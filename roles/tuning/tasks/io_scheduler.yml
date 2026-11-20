@@ -51,7 +51,7 @@
       - name: Report I/O scheduler configuration status
         ansible.builtin.debug:
             msg: >-
-                Device {{ item.item.name }} ({{ item.item.type }}):
+                Device {{ item.item.name }}:
                 {% if item.failed -%}
                 Could not access scheduler settings{%- elif _tuning_scheduler_result.results[loop.index0].changed -%}
                 Changed to {{ item.item.scheduler }}{%- else -%}
@@ -69,12 +69,17 @@
         failed_when: false
         loop: "{{ _tuning_optimized_storage_devices }}"
 
-      - name: Validate I/O scheduler was applied
-        ansible.builtin.assert:
-            that:
-                - not item.failed
-                - ('[' + item.item.scheduler + ']') in (item.content | b64decode)
-            fail_msg: "Failed to set I/O scheduler {{ item.item.scheduler }} for device {{ item.item.name }}"
-            success_msg: "I/O scheduler {{ item.item.scheduler }} successfully applied to {{ item.item.name }}"
+      # Warn instead of assert: like the immediate apply above this is
+      # best-effort, a device may not offer the scheduler (e.g. no
+      # mq-deadline on some virtual disks).
+      - name: Warn when an I/O scheduler was not applied
+        ansible.builtin.debug:
+            msg: >-
+                WARNING: I/O scheduler {{ item.item.scheduler }} is not active on
+                {{ item.item.name }} ({{ (item.content | b64decode | trim) if not item.failed else 'unreadable' }})
         loop: "{{ _tuning_final_scheduler.results }}"
-        when: not ansible_check_mode
+        loop_control:
+            label: "{{ item.item.name }}"
+        when:
+            - not ansible_check_mode
+            - item.failed or ('[' + item.item.scheduler + ']') not in (item.content | b64decode)

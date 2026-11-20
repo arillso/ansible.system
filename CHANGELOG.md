@@ -1050,10 +1050,51 @@ specified` and would have failed hard once that warning is promoted to an
 - Updated ansible.posix dependency from >=1.4.0 to >=2.0.0
 - Removed unused devsec.hardening dependency
 
+- **tuning**: `net.ipv4.tcp_fack` (removed in kernel 4.15) from
+  `tuning_network_sysctl_config`; the role also removes it from the drop-in.
+- **tuning**: the network offload task (it only re-enabled features that were
+  already on), the never-notified handlers `Validate grub update` and
+  `Validate service states`, and the unused `_tuning_*_mapping` and
+  `_tuning_available_*` vars.
+
 ### Fixed
 
 - Fixed firewall Tailscale service dependency handling (#82)
 - Fixed systemd_journald_runtime variables (#67)
+- **tuning**: `tuning_grub_cmdline_linux_append` defaults to
+  `transparent_hugepage={{ tuning_transparent_hugepages }}` instead of
+  `transparent_hugepage=never`, so GRUB and `disable-thp.service` agree. A
+  parameter whose key is already in `GRUB_CMDLINE_LINUX` is replaced instead
+  of appended next to the old value; an empty string leaves GRUB untouched.
+- **tuning**: `tuning_packages_list` is a list of package names, as its
+  argument spec always said. Lists of dicts are no longer accepted.
+- **tuning**: `tuning_cpu_governor`, `tuning_io_scheduler` and
+  `tuning_io_scheduler_override` now take effect (any value other than `auto`
+  is used as is), and `tuning_io_scheduler_devices` limits the devices.
+- **tuning**: `vm.swappiness` comes only from `tuning_swap_swappiness`, which
+  wins over the same key in `tuning_sysctl_config`. Before, both wrote the
+  file and the role was never idempotent.
+- **tuning**: `net.ipv4.tcp_congestion_control` is optional by default
+  (`tuning_optional_sysctl_params`), and `tcp_bbr` is loaded and persisted.
+  Optional sysctls that fail are removed from the drop-in again.
+- **tuning**: an I/O scheduler that a device does not offer now warns instead
+  of failing the role.
+
+- **tuning**: the swap file's filesystem is the longest matching mount point.
+  With `/` and `/var` mounted, a swap file below `/var` read 0 MB free and
+  failed; `/boot` also matched `/bootstrap`.
+- **tuning**: the free-space check only runs when the swap file is created or
+  resized, and check mode no longer fails on the swap verification.
+- **tuning**: the CPU governor is written with `tee`; `copy` cannot write to
+  sysfs, and the assert then aborted the role before the cpufreq service was
+  enabled. The service is now enabled before the check.
+- **tuning**: SUSE installs `cpupower` instead of the non-existent
+  `kernel-tools`.
+- **tuning**: the ring-buffer check compares against the current settings
+  only, not the "Pre-set maximums" section.
+- **tuning**: the tuned profile is compared by name; `balanced` no longer
+  matches an active `balanced-battery`.
+- **tuning**: the I/O scheduler report referenced an undefined `type` key.
 
 ### Security
 

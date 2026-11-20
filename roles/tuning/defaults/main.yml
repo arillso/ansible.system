@@ -1,11 +1,10 @@
 ---
 # Default sysctl parameters for performance tuning
-tuning_sysctl_config:  # noqa: argument-specs
+tuning_sysctl_config: # noqa: argument-specs
     vm.dirty_ratio: 10
     vm.dirty_background_ratio: 3
     vm.dirty_expire_centisecs: 12000
     vm.dirty_writeback_centisecs: 500
-    vm.swappiness: 10
     vm.vfs_cache_pressure: 50
     vm.min_free_kbytes: 131072
     net.core.rmem_default: 262144
@@ -25,19 +24,27 @@ tuning_sysctl_config:  # noqa: argument-specs
     kernel.threads-max: 4194304
 
 # Network specific sysctl
-tuning_network_sysctl_config:  # noqa: argument-specs
+tuning_network_sysctl_config: # noqa: argument-specs
     net.ipv4.tcp_window_scaling: 1
     net.ipv4.tcp_timestamps: 1
     net.ipv4.tcp_sack: 1
-    net.ipv4.tcp_fack: 1
     net.ipv4.tcp_moderate_rcvbuf: 1
     net.ipv4.tcp_no_metrics_save: 1
     net.ipv4.ip_local_port_range: "1024 65535"
 
-# GRUB kernel parameters
-tuning_grub_cmdline_linux_append: "transparent_hugepage=never"
+# Sysctl keys that may be missing on a host (kernel module not loaded or
+# knob not built). A failed optional key is reported and removed again from
+# the drop-in file instead of failing the role.
+tuning_optional_sysctl_params:
+    - net.ipv4.tcp_congestion_control
+tuning_optional_network_sysctl_params: []
 
-# Swap configuration
+# GRUB kernel parameters. Each `key=value` replaces an existing parameter with
+# the same key, so a changed value does not pile up next to the old one.
+tuning_grub_cmdline_linux_append: "transparent_hugepage={{ tuning_transparent_hugepages }}"
+
+# Swap configuration. tuning_swap_swappiness is the single source for
+# vm.swappiness and wins over a vm.swappiness key in tuning_sysctl_config.
 tuning_swap_swappiness: 10
 tuning_swap_file_enabled: false
 tuning_swap_file_path: /swapfile
@@ -48,12 +55,15 @@ tuning_swap_file_size_mb: 2048
 # layouts (e.g. zram-first with disk-swap as fallback at lower priority).
 tuning_swap_priority: 0
 
-# I/O Scheduler
+# I/O Scheduler: `auto` picks `none` for NVMe and `mq-deadline` otherwise; any
+# other value is used for every device. The override takes precedence.
+# tuning_io_scheduler_devices limits the devices (empty = all detected disks).
 tuning_io_scheduler: auto
 tuning_io_scheduler_override: null
 tuning_io_scheduler_devices: []
 
-# CPU Governor
+# CPU Governor: `auto` picks `powersave` for Intel and `ondemand` otherwise;
+# any other value is used as the governor. The override takes precedence.
 tuning_cpu_governor: auto
 tuning_cpu_governor_override: null
 
@@ -64,7 +74,7 @@ tuning_transparent_hugepages: madvise
 tuning_tuned_profile: balanced
 
 # Security limits
-tuning_security_limits:  # noqa: argument-specs
+tuning_security_limits: # noqa: argument-specs
     - domain: "*"
       type: soft
       item: nofile

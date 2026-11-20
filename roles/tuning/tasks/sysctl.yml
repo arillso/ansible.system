@@ -15,6 +15,18 @@
 # `sysctl_result.failed` from inside `failed_when`, which is the same
 # Audit M3 anti-pattern that was fixed in network.yml.
 
+# bbr is a module on most distro kernels; without it the sysctl write is
+# rejected. Best-effort: when the module is missing, the (default optional)
+# congestion-control key is reported and skipped below.
+- name: Load tcp_bbr for the bbr congestion control
+  community.general.modprobe:
+      name: tcp_bbr
+      state: present
+      persistent: present
+  become: true
+  failed_when: false
+  when: _tuning_sysctl_effective['net.ipv4.tcp_congestion_control'] | default('') == 'bbr'
+
 - name: Configure required sysctl parameters
   ansible.posix.sysctl:
       name: "{{ _sysctl_item.key }}"
@@ -23,7 +35,7 @@
       reload: true
       sysctl_file: "{{ tuning_sysctl_file }}"
   become: true
-  loop: "{{ tuning_sysctl_config | dict2items }}"
+  loop: "{{ _tuning_sysctl_effective | dict2items }}"
   loop_control:
       loop_var: _sysctl_item
       label: "{{ _sysctl_item.key }}"
@@ -39,7 +51,7 @@
       reload: true
       sysctl_file: "{{ tuning_sysctl_file }}"
   become: true
-  loop: "{{ tuning_sysctl_config | dict2items }}"
+  loop: "{{ _tuning_sysctl_effective | dict2items }}"
   loop_control:
       loop_var: _sysctl_item
       label: "{{ _sysctl_item.key }}"
@@ -53,6 +65,23 @@
       msg: >-
           Optional sysctl '{{ _sysctl_item.item.key }}' could not be applied
           on this host: {{ _sysctl_item.msg | default('see previous error') }}
+  loop: "{{ _tuning_sysctl_optional.results | default([]) }}"
+  loop_control:
+      loop_var: _sysctl_item
+      label: "{{ _sysctl_item.item.key | default('(skipped)') }}"
+  when:
+      - _sysctl_item.failed | default(false)
+      - not _sysctl_item.skipped | default(false)
+
+# sysctl writes the key to the file before it reloads, so a failed optional
+# key would stay in the drop-in and break every later `sysctl --system`.
+- name: Remove optional sysctl parameters that could not be applied
+  ansible.posix.sysctl:
+      name: "{{ _sysctl_item.item.key }}"
+      state: absent
+      reload: false
+      sysctl_file: "{{ tuning_sysctl_file }}"
+  become: true
   loop: "{{ _tuning_sysctl_optional.results | default([]) }}"
   loop_control:
       loop_var: _sysctl_item

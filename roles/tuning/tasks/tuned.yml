@@ -26,7 +26,9 @@
             msg: >-
                 Tuned profile '{{ tuning_tuned_profile }}' is not available.
                 Available profiles: {{ _tuning_available_tuned_profiles.stdout }}
-        when: tuning_tuned_profile not in _tuning_available_tuned_profiles.stdout
+        when: >-
+            tuning_tuned_profile not in
+            (_tuning_available_tuned_profiles.stdout | regex_findall('(?m)^- (\\S+)'))
 
       - name: Get current tuned profile
         ansible.builtin.command: tuned-adm active
@@ -38,7 +40,10 @@
         become: true
         when:
             - tuning_tuned_profile is defined
-            - tuning_tuned_profile not in _tuning_current_tuned_profile.stdout
+            - >-
+                tuning_tuned_profile !=
+                (_tuning_current_tuned_profile.stdout
+                 | regex_findall('(?m)^Current active profile:\\s*(.+)$') | first | default('') | trim)
         changed_when: true
         register: _tuning_tuned_result
         failed_when: _tuning_tuned_result.rc != 0

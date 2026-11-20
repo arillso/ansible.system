@@ -16,19 +16,34 @@
       name: pip
       state: latest
       executable: "{{ python_pip_executable }}"
+      break_system_packages: "{{ python_pip_break_system_packages }}"
   become: true
   when: python_upgrade_pip | default(false) | bool
+  retries: "{{ python_retry_count }}"
+  delay: "{{ python_retry_delay }}"
+  register: _python_pip_upgrade
+  until: _python_pip_upgrade is succeeded
   tags: ["python", "pip"]
 
 - name: Manage Python packages
-  ansible.builtin.include_tasks: pip.yml
+  ansible.builtin.include_tasks:
+      file: install.yml
+      apply:
+          tags: ["python", "pip"]
+  vars:
+      _python_pip_items: "{{ python_packages }}"
   when:
       - python_packages | length > 0
       - python_pip_enabled | default(true) | bool
   tags: ["python", "pip"]
 
 - name: Install from requirements files
-  ansible.builtin.include_tasks: requirements.yml
+  ansible.builtin.include_tasks:
+      file: install.yml
+      apply:
+          tags: ["python", "pip", "requirements"]
+  vars:
+      _python_pip_items: "{{ python_requirements_files }}"
   when:
       - python_requirements_files | length > 0
       - python_pip_enabled | default(true) | bool

@@ -27,3 +27,13 @@
             that:
                 - _requests.rc == 0
                 - _requests.stdout | length > 0
+
+      - name: Confirm requirements file was installed into its venv
+        ansible.builtin.command:
+            cmd: /opt/molecule-req-venv/bin/python -c "import idna"
+        changed_when: false
+
+      - name: Confirm system-wide package is importable
+        ansible.builtin.command:
+            cmd: python3 -c "import dotenv"
+        changed_when: false

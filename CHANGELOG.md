@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for it; `order` on a rule sorts it within its chain after merging (the
   default log-and-drop rule uses `1000`).
 - **firewall**: `reject_with` accepts `icmpv6-*`, `icmpx-*` and `tcp-reset`.
+- **python**: `python_pip_break_system_packages` (default `false`) passes
+  `break_system_packages` to the pip module, so system-wide installs and
+  `python_upgrade_pip` work on PEP 668 distros (Debian 12+, Ubuntu 23.04+).
 
 ### Changed
 
@@ -70,6 +73,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `cloud-init status --wait` instead of `wait_for` on port 22 and polling
   `status.json`. It uses the inventory's connection settings (`ansible_host`,
   `ansible_port`, ProxyJump) and no longer needs `community.general`.
+- **python**: the `pip` and `requirements` entry points share one pip task
+  (`tasks/install.yml`). `python_upgrade_pip` now retries like the other
+  install tasks.
+- **python**: `python_virtualenv_python` defaults to `""` instead of `python3`;
+  the pip module then chooses the interpreter. A value set together with the
+  venv module now fails with the module's error instead of being dropped.
 
 ### Removed
 
@@ -93,6 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **facts**: variables that were never read and have no sensible
   implementation: `facts_security_check_method`, `facts_logging_level`,
   `facts_concurrent_execution` and `facts_cache_compression_enabled`.
+- **python**: `python_virtualenv_enabled` was never read.
+- **python**: unused `_python_common_packages` and `vars/main.yml`.
 
 ### Fixed
 
@@ -172,6 +183,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **bitwarden_secrets**: `--check` on a host without `bws` no longer fails at
   the extract step and makes no changes on the target.
 - **bitwarden_secrets**: Renovate now reads the `bws-v*` upstream tags.
+- **python**: `python_requirements_files` with `virtualenv` failed with
+  `parameters are mutually exclusive: executable|virtualenv`, and with the
+  default `python3 -m venv` because `virtualenv_python` was always passed.
+- **python**: `virtualenv_python` was dropped for any `virtualenv_command`
+  containing `venv`, e.g. `/opt/venvs/bin/virtualenv`.
+- **python**: with `--tags pip` or `--tags requirements` no package was
+  installed, because the included pip task carried no tags.
+- **python**: the argument spec no longer declares a Debian-only default for
+  `python_system_packages` (`python3-venv` does not exist on EL).
+- **python**: an empty `python_pip_extra_args` is omitted instead of passed.
 
 ### Security
 

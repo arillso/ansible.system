@@ -1,0 +1,34 @@
+---
+# Shared pip task for the pip and requirements entry points. Each item is
+# either a package (name) or a requirements file (path).
+- name: Install Python packages via pip
+  ansible.builtin.pip:
+      name: "{{ _python_pip_item.name | default(omit) }}"
+      requirements: "{{ _python_pip_item.path | default(omit) }}"
+      version: "{{ _python_pip_item.version | default(omit) }}"
+      state: "{{ _python_pip_item.state | default('present') }}"
+      virtualenv: "{{ _python_pip_item.virtualenv | default(omit) }}"
+      virtualenv_command: "{{ _python_pip_item.virtualenv_command | default(python_virtualenv_command) }}"
+      virtualenv_site_packages: >-
+          {{ _python_pip_item.virtualenv_site_packages |
+             default(python_virtualenv_site_packages) }}
+      # Omitted when empty: the pip module then picks the interpreter itself
+      # and rejects virtualenv_python together with the venv module.
+      virtualenv_python: "{{ (_python_pip_item.virtualenv_python | default(python_virtualenv_python)) or omit }}"
+      extra_args: "{{ (_python_pip_item.extra_args | default(python_pip_extra_args)) or omit }}"
+      # executable and virtualenv are mutually exclusive in ansible.builtin.pip;
+      # inside a virtualenv pip runs from the venv's interpreter.
+      executable: >-
+          {{ omit
+             if (_python_pip_item.virtualenv | default(false))
+             else (_python_pip_item.executable | default(python_pip_executable)) }}
+      break_system_packages: "{{ python_pip_break_system_packages }}"
+  become: true
+  loop: "{{ _python_pip_items }}"
+  loop_control:
+      loop_var: _python_pip_item
+      label: "{{ _python_pip_item.name | default(_python_pip_item.path) }}"
+  retries: "{{ python_retry_count }}"
+  delay: "{{ python_retry_delay }}"
+  register: _python_pip_result
+  until: _python_pip_result is succeeded

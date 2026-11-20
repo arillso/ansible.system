@@ -18,3 +18,9 @@
         ansible.builtin.dnf:
             update_cache: true
         when: ansible_facts['os_family'] == "RedHat"
+
+      - name: Write requirements file for the requirements entry point
+        ansible.builtin.copy:
+            dest: /opt/molecule-requirements.txt
+            content: "idna\n"
+            mode: "0644"

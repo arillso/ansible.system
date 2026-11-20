@@ -16,9 +16,8 @@
   failed_when: false
   check_mode: false
 
-# The running-kernel package only when the module is missing or already comes
-# from it; the opt-in metapackage whenever it is set. ansible_facts.packages
-# comes from package_facts in preflight.yml.
+# The running-kernel package only when the module is missing; the opt-in
+# metapackage whenever it is set.
 - name: Install kernel module packages providing zram
   ansible.builtin.include_role:
       name: arillso.system.packages
@@ -27,8 +26,7 @@
       _zram_kernel_packages: >-
           {{ ([zram_kernel_module_package]
               if zram_kernel_module_package | length > 0
-                 and (_zram_modinfo.rc != 0
-                      or zram_kernel_module_package in ansible_facts.packages)
+                 and _zram_modinfo.rc != 0
               else [])
              + ([zram_kernel_module_meta_package]
                 if zram_kernel_module_meta_package | length > 0 else []) }}

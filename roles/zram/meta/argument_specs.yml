@@ -52,7 +52,7 @@ argument_specs:
                 description:
                     - "Package that provides the zram kernel module; empty value skips the install"
                     - "On Ubuntu, resolved at runtime to linux-modules-extra-<kernel> for the running kernel"
-                    - "Installed only when modinfo zram fails or the package is already installed"
+                    - "Installed only when modinfo zram fails"
                     - "Empty on Debian, which ships the zram module in the stock kernel with no separate package"
                 type: "str"
                 required: false

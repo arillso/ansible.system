@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **zram**: `zram_kernel_module_meta_package` (opt-in, empty by default)
+  installs a kernel flavour metapackage, so a kernel upgrade does not leave zram
+  without its module. `linux-modules-extra-<kernel>` alone only covers the
+  running kernel.
+- **zram**: `zram_restart_on_change` restarts `zramswap` on a config change even
+  while zram swap holds data.
 - **firewall**: `firewall_ssh_port` sets the SSH port of the default input
   chain and follows `access_ssh_port` when that is set.
 - **firewall**: tables take named `sets` (`name`, `type`, `flags`,
@@ -28,8 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   instead of leaving it enabled. zram stays active until the next reboot; the
   role does not stop it, because swapoff can fail when RAM is short.
 - **zram**: a changed `/etc/default/zramswap` restarts `zramswap` only while the
-  zram swap is empty; otherwise the change waits for the next reboot. The new
-  `zram_restart_on_change` restarts anyway.
+  zram swap is empty; otherwise the change waits for the next reboot and the
+  role reports it on every run until then.
 - **access**: `access_ssh_subsystem_sftp` defaults to `internal-sftp` instead of
   the Debian-only `/usr/lib/openssh/sftp-server`, so sftp works on EL 8/9.
 - **access**: `sshd_config` now sets `UsePAM yes` (`access_ssh_use_pam`) and
@@ -125,13 +131,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`reject with icmp-admin-prohibited`).
 - **firewall**: `log_prefix: ""` still rendered a log statement; it now
   switches logging off for the rule.
-- **zram**: the new opt-in `zram_kernel_module_meta_package` installs a kernel
-  flavour metapackage, so a kernel upgrade no longer leaves zram without its
-  module. The README documents that `linux-modules-extra-<kernel>` alone only
-  covers the running kernel.
 - **zram**: `linux-modules-extra-<kernel>` is installed only when `modinfo zram`
-  fails or the package is already there, so built-in modules and custom kernels
-  no longer break the run.
+  fails, so built-in modules and custom kernels no longer break the run.
+- **zram**: a fresh install no longer restarts `zramswap`; the config is written
+  before `zram-tools` starts the service.
 - **zram**: `--check` on a host without `zram-tools` no longer fails on the
   unknown `zramswap` unit.
 - **zram**: the role asserts `zram_percent` (1..100) and `zram_priority`

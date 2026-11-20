@@ -21,7 +21,7 @@
   register: _zram_disabled
   when:
       - not zram_enabled | bool
-      - _zram_unit.stdout | length > 0
+      - (_zram_unit.stdout | default('')) | length > 0
 
 - name: Report that zram stays active until the next reboot
   ansible.builtin.debug:
@@ -29,7 +29,9 @@
           zramswap.service is disabled. zram swap stays active until the next
           reboot; run `systemctl stop zramswap` once enough RAM is free to
           switch it off now.
-  when: _zram_disabled is changed
+  when:
+      - _zram_disabled is changed
+      - _zram_disabled.status.ActiveState | default('') == 'active'
 
 - name: End the role when zram is disabled
   ansible.builtin.meta: end_role
@@ -60,7 +62,6 @@
       group: root
       mode: "0644"
   become: true
-  notify: "zram: restart zramswap"
 
 - name: Install zram tools package via packages role
   ansible.builtin.include_role:
@@ -83,4 +84,23 @@
             enabled: true
             state: started
             daemon_reload: true
-  when: not ansible_check_mode or _zram_unit.stdout | length > 0
+  when: not ansible_check_mode or (_zram_unit.stdout | default('')) | length > 0
+
+# The template does not notify the restart itself. A fresh install starts
+# zramswap after the config is written, so it needs no restart, and a restart
+# the handler deferred because zram held data must be retried on later runs,
+# when the template no longer reports changed. Comparing the config mtime with
+# the service start covers both. TZ=UTC keeps the timestamp parseable by date.
+- name: Check whether zramswap runs with an older config than /etc/default/zramswap
+  ansible.builtin.shell:
+      cmd: >-
+          set -e;
+          started=$(TZ=UTC systemctl show -p ActiveEnterTimestamp --value zramswap.service);
+          [ -n "$started" ];
+          [ "$(stat -c %Y /etc/default/zramswap)" -gt "$(date -d "$started" +%s)" ]
+      executable: /bin/bash
+  register: _zram_restart_pending
+  changed_when: _zram_restart_pending.rc == 0
+  failed_when: false
+  notify: "zram: restart zramswap"
+  when: not ansible_check_mode

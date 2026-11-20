@@ -13,8 +13,15 @@
           zram_priority must be 0..32767 (got {{ zram_priority }}).
       quiet: true
 
-- name: Gather installed packages to detect competing zram setups
-  ansible.builtin.package_facts:
+- name: Query competing zram packages
+  ansible.builtin.command:
+      cmd: >-
+          dpkg-query -W -f '${Package} ${db:Status-Status}\n'
+          systemd-zram-generator zram-config
+  register: _zram_conflict_query
+  changed_when: false
+  failed_when: false
+  check_mode: false
 
 # These tools create their own zram swap devices and collide with zramswap on
 # /dev/zram0. The role does not remove them, because that would switch off a
@@ -29,6 +36,7 @@
       quiet: true
   vars:
       _zram_conflicts: >-
-          {{ ['systemd-zram-generator', 'zram-config']
-             | select('in', ansible_facts.packages)
+          {{ _zram_conflict_query.stdout_lines
+             | select('search', ' installed$')
+             | map('split', ' ') | map('first')
              | list }}

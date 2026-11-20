@@ -31,8 +31,7 @@ zram_packages:
 # for the running kernel. On Ubuntu cloud images with linux-image-virtual the
 # module is not part of the base image — it lives in
 # linux-modules-extra-<kernel>. The role installs it only when `modinfo zram`
-# fails or the package is already installed, so built-in modules and custom
-# kernels need no package. Debian ships the module in the stock kernel and has
+# fails, so built-in modules and custom kernels need no package. Debian ships the module in the stock kernel and has
 # no linux-modules-extra-* package, so the default is empty there and the
 # install step is skipped. Set explicitly to override per host.
 zram_kernel_module_package: >-

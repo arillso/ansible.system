@@ -2,8 +2,9 @@
 # Restarting zramswap runs swapoff, which pulls every page stored in zram back
 # into RAM and can stall the host or wake the OOM killer. The restart therefore
 # only runs while the zram swap is empty or when zram_restart_on_change opts
-# in; otherwise the new config waits for a reboot. A fresh install does not
-# depend on it: tasks/main.yml writes the config before zram-tools starts.
+# in; otherwise the new config waits for a reboot. tasks/main.yml notifies on
+# every run while the running service is older than the config, so a deferred
+# restart is retried and zram_restart_on_change can be set later.
 - name: Read zram swap usage before restarting zramswap
   ansible.builtin.command:
       cmd: swapon --show=NAME,USED --bytes --noheadings

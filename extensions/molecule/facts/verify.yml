@@ -15,3 +15,27 @@
             that:
                 - _facts_cache.stat.exists
                 - _facts_cache.stat.isdir
+                - _facts_cache.stat.mode == '0700'
+
+      - name: Stat the retired last.fact script
+        ansible.builtin.stat:
+            path: /etc/ansible/facts.d/last.fact
+        register: _facts_last_fact
+
+      # Converge disables security updates and enables container detection:
+      # both flags must reach the scripts as lowercase "true"/"false".
+      - name: Gather local facts
+        ansible.builtin.setup:
+            gather_subset:
+                - "!all"
+                - "!any"
+                - "local"
+
+      - name: Assert the fact scripts honour the role flags
+        ansible.builtin.assert:
+            that:
+                - not _facts_last_fact.stat.exists
+                - ansible_local.security.meta.check_method == 'disabled'
+                - ansible_local.container.cache.enabled
+                - ansible_local.run.last_run.playbook == 'facts'
+                - ansible_local.run.last_run.epoch > 0

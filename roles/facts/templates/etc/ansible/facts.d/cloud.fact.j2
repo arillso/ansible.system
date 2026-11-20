@@ -11,7 +11,8 @@ readonly CACHE_TTL="{{ facts_cache_ttl_cloud | default(facts_cache_default_ttl) 
 readonly TIMEOUT="{{ facts_timeout_default | default(5) }}"
 readonly MAX_RETRIES="{{ facts_max_retries | default(1) }}"
 readonly METADATA_BASE_URL="{{ facts_cloud_metadata_base_url | default('http://169.254.169.254') }}"
-readonly DEBUG_ENABLED="{{ facts_debug_enabled | default(false) }}"
+readonly CACHE_ENABLED="{{ facts_cache_enabled | bool | lower }}"
+readonly DEBUG_ENABLED="{{ facts_debug_enabled | bool | lower }}"
 {# Default provider from the gathered DMI facts; containers report the host's DMI, so they stay generic #}
 {%- set _vendor = ansible_facts['system_vendor'] | default('') | lower %}
 {%- set _bios = ansible_facts['bios_version'] | default('') | lower %}
@@ -251,8 +252,9 @@ main() {
         return 0
     fi
 
-    # Try to use cached data first
-    if is_cache_valid "$CACHE_FILE" "$CACHE_TTL"; then
+    # Use the cache only if it was written for the current provider
+    if [[ "$CACHE_ENABLED" == "true" ]] && is_cache_valid "$CACHE_FILE" "$CACHE_TTL" \
+        && jq -e --arg p "$CLOUD_PROVIDER" '.provider == $p' "$CACHE_FILE" >/dev/null 2>&1; then
         if read_cache "$CACHE_FILE"; then
             return 0
         fi
@@ -261,8 +263,12 @@ main() {
     local metadata
     metadata=$(get_cloud_metadata "$CLOUD_PROVIDER")
 
-    # Update cache with fresh data (but don't depend on success for output)
-    write_cache "$CACHE_FILE" "$metadata" || log_error "Cache write failed, but continuing with output"
+    # Cache only successful lookups: a transient metadata outage must not
+    # pin "unknown" for the whole TTL
+    if [[ "$CACHE_ENABLED" == "true" ]] \
+        && jq -e '.metadata_available or .provider == "generic"' <<<"$metadata" >/dev/null 2>&1; then
+        write_cache "$CACHE_FILE" "$metadata" || log_error "Cache write failed, but continuing with output"
+    fi
 
     # Always output the collected metadata
     echo "$metadata"

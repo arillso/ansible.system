@@ -12,7 +12,7 @@ readonly TIMEOUT_SECONDS="{{ facts_timeout_default | default(5) }}"
 readonly CACHE_DIR="{{ facts_cache_dir | default('/var/cache/ansible-facts') }}"
 readonly CACHE_FILE="${CACHE_DIR}/system.json"
 readonly CACHE_TTL="{{ facts_cache_ttl_system | default(86400) }}"  # 24 hours cache TTL
-readonly DEBUG_ENABLED="{{ facts_debug_enabled | default(false) }}"
+readonly DEBUG_ENABLED="{{ facts_debug_enabled | bool | lower }}"
 
 # Logging function for error handling
 log_error() {
@@ -94,11 +94,13 @@ safe_exec() {
     local cmd="$1"
     local default_value="${2:-unknown}"
 
-    if timeout "${TIMEOUT_SECONDS}" bash -c "${cmd}" 2>/dev/null; then
-        return 0
+    local output
+    # Print the default alone, not after partial output of a failed command.
+    # Always return 0: callers assign the output, and set -e would abort.
+    if output=$(timeout "${TIMEOUT_SECONDS}" bash -c "${cmd}" 2>/dev/null); then
+        echo "${output}"
     else
         echo "${default_value}"
-        return 1
     fi
 }
 
@@ -224,46 +226,15 @@ collect_cloud_provider_info() {
     fi
 }
 
-# Collect security update information (semi-static - changes weekly/monthly)
-collect_security_updates() {
-{% if ansible_facts['os_family'] == "Debian" %}
-    if command -v apt &> /dev/null; then
-        local security_updates
-        security_updates=$(get_numeric_value "apt list --upgradable 2>/dev/null | grep -c security" "0")
-        jq -n --arg security_updates_available "${security_updates}" \
-            '{security_updates_available: ($security_updates_available | tonumber)}'
-    else
-        jq -n '{security_updates_available: 0}'
-    fi
-{% elif ansible_facts['os_family'] == "RedHat" %}
-    if command -v yum &> /dev/null; then
-        local security_updates
-        security_updates=$(get_numeric_value "yum check-update --security 2>/dev/null | grep -c 'Needed'" "0")
-        jq -n --arg security_updates_available "${security_updates}" \
-            '{security_updates_available: ($security_updates_available | tonumber)}'
-    elif command -v dnf &> /dev/null; then
-        local security_updates
-        security_updates=$(get_numeric_value "dnf check-update --security 2>/dev/null | grep -c 'Needed'" "0")
-        jq -n --arg security_updates_available "${security_updates}" \
-            '{security_updates_available: ($security_updates_available | tonumber)}'
-    else
-        jq -n '{security_updates_available: 0}'
-    fi
-{% else %}
-    jq -n '{security_updates_available: 0}'
-{% endif %}
-}
-
 # Collect all static facts
 collect_static_facts() {
-    local node_classification network_info timezone_info security_updates system_facts cloud_provider_info
+    local node_classification network_info timezone_info system_facts cloud_provider_info
     local iso_timestamp human_timestamp epoch_timestamp
 
     # Collect all static fact categories
     node_classification=$(collect_node_classification)
     network_info=$(collect_network_info)
     timezone_info=$(collect_timezone_info)
-    security_updates=$(collect_security_updates)
     system_facts=$(collect_system_facts)
     cloud_provider_info=$(collect_cloud_provider_info)
 
@@ -277,7 +248,6 @@ collect_static_facts() {
         --argjson node_classification "${node_classification}" \
         --argjson network_info "${network_info}" \
         --argjson timezone_info "${timezone_info}" \
-        --argjson security_updates "${security_updates}" \
         --argjson system_facts "${system_facts}" \
         --argjson cloud_provider_info "${cloud_provider_info}" \
         --arg iso_timestamp "${iso_timestamp}" \
@@ -287,7 +257,6 @@ collect_static_facts() {
         $node_classification +
         $network_info +
         $timezone_info +
-        $security_updates +
         $cloud_provider_info +
         ($system_facts | with_entries(select(.key | in({"platform": true, "architecture": true, "kernel": true, "virtualization_type": true, "python_version": true})))) +
         {
@@ -304,7 +273,7 @@ collect_static_facts() {
 # Main execution with caching logic
 main() {
     # Check if static facts caching is disabled
-    if [[ "${facts_enable_static_cache:-true}" != "true" ]]; then
+    if [[ "{{ (facts_cache_enabled | bool and facts_enable_static_cache | bool) | lower }}" != "true" ]]; then
         collect_static_facts
         return 0
     fi

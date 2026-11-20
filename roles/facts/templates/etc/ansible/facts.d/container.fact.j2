@@ -7,19 +7,19 @@
 set -euo pipefail
 
 # Universal configuration variables from Ansible (harmonized across all facts scripts)
-CACHE_ENABLED="{{ facts_cache_enabled | default(true) }}"
+CACHE_ENABLED="{{ facts_cache_enabled | bool | lower }}"
 CACHE_TTL="{{ facts_cache_ttl_container | default(facts_cache_default_ttl) | default(300) }}"
 CACHE_DIR="{{ facts_cache_dir | default('/var/cache/ansible-facts') }}"
 HEALTH_TIMEOUT="{{ facts_timeout_default | default(5) }}"
 API_TIMEOUT="{{ facts_timeout_api | default(10) }}"
 MAX_RETRIES="{{ facts_max_retries | default(1) }}"
-DEBUG_ENABLED="{{ facts_debug_enabled | default(false) }}"
+DEBUG_ENABLED="{{ facts_debug_enabled | bool | lower }}"
 
-# Detection flags (container-specific)
-DETECT_DOCKER="{{ facts_container_detect_docker | default(true) }}"
-DETECT_PODMAN="{{ facts_container_detect_podman | default(true) }}"
-DETECT_KUBERNETES="{{ facts_container_detect_kubernetes | default(true) }}"
-DETECT_CONTAINERD="{{ facts_container_detect_containerd | default(true) }}"
+# Detection flags (container-specific, all gated by facts_enable_container_detection)
+DETECT_DOCKER="{{ (facts_enable_container_detection | bool and facts_container_detect_docker | bool) | lower }}"
+DETECT_PODMAN="{{ (facts_enable_container_detection | bool and facts_container_detect_podman | bool) | lower }}"
+DETECT_KUBERNETES="{{ (facts_enable_container_detection | bool and facts_container_detect_kubernetes | bool) | lower }}"
+DETECT_CONTAINERD="{{ (facts_enable_container_detection | bool and facts_container_detect_containerd | bool) | lower }}"
 
 # Cache file paths (standardized)
 CACHE_FILE="${CACHE_DIR}/container-facts.json"
@@ -56,7 +56,8 @@ safe_exec_with_retry() {
 
     log_debug "Command failed after $((retries+1)) attempts: ${cmd}"
     echo "${default_value}"
-    return 1
+    # Callers assign the output; a non-zero status would abort under set -e.
+    return 0
 }
 
 # Runtime detection results
@@ -67,9 +68,9 @@ declare -A RUNTIME_SERVICES
 
 # Cache management functions
 setup_cache() {
-    if [[ "${CACHE_ENABLED}" == "true" ]]; then
+    if [[ "${CACHE_ENABLED}" == "true" && ! -d "${CACHE_DIR}" ]]; then
         mkdir -p "${CACHE_DIR}"
-        chmod 755 "${CACHE_DIR}"
+        chmod 700 "${CACHE_DIR}"
     fi
 }
 
@@ -101,7 +102,7 @@ cache_data() {
     if [[ "${CACHE_ENABLED}" == "true" ]]; then
         echo "$1" > "${CACHE_FILE}.tmp"
         mv "${CACHE_FILE}.tmp" "${CACHE_FILE}"
-        chmod 644 "${CACHE_FILE}"
+        chmod 600 "${CACHE_FILE}"
     fi
 }
 
@@ -353,7 +354,7 @@ main() {
     json_result=$(generate_facts_json)
 
     # Cache the results
-    cache_data "${json_result}"
+    cache_data "${json_result}" || log_error "Cache write failed, but continuing with output"
 
     # Output results
     echo "${json_result}"

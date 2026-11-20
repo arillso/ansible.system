@@ -33,9 +33,19 @@
   tags:
       - facts
 
-- name: "Create cloud metadata cache directory"
+# last.fact rewrote last_run.json on every fact gather; the role now
+# records the deployment itself (tasks/main.yml).
+- name: "Remove retired last.fact script"
   ansible.builtin.file:
-      path: "/var/cache/ansible-facts"
+      path: /etc/ansible/facts.d/last.fact
+      state: absent
+  become: true
+  tags:
+      - facts
+
+- name: "Create facts cache directory"
+  ansible.builtin.file:
+      path: "{{ facts_cache_dir }}"
       state: directory
       mode: "0700"
       owner: root

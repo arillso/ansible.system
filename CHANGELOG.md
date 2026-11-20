@@ -28,6 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   repo's `ansible.cfg`; keep others via `ansible_otel_extra_callbacks`.
   OpenTelemetry now requires `ansible_install_method: pipx`.
 
+- **facts**: `last_run.json` is written by a role task instead of the
+  `last.fact` script, so it records the last deployment instead of the last
+  fact gather. The role removes `/etc/ansible/facts.d/last.fact`.
+- **facts**: container detection now actually runs (see Fixed), which adds the
+  runtime version and health probes to every fact gather on container hosts.
+- **facts**: `system.fact` no longer reports `security_updates_available`;
+  `security.fact` is the only source.
+
 ### Removed
 
 - **access**: `access_sudoers_validate` was never read. Use
@@ -37,6 +45,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **bitwarden_secrets**: `armv7l` support (no upstream release asset exists),
   `bitwarden_secrets_state: latest` (it was accepted but never installed
   anything) and the unused `bitwarden_secrets_debug_mode`.
+
+- **facts**: the handlers `facts: refresh`, `facts: restart ssh` and
+  `facts: update motd` and the variable `facts_ssh_service_names`. No task
+  notified them.
+- **facts**: variables that were never read: `facts_cache_ttl_network`,
+  `facts_security_check_method`, `facts_logging_level`,
+  `facts_error_on_failure`, `facts_concurrent_execution`,
+  `facts_script_execution_timeout`, `facts_cache_compression_enabled`,
+  `facts_cache_cleanup_enabled`, `facts_cache_cleanup_age_days`,
+  `facts_system_collect_*`, `facts_network_collect_*` and
+  `facts_container_collect_*`.
 
 ### Fixed
 
@@ -102,6 +121,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   run as root. A mirrored `bitwarden_secrets_download_url` keeps working while
   the list is reachable; air-gapped hosts set `bitwarden_secrets_checksum` or
   skip the check with `bitwarden_secrets_checksum_url: ""`.
+
+- **facts**: boolean settings reached the fact scripts as `True`/`False` and
+  never matched `true`. Container detection and the container cache were
+  always off, and `facts_debug_enabled` had no effect.
+  `facts_enable_container_detection` now gates all runtime probes.
+- **facts**: `facts_enable_security_updates` and `facts_enable_static_cache`
+  were read as shell variables and had no effect.
+- **facts**: `facts_cache_enabled` was ignored by the cloud, security and system
+  facts.
+- **facts**: a timed-out container probe aborted `container.fact` without
+  output.
+- **facts**: `container.fact` reset the cache directory to `0755` on every
+  gather, and wrote its cache file as `0644`. Both are now `0700`/`0600`.
+- **facts**: the role created `/var/cache/ansible-facts` regardless of
+  `facts_cache_dir`.
+- **facts**: `facts_version` contained the whole `ansible-galaxy` output line
+  instead of the version. It is read from `MANIFEST.json` or `galaxy.yml`.
+- **facts**: a failed probe in `system.fact` and `security.fact` returned its
+  partial output plus the default, e.g. `virtualization_type: "none\n…"` on
+  bare metal.
+- **facts**: `cloud.fact` cached failed metadata lookups for an hour and kept
+  serving a cache written for another provider.
+- **facts**: the local facts refresh had no tag and was skipped with
+  `--tags facts`.
+- **facts**: the README example used the nonexistent `facts_cache_ttl`.
 
 ## [2.0.4] - 2026-11-04
 

@@ -11,7 +11,8 @@ readonly CACHE_DIR="{{ facts_cache_dir | default('/var/cache/ansible-facts') }}"
 readonly CACHE_FILE="${CACHE_DIR}/security.json"
 readonly CACHE_TTL="{{ facts_cache_ttl_security | default(facts_cache_default_ttl) | default(300) }}"  # 5 minutes cache TTL for security updates
 readonly SECURITY_TIMEOUT="{{ facts_security_command_timeout | default(facts_timeout_default) | default(15) }}"
-readonly DEBUG_ENABLED="{{ facts_debug_enabled | default(false) }}"
+readonly CACHE_ENABLED="{{ facts_cache_enabled | bool | lower }}"
+readonly DEBUG_ENABLED="{{ facts_debug_enabled | bool | lower }}"
 
 # Logging functions (harmonized with universal debug configuration)
 log_debug() {
@@ -98,11 +99,13 @@ safe_exec() {
     local default_value="${2:-0}"
     local timeout_seconds="${3:-10}"
 
-    if timeout "${timeout_seconds}" bash -c "${cmd}" 2>/dev/null; then
-        return 0
+    local output
+    # Print the default alone, not after partial output of a failed command.
+    # Always return 0: callers assign the output, and set -e would abort.
+    if output=$(timeout "${timeout_seconds}" bash -c "${cmd}" 2>/dev/null); then
+        echo "${output}"
     else
         echo "${default_value}"
-        return 1
     fi
 }
 
@@ -177,7 +180,7 @@ collect_security_facts() {
 # Main execution with short caching logic
 main() {
     # Check if security updates checking is disabled
-    if [[ "${facts_enable_security_updates:-true}" != "true" ]]; then
+    if [[ "{{ facts_enable_security_updates | bool | lower }}" != "true" ]]; then
         jq -n '{
             security_updates_available: 0,
             meta: {
@@ -195,7 +198,7 @@ main() {
     fi
 
     # Try to use cached data first (short TTL)
-    if is_cache_valid "$CACHE_FILE" "$CACHE_TTL"; then
+    if [[ "$CACHE_ENABLED" == "true" ]] && is_cache_valid "$CACHE_FILE" "$CACHE_TTL"; then
         if read_cache "$CACHE_FILE"; then
             return 0
         fi
@@ -206,7 +209,9 @@ main() {
     security_facts=$(collect_security_facts)
 
     # Update cache with fresh data
-    write_cache "$CACHE_FILE" "$security_facts" || log_error "Cache write failed, but continuing with output"
+    if [[ "$CACHE_ENABLED" == "true" ]]; then
+        write_cache "$CACHE_FILE" "$security_facts" || log_error "Cache write failed, but continuing with output"
+    fi
 
     # Always output the collected security facts
     echo "$security_facts"

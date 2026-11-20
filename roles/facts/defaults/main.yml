@@ -1,11 +1,14 @@
 ---
 # Core role identification
-facts_role_name: "{{ ansible_role_name }}"
-facts_collection_name: "{{ ansible_collection_name }}"
+facts_role_name: "{{ ansible_role_name | default('facts') }}"
+facts_collection_name: "{{ ansible_collection_name | default('arillso.system') }}"
+# Version of the collection on the controller: MANIFEST.json for an installed
+# collection, galaxy.yml for a source checkout, empty when neither is found.
 facts_version: >-
-    {{ lookup('pipe',
-       'ansible-galaxy collection list ' + ansible_collection_name +
-       ' | grep ' + ansible_collection_name + ' | awk "{print $2}"') }}
+    {{ (lookup('ansible.builtin.file', role_path ~ '/../../MANIFEST.json', errors='ignore')
+        | default('{}', true) | from_json).collection_info.version
+       | default((lookup('ansible.builtin.file', role_path ~ '/../../galaxy.yml', errors='ignore')
+        | default('{}', true) | from_yaml).version | default(''), true) }}
 
 # Node classification
 facts_node_type: "generic"
@@ -15,15 +18,8 @@ facts_system_owner: "ops-team"
 facts_system_tags:
     - "managed"
     - "facts"
+# Playbook name recorded in last_run.json at every role run
 facts_playbook_name: "facts"
-
-# SSH service configuration
-facts_ssh_service_names:
-    Debian: "ssh"
-    RedHat: "sshd"
-    Suse: "sshd"
-    Alpine: "openssh"
-    default: "sshd"
 
 # Feature flags for facts collection scripts
 facts_enable_cloud_metadata: true
@@ -44,7 +40,6 @@ facts_cache_ttl_cloud: 3600
 facts_cache_ttl_container: 300
 facts_cache_ttl_security: 300
 facts_cache_ttl_system: 86400
-facts_cache_ttl_network: 1800
 
 # Cloud metadata collection configuration
 facts_cloud_metadata_base_url: "http://169.254.169.254"
@@ -57,40 +52,13 @@ facts_cloud_providers_enabled:
     - "generic"
 
 # Security facts configuration
-facts_security_check_method: "auto"
 facts_security_command_timeout: 15
 
-# Debug and logging configuration
+# Debug output of the fact scripts on stderr
 facts_debug_enabled: false
-facts_logging_level: "info"
-facts_error_on_failure: false
 
-# Performance and reliability configuration
-facts_concurrent_execution: false
-facts_script_execution_timeout: 30
-facts_cache_compression_enabled: false
-facts_cache_cleanup_enabled: true
-facts_cache_cleanup_age_days: 7
-
-# System facts collection granularity
-facts_system_collect_hardware: true
-facts_system_collect_network: true
-facts_system_collect_storage: true
-facts_system_collect_performance: true
-facts_system_collect_virtualization: true
-
-# Network facts collection granularity
-facts_network_collect_interfaces: true
-facts_network_collect_routes: true
-facts_network_collect_dns: true
-facts_network_collect_firewall: true
-
-# Container runtime detection and facts configuration
+# Container runtime detection (all also require facts_enable_container_detection)
 facts_container_detect_docker: true
 facts_container_detect_podman: true
 facts_container_detect_kubernetes: true
 facts_container_detect_containerd: true
-facts_container_collect_inventory: true
-facts_container_collect_health: true
-facts_container_collect_volumes: true
-facts_container_collect_networks: true

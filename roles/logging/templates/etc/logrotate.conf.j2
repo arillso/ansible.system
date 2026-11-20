@@ -47,17 +47,3 @@ su {{ logging_logrotate_su }}
 # Include directory
 include {{ logging_logrotate_include_dir }}
 
-# System-specific logs
-/var/log/wtmp {
-    missingok
-    monthly
-    create 0664 root utmp
-    rotate 1
-}
-
-/var/log/btmp {
-    missingok
-    monthly
-    create 0660 root utmp
-    rotate 1
-}

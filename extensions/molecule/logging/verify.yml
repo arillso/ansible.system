@@ -33,3 +33,13 @@
         changed_when: false
         register: _logrotate_check
         failed_when: _logrotate_check.rc not in [0, 1]
+
+      - name: Check global logrotate configuration
+        ansible.builtin.command:
+            cmd: logrotate -d /etc/logrotate.conf
+        changed_when: false
+
+      - name: Check rsyslog configuration
+        ansible.builtin.command:
+            cmd: rsyslogd -N1
+        changed_when: false

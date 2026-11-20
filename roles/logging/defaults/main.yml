@@ -31,7 +31,8 @@ logging_logrotate_dateext: true
 logging_logrotate_compress: true
 logging_logrotate_delaycompress: false
 logging_logrotate_notifempty: true
-logging_logrotate_su: ""
+# Ubuntu ships /var/log as root:syslog 0775, which logrotate refuses without su.
+logging_logrotate_su: "{{ 'root adm' if ansible_facts['distribution'] == 'Ubuntu' else '' }}"
 logging_logrotate_include_dir: /etc/logrotate.d
 logging_logrotate_extra_options: []
 logging_logrotate_packages:
@@ -49,7 +50,9 @@ logging_rsyslog_entries: []
 #       & stop
 
 logging_rsyslog_preserve_fqdn: false
-logging_rsyslog_work_directory: /var/lib/rsyslog
+logging_rsyslog_work_directory: >-
+    {{ '/var/lib/rsyslog' if ansible_facts['os_family'] == 'RedHat'
+       else '/var/spool/rsyslog' }}
 logging_rsyslog_include_config: /etc/rsyslog.d/*.conf
 logging_rsyslog_main_queue_size: 10000
 logging_rsyslog_main_queue_type: LinkedList
@@ -67,9 +70,11 @@ logging_rsyslog_remote_servers: []
 #     port: 514
 #     protocol: tcp
 
-logging_rsyslog_modules:
-    - imuxsock
-    - imklog
+# EL reads local and kernel messages from the journal (imjournal); Debian and
+# Ubuntu take them from the syslog socket and the kernel ring buffer.
+logging_rsyslog_modules: >-
+    {{ ['imuxsock', 'imjournal'] if ansible_facts['os_family'] == 'RedHat'
+       else ['imuxsock', 'imklog'] }}
 logging_rsyslog_service_state: started
 logging_rsyslog_service_enabled: true
 logging_rsyslog_restart_on_change: true

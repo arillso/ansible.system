@@ -16,6 +16,7 @@
       owner: root
       group: root
       mode: "0644"
+      validate: logrotate -d %s
       backup: "{{ logging_backup_configs }}"
   become: true
   retries: "{{ logging_retry_count }}"
@@ -36,9 +37,7 @@
   loop_control:
       loop_var: _logging_logrotate_item
       label: "{{ _logging_logrotate_item.name }}"
-  when:
-      - logging_logrotate_entries | length > 0
-      - _logging_logrotate_item.state | default('present') == 'present'
+  when: _logging_logrotate_item.state | default('present') == 'present'
 
 - name: Remove logrotate entries
   ansible.builtin.file:
@@ -49,6 +48,4 @@
   loop_control:
       loop_var: _logging_logrotate_item
       label: "{{ _logging_logrotate_item.name }}"
-  when:
-      - logging_logrotate_entries | length > 0
-      - _logging_logrotate_item.state | default('present') == 'absent'
+  when: _logging_logrotate_item.state | default('present') == 'absent'

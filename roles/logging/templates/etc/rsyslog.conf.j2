@@ -3,7 +3,15 @@
 
 # Modules
 {% for module in logging_rsyslog_modules %}
+{% if module == 'imuxsock' and 'imjournal' in logging_rsyslog_modules %}
+module(load="imuxsock" SysSock.Use="off")
+{% elif module == 'imklog' %}
+module(load="imklog" permitNonKernelFacility="{{ 'on' if logging_rsyslog_klog_permit_non_kernel_facility else 'off' }}")
+{% elif module == 'imjournal' %}
+module(load="imjournal" StateFile="imjournal.state")
+{% else %}
 module(load="{{ module }}")
+{% endif %}
 {% endfor %}
 
 # Global directives
@@ -28,19 +36,14 @@ $FileCreateMode {{ logging_rsyslog_file_create_mode }}
 $DirCreateMode {{ logging_rsyslog_dir_create_mode }}
 $Umask 0022
 
-{% if not logging_rsyslog_traditional_log_format %}
-# Use default timestamp format
+{% if logging_rsyslog_traditional_log_format %}
+# Use traditional (low-precision) timestamp format
 $ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
-{% endif %}
-
-{% if not logging_rsyslog_klog_permit_non_kernel_facility %}
-# Filter non-kernel messages from kernel log
-$KLogPermitNonKernelFacility off
 {% endif %}
 
 # Remote logging
 {% for server in logging_rsyslog_remote_servers %}
-{% if server.protocol == 'tcp' %}
+{% if server.protocol | default('udp') == 'tcp' %}
 *.* @@{{ server.host }}:{{ server.port }}
 {% else %}
 *.* @{{ server.host }}:{{ server.port }}
@@ -51,9 +54,18 @@ $KLogPermitNonKernelFacility off
 $IncludeConfig {{ logging_rsyslog_include_config }}
 
 # Standard log files
+{% if ansible_facts['os_family'] == 'RedHat' %}
+*.info;mail.none;authpriv.none;cron.none  /var/log/messages
+authpriv.*                                /var/log/secure
+mail.*                                    -/var/log/maillog
+cron.*                                    /var/log/cron
+uucp,news.crit                            /var/log/spooler
+local7.*                                  /var/log/boot.log
+{% else %}
 auth,authpriv.*                 /var/log/auth.log
 *.*;auth,authpriv.none          -/var/log/syslog
 kern.*                          -/var/log/kern.log
 mail.*                          -/var/log/mail.log
 mail.err                        /var/log/mail.err
+{% endif %}
 *.emerg                         :omusrmsg:*

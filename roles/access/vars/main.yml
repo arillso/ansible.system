@@ -29,3 +29,37 @@ _access_ssh_validation_commands:
     Suse: sshd -t -f %s
     Alpine: sshd -t -f %s
     default: sshd -t -f %s
+
+# Keys from access_users[].ssh_keys in the access_ssh_keys format; a per-key
+# `user` overrides the parent user's name. Keys whose effective user is absent
+# in access_users are dropped, since that user is removed in the same run.
+_access_ssh_user_keys: >-
+    {%- set _absent = access_users | selectattr('state', 'defined')
+        | selectattr('state', 'equalto', 'absent') | map(attribute='name') | list -%}
+    {%- set _keys = [] -%}
+    {%- for _u in access_users if _u.state | default('present') == 'present' -%}
+    {%- for _k in _u.ssh_keys | default([]) if _k.key is defined
+        and _k.user | default(_u.name) not in _absent -%}
+    {%- set _ = _keys.append(_k | combine({'user': _k.user | default(_u.name)})) -%}
+    {%- endfor -%}
+    {%- endfor -%}
+    {{ _keys }}
+
+# Keys handled by the current tasks/ssh_keys.yml run; users.yml passes
+# _access_ssh_key_list, main.yml runs it for access_ssh_keys
+_access_ssh_keys: "{{ _access_ssh_key_list | default(access_ssh_keys) }}"
+
+# Enabled keys of both sources. Exclusive users and their key set are resolved
+# from this list, so both runs write the same authorized_keys content.
+_access_ssh_all_keys: >-
+    {{ (_access_ssh_user_keys if access_users_enabled | default(true) | bool else [])
+       + (access_ssh_keys if access_ssh_keys_enabled | default(true) | bool else []) }}
+
+# Users with at least one present exclusive key; their keys go into one call
+_access_ssh_exclusive_users: >-
+    {%- set _users = [] -%}
+    {%- for _k in _access_ssh_all_keys
+        if _k.exclusive | default(false) | bool and _k.state | default('present') == 'present' -%}
+    {%- set _ = _users.append(_k.user) -%}
+    {%- endfor -%}
+    {{ _users | unique | list }}

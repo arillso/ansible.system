@@ -53,6 +53,10 @@ argument_specs:
                         description: "List of supplementary groups"
                         type: list
                         elements: str
+                    append:
+                        description: "Add to groups instead of replacing the supplementary group list"
+                        type: bool
+                        default: true
                     shell:
                         description: "User shell"
                         type: str
@@ -204,10 +208,6 @@ argument_specs:
                 description: "File mode for sudoers files"
                 type: str
                 default: "0440"
-            access_sudoers_validate:
-                description: "Validate sudoers syntax with visudo"
-                type: bool
-                default: true
 
             # SSH Server Configuration
             access_ssh_port:
@@ -333,9 +333,17 @@ argument_specs:
                 elements: str
                 default: []
             access_ssh_subsystem_sftp:
-                description: "Path to SFTP server binary"
+                description: "SFTP subsystem command (internal-sftp or path to sftp-server)"
                 type: str
-                default: /usr/lib/openssh/sftp-server
+                default: internal-sftp
+            access_ssh_use_pam:
+                description: "Enable PAM for SSH logins (UsePAM)"
+                type: bool
+                default: true
+            access_ssh_include_dir:
+                description: "Drop-in directory included after the role settings and before any Match in access_ssh_config_extra; skipped if missing; empty string disables"
+                type: str
+                default: /etc/ssh/sshd_config.d
             access_ssh_config_extra:
                 description: "Extra SSH configuration options as key-value pairs"
                 type: dict
@@ -448,6 +456,10 @@ argument_specs:
                         description: "List of supplementary groups"
                         type: list
                         elements: str
+                    append:
+                        description: "Add to groups instead of replacing the supplementary group list"
+                        type: bool
+                        default: true
                     shell:
                         description: "User shell"
                         type: str
@@ -605,16 +617,12 @@ argument_specs:
                 description: "File mode for sudoers files"
                 type: str
                 default: "0440"
-            access_sudoers_validate:
-                description: "Validate sudoers syntax with visudo"
-                type: bool
-                default: true
             access_validate_sudoers:
                 description: "Validate sudoers files before applying"
                 type: bool
                 default: true
 
-    ssh:
+    ssh_server:
         short_description: "SSH server configuration entry point"
         description:
             - "Entry point for SSH server configuration"
@@ -743,9 +751,17 @@ argument_specs:
                 elements: str
                 default: []
             access_ssh_subsystem_sftp:
-                description: "Path to SFTP server binary"
+                description: "SFTP subsystem command (internal-sftp or path to sftp-server)"
                 type: str
-                default: /usr/lib/openssh/sftp-server
+                default: internal-sftp
+            access_ssh_use_pam:
+                description: "Enable PAM for SSH logins (UsePAM)"
+                type: bool
+                default: true
+            access_ssh_include_dir:
+                description: "Drop-in directory included after the role settings and before any Match in access_ssh_config_extra; skipped if missing; empty string disables"
+                type: str
+                default: /etc/ssh/sshd_config.d
             access_ssh_config_extra:
                 description: "Extra SSH configuration options as key-value pairs"
                 type: dict

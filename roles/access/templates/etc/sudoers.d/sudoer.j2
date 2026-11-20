@@ -5,10 +5,9 @@
    separated command spec, so normalise a list via join. A bare list
    rendered straight to the template produces Python's "['ALL']" repr,
    which visudo rejects ("expected a fully-qualified path name"). #}
-{% if _access_sudoer_item.commands is string %}
-{%   set _sudoer_commands = _access_sudoer_item.commands %}
-{% else %}
-{%   set _sudoer_commands = _access_sudoer_item.commands | default(['ALL']) | join(', ') %}
+{% set _sudoer_commands = _access_sudoer_item.commands | default('ALL') %}
+{% if _sudoer_commands is not string %}
+{%   set _sudoer_commands = _sudoer_commands | join(', ') %}
 {% endif %}
 {% if _access_sudoer_item.user is defined %}
 # User: {{ _access_sudoer_item.user }}

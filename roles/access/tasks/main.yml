@@ -1,6 +1,10 @@
 ---
-- name: Manage groups
+# Groups are created before users and removed after them, so a user can
+# reference a new group and a removed group is no longer a primary group.
+- name: Manage groups (present)
   ansible.builtin.include_tasks: groups.yml
+  vars:
+      _access_group_state: present
   when:
       - access_groups | length > 0
       - access_groups_enabled | default(true) | bool
@@ -12,6 +16,15 @@
       - access_users | length > 0
       - access_users_enabled | default(true) | bool
   tags: ["access", "users"]
+
+- name: Manage groups (absent)
+  ansible.builtin.include_tasks: groups.yml
+  vars:
+      _access_group_state: absent
+  when:
+      - access_groups | length > 0
+      - access_groups_enabled | default(true) | bool
+  tags: ["access", "groups"]
 
 - name: Manage SSH keys
   ansible.builtin.include_tasks: ssh_keys.yml

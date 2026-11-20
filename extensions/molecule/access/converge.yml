@@ -14,10 +14,19 @@
             groups: [deploy]
             shell: /bin/bash
             create_home: true
+            # Non-exclusive key from the user definition must survive the
+            # exclusive keys in access_ssh_keys, also on the idempotence run
+            ssh_keys:
+                - key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG1VHyxyiIjCWMiQ10npuiZklos7MhoeJ8NckAfzN4sR molecule-user"
       access_ssh_keys:
           - user: deploy
             key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINxIyJ2+QwxJ+9w+1ZuZRxjT4ePMOhM3uOpPNkfqWnMM molecule-test"
             state: present
+            exclusive: true
+          # A second exclusive key must not remove the first one
+          - user: deploy
+            key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBl0I0RAhc0Q0xd4dXN6qk7Ur3cXH5zTW+2sGZo2Xxy0 molecule-second"
+            exclusive: true
       access_sudoers:
           - name: deploy-nopasswd
             user: deploy

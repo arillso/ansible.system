@@ -55,7 +55,6 @@ access_sudoers: []
 access_sudoers_file_owner: root
 access_sudoers_file_group: root
 access_sudoers_file_mode: "0440"
-access_sudoers_validate: true
 
 access_ssh_port: 22
 access_ssh_listen_addresses: []
@@ -86,7 +85,15 @@ access_ssh_allow_users: []
 access_ssh_allow_groups: []
 access_ssh_deny_users: []
 access_ssh_deny_groups: []
-access_ssh_subsystem_sftp: /usr/lib/openssh/sftp-server
+# internal-sftp is built into sshd, so no distro-specific binary path is needed
+access_ssh_subsystem_sftp: internal-sftp
+access_ssh_use_pam: true
+# Drop-in directory included after the role's settings and the
+# access_ssh_config_extra options before any Match key; empty string disables.
+# Skipped when the directory does not exist (EL 8, OpenSSH < 8.2). sshd uses the
+# first value of a single-value option, so the role's settings win over
+# drop-ins. List options (AllowUsers, ListenAddress, HostKey, AcceptEnv) add up.
+access_ssh_include_dir: /etc/ssh/sshd_config.d
 access_ssh_config_extra: {}
 # Example:
 # access_ssh_config_extra:

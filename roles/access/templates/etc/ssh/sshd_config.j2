@@ -10,6 +10,7 @@ ListenAddress {{ address }}
 {% endif %}
 
 # Authentication
+UsePAM {{ 'yes' if access_ssh_use_pam else 'no' }}
 PermitRootLogin {{ access_ssh_permit_root_login }}
 PubkeyAuthentication {{ 'yes' if access_ssh_pubkey_authentication else 'no' }}
 PasswordAuthentication {{ 'yes' if access_ssh_password_authentication else 'no' }}
@@ -58,8 +59,21 @@ DenyGroups {{ access_ssh_deny_groups | join(' ') }}
 
 # Subsystems
 Subsystem sftp {{ access_ssh_subsystem_sftp }}
+{#- Extra options up to the first Match go before the Include, so they win over
+    drop-ins; Match and everything after it go after the Include, so the Match
+    block does not scope the drop-ins. -#}
+{% set _extra = access_ssh_config_extra | dict2items %}
+{% set _match_at = (_extra | map(attribute='key') | list).index('Match') if 'Match' in access_ssh_config_extra else _extra | length %}
 
 # Additional configuration
-{% for key, value in access_ssh_config_extra.items() %}
-{{ key }} {{ value }}
+{% for item in _extra[:_match_at] %}
+{{ item.key }} {{ item.value }}
+{% endfor %}
+{% if _access_ssh_include_enabled | default(false) | bool %}
+
+# Drop-ins (cloud-init, packages); options set above take precedence
+Include {{ access_ssh_include_dir }}/*.conf
+{% endif %}
+{% for item in _extra[_match_at:] %}
+{{ item.key }} {{ item.value }}
 {% endfor %}

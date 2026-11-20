@@ -48,7 +48,9 @@
             src: /home/deploy/.ssh/authorized_keys
         register: _authkeys
 
-      - name: Assert authorized_keys contains the molecule test key
+      - name: Assert authorized_keys contains both exclusive keys and the user key
         ansible.builtin.assert:
             that:
                 - "'molecule-test' in (_authkeys.content | b64decode)"
+                - "'molecule-second' in (_authkeys.content | b64decode)"
+                - "'molecule-user' in (_authkeys.content | b64decode)"

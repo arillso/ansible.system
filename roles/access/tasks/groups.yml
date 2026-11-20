@@ -10,6 +10,10 @@
   loop_control:
       loop_var: _access_group_item
       label: "{{ _access_group_item.name }}"
+  # main.yml splits the run by state; tasks_from: groups handles all entries
+  when: >-
+      _access_group_state is undefined
+      or _access_group_item.state | default('present') == _access_group_state
   retries: "{{ access_retry_count }}"
   delay: "{{ access_retry_delay }}"
   register: _access_groups_result

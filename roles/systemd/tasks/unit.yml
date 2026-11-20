@@ -74,10 +74,15 @@
   loop_control:
       loop_var: _systemd_unit_item
       label: "{{ _systemd_unit_item.name }}"
+  # Drop-ins (no unit suffix) and templates (foo@.service, cannot be stopped
+  # without an instance) are left alone.
+  when:
+      - _systemd_unit_is_unit | bool
+      - "'@.' not in _systemd_unit_item.name"
   register: _systemd_unit_absent_stat
 
 # Stop and disable before the file goes, otherwise the process keeps running
-# and the .wants/ symlink dangles. Drop-ins (no unit suffix) are left alone.
+# and the .wants/ symlink dangles.
 - name: Stop and disable systemd units before removal
   ansible.builtin.systemd:
       name: "{{ _systemd_unit_stat._systemd_unit_item.name }}"
@@ -88,9 +93,7 @@
   loop_control:
       loop_var: _systemd_unit_stat
       label: "{{ _systemd_unit_stat._systemd_unit_item.name }}"
-  when:
-      - _systemd_unit_stat.stat.exists
-      - _systemd_unit_stat._systemd_unit_item.name.split('.') | last in _systemd_unit_types
+  when: _systemd_unit_stat.stat.exists | default(false)
 
 - name: Remove systemd unit files
   ansible.builtin.file:

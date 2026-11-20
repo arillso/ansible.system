@@ -16,11 +16,14 @@ _systemd_unit_types:
     - slice
     - scope
 
-_systemd_unit_validate: >-
-    {{ systemd_validate_units | bool
-       and _systemd_unit_item.name.split('.') | last in _systemd_unit_types }}
+_systemd_unit_is_unit: "{{ _systemd_unit_item.name.split('.') | last in _systemd_unit_types }}"
+
+_systemd_unit_validate: "{{ systemd_validate_units | bool and _systemd_unit_is_unit | bool }}"
 
 # verify needs the real unit name, so copy the temp file to <tmpdir>/<name> first.
+# The name is quoted: validate splits the command shell-style and would drop the
+# backslash of escaped names (mnt-my\x2ddisk.mount). --man=no: hosts without man
+# pages would otherwise fail every unit with Documentation=man:...
 _systemd_validate_cmd: >-
-    /bin/sh -c 'd=$(mktemp -d) && cp "$1" "$d/$2" && systemd-analyze verify "$d/$2"; r=$?; rm -rf "$d"; exit $r'
-    _ %s {{ _systemd_unit_item.name }}
+    /bin/sh -c 'd=$(mktemp -d) && cp "$1" "$d/$2" && systemd-analyze verify --man=no "$d/$2"; r=$?; rm -rf "$d"; exit $r'
+    _ %s {{ _systemd_unit_item.name | quote }}

@@ -6,6 +6,6 @@
   become: true
   when:
       - systemd_journald_restart_on_change | bool
-      # journald.yml restarts it already in that case
-      - systemd_journald_service_state != 'restarted'
+      # restarted: journald.yml restarts it already; stopped: must stay down
+      - systemd_journald_service_state not in ['restarted', 'stopped']
   listen: "systemd: restart journald"

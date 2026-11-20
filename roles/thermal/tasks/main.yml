@@ -61,6 +61,10 @@
       - name: Configure thermald
         ansible.builtin.include_tasks: thermald.yml
 
+      - name: Gather service facts for the check mode guard
+        ansible.builtin.service_facts:
+        when: ansible_check_mode
+
       - name: Manage thermal services
         ansible.builtin.include_tasks: service.yml
         when: not _thermal_service_unavailable

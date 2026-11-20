@@ -36,13 +36,15 @@ For detailed documentation including all variables, examples, and usage instruct
 | `bitwarden_secrets_state`            | `present`        | `present` to install, `absent` to remove |
 | `bitwarden_secrets_force_install`    | `false`          | Force re-download regardless of version  |
 | `bitwarden_secrets_download_timeout` | `120`            | Download timeout in seconds              |
+| `bitwarden_secrets_checksum_url`     | upstream list    | SHA-256 list; `''` skips verification    |
+| `bitwarden_secrets_checksum`         | `""`             | Fixed SHA-256, e.g. for air-gapped hosts |
 | `bitwarden_secrets_retry_count`      | `3`              | Download retry attempts                  |
 
 See [`defaults/main.yml`](defaults/main.yml) for the complete list and [the guide](https://guide.arillso.io/collections/arillso/system/bitwarden_secrets_role.html) for detailed docs.
 
 ## Check Mode
 
-This role supports `--check`. On a host that needs an install, the download task reports `changed` and the extract step is skipped.
+This role supports `--check`. On a host that needs an install, it reports `changed` without downloading anything.
 
 ## License
 

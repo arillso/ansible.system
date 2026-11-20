@@ -25,8 +25,12 @@ argument_specs:
             bitwarden_secrets_download_url:
                 description: "Full download URL for the bws release archive (auto-constructed from version and arch)"
                 type: str
+            bitwarden_secrets_checksum:
+                description: "Fixed SHA-256 of the archive; overrides the checksum list (for air-gapped hosts)"
+                type: str
+                default: ""
             bitwarden_secrets_checksum_url:
-                description: "URL of the SHA-256 checksum list used to verify the archive (auto-constructed from version)"
+                description: "URL of the SHA-256 checksum list, searched for the upstream asset name; '' with an empty checksum skips verification"
                 type: str
             bitwarden_secrets_download_timeout:
                 description: "Timeout in seconds for downloading the bws binary"

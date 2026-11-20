@@ -81,11 +81,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **bitwarden_secrets**: the installed version is compared exactly, so
   `2.1.0` no longer matches an installed `12.1.0`.
 - **bitwarden_secrets**: a custom `bitwarden_secrets_install_path` is created
-  if missing.
+  if missing; an existing directory keeps its mode.
+- **bitwarden_secrets**: with `gather_facts: false` the role gathers the
+  architecture fact itself, and `--tags install` or `--tags download` no
+  longer fail on an undefined variable.
 - **bitwarden_secrets**: `unzip` is only installed for `state: present`, so
   uninstalling works without package repositories.
 - **bitwarden_secrets**: `--check` on a host without `bws` no longer fails at
-  the extract step.
+  the extract step and makes no changes on the target.
 - **bitwarden_secrets**: Renovate now reads the `bws-v*` upstream tags.
 
 ### Security
@@ -95,8 +98,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   user could plant a `bws` binary that the role then installed as root. The
   download now goes to a private temporary directory that is always removed.
 - **bitwarden_secrets**: the archive is verified against the upstream
-  `bws-sha256-checksums-<version>.txt` (new variable
-  `bitwarden_secrets_checksum_url`).
+  `bws-sha256-checksums-<version>.txt`, and download, check and extraction all
+  run as root. A mirrored `bitwarden_secrets_download_url` keeps working while
+  the list is reachable; air-gapped hosts set `bitwarden_secrets_checksum` or
+  skip the check with `bitwarden_secrets_checksum_url: ""`.
 
 ## [2.0.4] - 2026-11-04
 

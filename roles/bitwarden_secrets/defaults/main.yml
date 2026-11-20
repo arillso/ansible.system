@@ -8,14 +8,18 @@ bitwarden_secrets_binary_name: "bws"
 # Architecture Detection
 # Empty for unsupported architectures; the role then fails instead of
 # installing a binary for the wrong CPU.
-bitwarden_secrets_arch: "{{ _bitwarden_secrets_arch_map[ansible_facts['architecture']] | default('') }}"
+bitwarden_secrets_arch: "{{ _bitwarden_secrets_arch_map.get(ansible_facts.get('architecture', ''), '') }}"
 
 # Download Configuration
 bitwarden_secrets_download_url: >-
     https://github.com/bitwarden/sdk-sm/releases/download/bws-v{{
     bitwarden_secrets_version }}/bws-{{ bitwarden_secrets_arch }}-{{
     bitwarden_secrets_version }}.zip
-# Upstream SHA-256 list; get_url picks the line matching the archive name.
+# SHA-256 verification. The list is searched for the upstream asset name
+# (bws-<arch>-<version>.zip), so it also works with a mirrored download URL.
+# Set bitwarden_secrets_checksum to a fixed hash for air-gapped hosts; set
+# bitwarden_secrets_checksum_url to '' (and leave the hash empty) to skip it.
+bitwarden_secrets_checksum: ""
 bitwarden_secrets_checksum_url: >-
     https://github.com/bitwarden/sdk-sm/releases/download/bws-v{{
     bitwarden_secrets_version }}/bws-sha256-checksums-{{

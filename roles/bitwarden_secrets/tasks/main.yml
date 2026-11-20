@@ -1,14 +1,24 @@
 ---
+# Read-only probes run with every tag selection, so `--tags install` or
+# `--tags download` still has the facts the install block depends on.
+- name: Gather architecture fact
+  ansible.builtin.setup:
+      gather_subset: [min]
+  when:
+      - bitwarden_secrets_state == 'present'
+      - ansible_facts['architecture'] is not defined
+  tags: ["bitwarden_secrets", "always"]
+
 - name: Assert supported architecture
   ansible.builtin.assert:
       that: bitwarden_secrets_arch | length > 0
       fail_msg: >-
-          No bws release for architecture '{{ ansible_facts['architecture'] }}'.
+          No bws release for architecture '{{ ansible_facts['architecture'] | default('unknown') }}'.
           Supported: {{ _bitwarden_secrets_arch_map.keys() | join(', ') }}.
           Set bitwarden_secrets_arch to override.
       quiet: true
   when: bitwarden_secrets_state == 'present'
-  tags: ["bitwarden_secrets"]
+  tags: ["bitwarden_secrets", "always"]
 
 - name: Install required packages
   ansible.builtin.package:
@@ -26,7 +36,7 @@
   ansible.builtin.stat:
       path: "{{ bitwarden_secrets_install_path }}/{{ bitwarden_secrets_binary_name }}"
   register: _bitwarden_secrets_installed
-  tags: ["bitwarden_secrets"]
+  tags: ["bitwarden_secrets", "always"]
 
 - name: Get installed bws version
   # Read-only probe; an existing binary that errors on --version is
@@ -37,8 +47,9 @@
   register: _bitwarden_secrets_current_version
   changed_when: false
   failed_when: false
+  check_mode: false
   when: _bitwarden_secrets_installed.stat.exists
-  tags: ["bitwarden_secrets"]
+  tags: ["bitwarden_secrets", "always"]
 
 - name: Determine if installation is needed
   ansible.builtin.set_fact:
@@ -52,10 +63,24 @@
               (_bitwarden_secrets_current_version.stdout | default('') | trim) != ('bws ' ~ bitwarden_secrets_version)
             )
           }}
-  tags: ["bitwarden_secrets"]
+  tags: ["bitwarden_secrets", "always"]
 
+- name: Report pending bws install (check mode)
+  ansible.builtin.debug:
+      msg: "Would install bws {{ bitwarden_secrets_version }} ({{ bitwarden_secrets_arch }})"
+  changed_when: true
+  when:
+      - _bitwarden_secrets_needs_install | bool
+      - ansible_check_mode
+  tags: ["bitwarden_secrets", "install", "download"]
+
+# Download, verification and extraction all run as root, so no unprivileged
+# process can swap the archive between checksum check and install.
 - name: Install bws CLI
-  when: _bitwarden_secrets_needs_install | bool
+  when:
+      - _bitwarden_secrets_needs_install | bool
+      - not ansible_check_mode
+  become: true
   tags: ["bitwarden_secrets", "install"]
   block:
       - name: Create private download directory
@@ -63,26 +88,68 @@
             state: directory
             prefix: bws-
         register: _bitwarden_secrets_tmp
-        check_mode: false
+        tags: ["download"]
+
+      - name: Fetch bws checksum list
+        ansible.builtin.uri:
+            url: "{{ bitwarden_secrets_checksum_url }}"
+            return_content: true
+            timeout: "{{ bitwarden_secrets_download_timeout }}"
+        register: _bitwarden_secrets_checksums
+        retries: "{{ bitwarden_secrets_retry_count }}"
+        delay: "{{ bitwarden_secrets_retry_delay }}"
+        until: _bitwarden_secrets_checksums is succeeded
+        when:
+            - bitwarden_secrets_checksum | length == 0
+            - bitwarden_secrets_checksum_url | length > 0
+        tags: ["download"]
+
+      - name: Select checksum for the bws archive
+        ansible.builtin.set_fact:
+            # Matched by upstream asset name, so a mirrored download_url keeps working.
+            # `\s*$` tolerates the trailing blanks in lists of bws <= 0.5.0.
+            _bitwarden_secrets_sha256: >-
+                {{
+                  bitwarden_secrets_checksum if bitwarden_secrets_checksum | length > 0
+                  else (_bitwarden_secrets_checksums.content | default('')
+                        | regex_search('^([0-9a-fA-F]{64})\s+\*?'
+                                       ~ (_bitwarden_secrets_asset | regex_escape) ~ '\s*$',
+                                       '\1', multiline=True)
+                        | default([''], true) | first)
+                }}
+        vars:
+            _bitwarden_secrets_asset: "bws-{{ bitwarden_secrets_arch }}-{{ bitwarden_secrets_version }}.zip"
+        tags: ["download"]
+
+      - name: Assert checksum is known
+        ansible.builtin.assert:
+            that: _bitwarden_secrets_sha256 | length > 0
+            fail_msg: >-
+                No SHA-256 for bws-{{ bitwarden_secrets_arch }}-{{ bitwarden_secrets_version }}.zip
+                in {{ bitwarden_secrets_checksum_url }}. Set bitwarden_secrets_checksum,
+                or set bitwarden_secrets_checksum_url to '' to skip verification.
+            quiet: true
+        when: bitwarden_secrets_checksum_url | length > 0 or bitwarden_secrets_checksum | length > 0
+        tags: ["download"]
 
       - name: Download bws CLI
         ansible.builtin.get_url:
             url: "{{ bitwarden_secrets_download_url }}"
             dest: "{{ _bitwarden_secrets_tmp.path }}/bws.zip"
-            checksum: "sha256:{{ bitwarden_secrets_checksum_url }}"
+            checksum: "{{ ('sha256:' ~ _bitwarden_secrets_sha256) if _bitwarden_secrets_sha256 | length > 0 else omit }}"
             mode: "0600"
             timeout: "{{ bitwarden_secrets_download_timeout }}"
         retries: "{{ bitwarden_secrets_retry_count }}"
         delay: "{{ bitwarden_secrets_retry_delay }}"
         register: _bitwarden_secrets_download
         until: _bitwarden_secrets_download is succeeded
+        tags: ["download"]
 
-      - name: Ensure install directory exists
-        ansible.builtin.file:
-            path: "{{ bitwarden_secrets_install_path }}"
-            state: directory
-            mode: "0755"
-        become: true
+      - name: Create install directory if missing
+        # Not ansible.builtin.file: that would also reset the mode of an existing directory.
+        ansible.builtin.command:
+            cmd: install -d -m 0755 {{ bitwarden_secrets_install_path | quote }}
+            creates: "{{ bitwarden_secrets_install_path }}"
 
       - name: Extract bws CLI
         ansible.builtin.unarchive:
@@ -90,16 +157,13 @@
             dest: "{{ bitwarden_secrets_install_path }}"
             remote_src: true
             mode: "0755"
-        become: true
-        # ponytail: get_url writes nothing in check mode, so there is no archive to extract
-        when: not ansible_check_mode
   always:
       - name: Clean up download
         ansible.builtin.file:
             path: "{{ _bitwarden_secrets_tmp.path }}"
             state: absent
-        check_mode: false
         when: _bitwarden_secrets_tmp.path is defined
+        tags: ["download", "cleanup"]
 
 - name: Ensure bws is executable
   ansible.builtin.file:

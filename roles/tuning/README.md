@@ -39,7 +39,7 @@ For detailed documentation including all variables, examples, and usage instruct
 | `tuning_network_sysctl_config`     | `{...}`                                                     | TCP/IP stack sysctl parameters (dict)                   |
 | `tuning_cpu_governor`              | `auto`                                                      | CPU frequency scaling governor                          |
 | `tuning_io_scheduler`              | `auto`                                                      | Block-device I/O scheduler                              |
-| `tuning_io_scheduler_devices`      | `[]`                                                        | Devices (udev patterns) instead of all detected disks   |
+| `tuning_io_scheduler_devices`      | `[]`                                                        | Device names instead of all detected disks              |
 | `tuning_optional_sysctl_params`    | `[net.ipv4.tcp_congestion_control]`                         | Sysctl keys that may fail without failing the role      |
 | `tuning_transparent_hugepages`     | `madvise`                                                   | Transparent Huge Pages mode                             |
 | `tuning_tuned_profile`             | `balanced`                                                  | tuned profile to apply                                  |

@@ -45,7 +45,8 @@
         changed_when: _tuning_scheduler_result.rc == 0
         when:
             - not item.failed
-            - ('[' ~ item.item.scheduler ~ ']') not in (item.content | b64decode)
+            # A device without an elevator reports a bare `none`, no brackets.
+            - not (('[' ~ item.item.scheduler ~ ']') in (item.content | b64decode) or (item.content | b64decode | trim) == item.item.scheduler)
         loop: "{{ _tuning_current_scheduler.results }}"
 
       - name: Report I/O scheduler configuration status
@@ -82,4 +83,4 @@
             label: "{{ item.item.name }}"
         when:
             - not ansible_check_mode
-            - item.failed or ('[' + item.item.scheduler + ']') not in (item.content | b64decode)
+            - item.failed or not (('[' ~ item.item.scheduler ~ ']') in (item.content | b64decode) or (item.content | b64decode | trim) == item.item.scheduler)

@@ -5,11 +5,10 @@
   block:
       # Best-effort immediate apply: containers and minimal kernels can
       # have transparent_hugepage disabled at compile time (sysfs entry
-      # missing) or read-only. The disable-thp.service rendered below is
-      # the persistent path of record — failing here would prevent the
-      # systemd unit from being deployed on hosts that just happen not
-      # to expose the sysfs knob. `tee` writes in place; `copy` cannot,
-      # its temp-file-and-rename fails on sysfs.
+      # missing) or read-only. Without the knob the role skips both the
+      # write and disable-thp.service, whose ExecStartPost check would fail.
+      # `tee` writes in place; `copy` cannot, its temp-file-and-rename
+      # fails on sysfs.
       - name: Read current transparent huge pages setting
         ansible.builtin.slurp:
             src: /sys/kernel/mm/transparent_hugepage/enabled
@@ -39,5 +38,4 @@
         notify:
             - "tuning: reload systemd"
             - "tuning: apply thp"
-        # Without the sysfs knob the unit's ExecStartPost check would fail.
         when: _tuning_thp_current.content is defined

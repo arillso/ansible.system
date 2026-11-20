@@ -57,13 +57,15 @@ tuning_swap_priority: 0
 
 # I/O Scheduler: `auto` picks `none` for NVMe and `mq-deadline` otherwise; any
 # other value is used for every device. The override takes precedence.
-# tuning_io_scheduler_devices replaces the detected disks (udev KERNEL patterns).
+# tuning_io_scheduler_devices replaces the detected disks (literal names).
 tuning_io_scheduler: auto
 tuning_io_scheduler_override: null
 tuning_io_scheduler_devices: []
 
-# CPU Governor: `auto` picks `powersave` for Intel and `ondemand` otherwise;
-# any other value is used as the governor. The override takes precedence.
+# CPU Governor: `auto` picks `powersave` on pstate drivers (only performance
+# and powersave offered), else `schedutil` or `ondemand`; any other value is
+# used as the governor and must be offered by the driver. The override takes
+# precedence.
 tuning_cpu_governor: auto
 tuning_cpu_governor_override: null
 

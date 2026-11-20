@@ -67,22 +67,24 @@
 
 - name: Set optimal settings
   ansible.builtin.set_fact:
-      # CPU governor: override > tuning_cpu_governor > auto. auto takes the
-      # first governor the driver offers (amd-pstate and intel_pstate only
-      # have performance and powersave).
+      # CPU governor: override > tuning_cpu_governor > auto. auto depends on
+      # the driver, not the vendor: pstate drivers (intel_pstate,
+      # amd-pstate) offer only performance and powersave, where powersave
+      # still scales. Under acpi-cpufreq powersave pins the minimum
+      # frequency, so prefer schedutil, then ondemand.
       _tuning_final_cpu_governor: >-
           {%- set avail = _tuning_detected_cpu_info.governors -%}
           {%- set wanted = tuning_cpu_governor_override
                 or (tuning_cpu_governor if tuning_cpu_governor | default('auto') != 'auto' else '') -%}
           {%- if not _tuning_detected_cpu_info.cpufreq_supported -%}
           none{%- elif wanted -%}
-          {{ wanted }}{%- else -%}
-          {{ ((['powersave' if _tuning_detected_cpu_info.vendor == 'intel' else 'ondemand', 'schedutil', 'powersave']
-               | select('in', avail) | list) + avail) | first }}{%- endif -%}
+          {{ wanted }}{%- elif avail | sort == ['performance', 'powersave'] -%}
+          powersave{%- else -%}
+          {{ ((['schedutil', 'ondemand'] | select('in', avail) | list) + avail) | first }}{%- endif -%}
 
       # Storage: override > tuning_io_scheduler > auto (nvme -> none, else
-      # mq-deadline). tuning_io_scheduler_devices replaces the detected disks;
-      # its entries are udev KERNEL patterns, so md*, dm-* or sd[a-z] work.
+      # mq-deadline). tuning_io_scheduler_devices (literal names such as sda
+      # or dm-0) replaces the detected disks.
       _tuning_optimized_storage_devices: >-
           {%- set devices = [] -%}
           {%- set fixed = tuning_io_scheduler_override

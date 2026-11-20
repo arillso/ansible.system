@@ -16,30 +16,32 @@
                     regex_search('GRUB_CMDLINE_LINUX="([^"]+)"', '\\1') -%}
                 {{ match[0] if match else '' }}
 
-      # A parameter whose key (the part before `=`) is already present is
-      # replaced in place, later duplicates are dropped, new keys are
-      # appended. A changed value replaces the old one instead of sitting
-      # next to it; an unchanged one leaves the line as is.
+      # A parameter whose key (the part before `=`) is already present once
+      # is replaced in place, new keys are appended. A changed value replaces
+      # the old one instead of sitting next to it; an unchanged one leaves
+      # the line as is. Keys that repeat in either list (console=,
+      # hugepagesz=) are left alone and only missing exact tokens appended.
       - name: Build new GRUB_CMDLINE_LINUX
         ansible.builtin.set_fact:
             _tuning_new_grub_cmdline: >-
+                {%- set cur = _tuning_current_grub_cmdline.split() -%}
+                {%- set add = tuning_grub_cmdline_linux_append.split() -%}
+                {%- set cur_keys = cur | map('regex_replace', '=.*$', '') | list -%}
+                {%- set add_keys = add | map('regex_replace', '=.*$', '') | list -%}
                 {%- set new = {} -%}
-                {%- for t in tuning_grub_cmdline_linux_append.split() -%}
-                {%- set _ = new.update({t | regex_replace('=.*$', ''): t}) -%}
-                {%- endfor -%}
-                {%- set out = [] -%}
-                {%- set seen = [] -%}
-                {%- for t in _tuning_current_grub_cmdline.split() -%}
+                {%- for t in add -%}
                 {%- set k = t | regex_replace('=.*$', '') -%}
-                {%- if k not in new -%}
-                {%- set _ = out.append(t) -%}
-                {%- elif k not in seen -%}
-                {%- set _ = out.append(new[k]) -%}
-                {%- set _ = seen.append(k) -%}
+                {%- if cur_keys | select('eq', k) | list | length < 2 and add_keys | select('eq', k) | list | length < 2 -%}
+                {%- set _ = new.update({k: t}) -%}
                 {%- endif -%}
                 {%- endfor -%}
-                {%- for k in new if k not in seen -%}
-                {%- set _ = out.append(new[k]) -%}
+                {%- set out = [] -%}
+                {%- for t in cur -%}
+                {%- set k = t | regex_replace('=.*$', '') -%}
+                {%- set _ = out.append(new[k] if k in new else t) -%}
+                {%- endfor -%}
+                {%- for t in add if t not in out -%}
+                {%- set _ = out.append(t) -%}
                 {%- endfor -%}
                 {{ out | join(' ') }}
 

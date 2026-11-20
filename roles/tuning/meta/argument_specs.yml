@@ -111,15 +111,15 @@ argument_specs:
                 required: false
                 default: []
                 elements: "str"
-                description: "udev KERNEL patterns to set the I/O scheduler on, e.g. sda or dm-* (empty = all detected disks)"
+                description: "Block device names to set the I/O scheduler on, e.g. sda or dm-0 (empty = all detected disks)"
 
             tuning_cpu_governor:
                 type: "str"
                 required: false
                 default: "auto"
                 description: |
-                    CPU governor to use. 'auto' uses powersave for Intel and
-                    ondemand for all other CPUs.
+                    CPU governor to use. 'auto' uses powersave on pstate
+                    drivers and schedutil or ondemand otherwise.
 
             tuning_cpu_governor_override:
                 type: "str"

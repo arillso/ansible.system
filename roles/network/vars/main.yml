@@ -1,14 +1,21 @@
 ---
 # Internal variables for network role
 
-# Common DNS servers
-_network_common_dns_servers:
-    google:
-        - 8.8.8.8
-        - 8.8.4.4
-    cloudflare:
-        - 1.1.1.1
-        - 1.0.0.1
-    quad9:
-        - 9.9.9.9
-        - 149.112.112.112
+# systemd-resolved ships as its own package from Debian 12, Ubuntu 24.04 and
+# EL 9 on; older releases include it in the systemd package.
+_network_resolved_package: >-
+    {{ (ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] | int >= 12)
+    or (ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['distribution_major_version'] | int >= 24)
+    or (ansible_facts['os_family'] == 'RedHat' and ansible_facts['distribution_major_version'] | int >= 9) }}
+
+# systemd accepts every boolean spelling for DNSStubListener.
+_network_resolved_stub_disabled: >-
+    {{ network_resolved_dnsstublistener | string | lower in ['no', 'false', '0', 'off'] }}
+
+# Validates the candidate file together with the other files in /etc/netplan
+# inside a scratch root, so a rejected config never reaches /etc/netplan.
+_network_netplan_validate_cmd: >-
+    sh -c 'root=$(mktemp -d) && mkdir -p "$root/etc/netplan"
+    && cp -p /etc/netplan/*.yaml "$root/etc/netplan/" 2>/dev/null;
+    cp "$1" "$root/etc/netplan/{{ network_netplan_filename }}"
+    && netplan generate --root-dir "$root"; rc=$?; rm -rf "$root"; exit $rc' _ %s

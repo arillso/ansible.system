@@ -4,6 +4,9 @@ network_resolv_enabled: true
 network_netplan_enabled: false
 
 # DNS Configuration
+# network_dns_nameservers, network_dns_search and network_dns_domain apply to
+# both paths. With systemd-resolved they fill DNS= and Domains= unless
+# network_resolved_dns / network_resolved_domains are set.
 network_dns_nameservers: []
 # Example:
 # network_dns_nameservers:
@@ -18,6 +21,8 @@ network_dns_search: []
 #   - local.example.com
 
 network_dns_domain: ""
+# Only used for a traditional /etc/resolv.conf; systemd-resolved has no
+# equivalent for resolver options.
 network_dns_options: []
 # Example:
 # network_dns_options:
@@ -28,16 +33,21 @@ network_dns_options: []
 
 # Systemd-resolved configuration
 network_use_systemd_resolved: true
+# Overrides network_dns_nameservers for resolved.conf when non-empty.
 network_resolved_dns: []
 network_resolved_fallback_dns:
     - 8.8.8.8
     - 8.8.4.4
+# Overrides network_dns_domain + network_dns_search when non-empty.
 network_resolved_domains: []
-network_resolved_llmnr: "yes"
-network_resolved_multicast_dns: "yes"
+# LLMNR and mDNS answer name queries from anyone on the link; off for servers.
+network_resolved_llmnr: "no"
+network_resolved_multicast_dns: "no"
 network_resolved_dnssec: "allow-downgrade"
 network_resolved_dns_over_tls: "no"
 network_resolved_cache: "yes"
+# "no"/"false"/"0"/"off" links /etc/resolv.conf to the full resolver list
+# (/run/systemd/resolve/resolv.conf) instead of the 127.0.0.53 stub.
 network_resolved_dnsstublistener: "yes"
 
 # Netplan Configuration
@@ -63,13 +73,13 @@ network_netplan_config: {}
 #             - 8.8.4.4
 
 network_netplan_filename: 01-netcfg.yaml
+# netplan apply only runs when the file changes in the same run.
 network_netplan_apply: false
-network_netplan_renderer: networkd
 
 # Service Management
+# Master switch for the role's handlers (systemd-resolved, NetworkManager).
 network_restart_services: true
 network_systemd_resolved_restart: true
-network_systemd_networkd_restart: false
 
 # Retry Configuration
 network_retry_count: 3
@@ -78,6 +88,3 @@ network_retry_delay: 5
 # Validation and Safety
 network_backup_configs: true
 network_validate_netplan: true
-
-# Debug Configuration
-network_debug_mode: false

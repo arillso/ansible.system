@@ -17,6 +17,40 @@
         register: _network_resolved_config
         until: _network_resolved_config is succeeded
 
+      # Installed after the config is in place, so the package's first start
+      # already uses it.
+      - name: Install systemd-resolved package
+        ansible.builtin.package:
+            name: systemd-resolved
+            state: present
+        become: true
+        retries: "{{ network_retry_count }}"
+        delay: "{{ network_retry_delay }}"
+        register: _network_resolved_install
+        until: _network_resolved_install is succeeded
+        when: _network_resolved_package | bool
+
+      - name: Check whether NetworkManager is installed
+        ansible.builtin.stat:
+            path: /usr/sbin/NetworkManager
+        register: _network_nm_binary
+
+      # Without this, NetworkManager keeps its own DNS handling and never
+      # passes per-link DNS servers to systemd-resolved.
+      - name: Hand NetworkManager DNS over to systemd-resolved
+        ansible.builtin.copy:
+            content: |
+                # {{ ansible_managed }}
+                [main]
+                dns=systemd-resolved
+            dest: /etc/NetworkManager/conf.d/90-arillso-dns-resolved.conf
+            owner: root
+            group: root
+            mode: "0644"
+        become: true
+        notify: "network: reload NetworkManager"
+        when: _network_nm_binary.stat.exists
+
       - name: Ensure systemd-resolved is enabled and started via systemd role
         ansible.builtin.include_role:
             name: arillso.system.systemd
@@ -27,14 +61,16 @@
                   enabled: true
                   state: started
 
-      - name: Create symlink for /etc/resolv.conf
+      - name: Link /etc/resolv.conf to systemd-resolved
         ansible.builtin.file:
-            src: /run/systemd/resolve/stub-resolv.conf
+            src: >-
+                {{ '/run/systemd/resolve/resolv.conf'
+                if _network_resolved_stub_disabled | bool
+                else '/run/systemd/resolve/stub-resolv.conf' }}
             dest: /etc/resolv.conf
             state: link
             force: true
         become: true
-        when: network_resolved_dnsstublistener != "no"
 
 - name: Configure traditional /etc/resolv.conf
   when: not (network_use_systemd_resolved | default(true) | bool)

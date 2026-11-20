@@ -1,15 +1,17 @@
 # {{ ansible_managed }}
 # Systemd-resolved configuration
+{% set _dns = network_resolved_dns or network_dns_nameservers %}
+{% set _domains = network_resolved_domains or (([network_dns_domain] if network_dns_domain else []) + network_dns_search) %}
 
 [Resolve]
-{% if network_resolved_dns | length > 0 %}
-DNS={{ network_resolved_dns | join(' ') }}
+{% if _dns | length > 0 %}
+DNS={{ _dns | join(' ') }}
 {% endif %}
 {% if network_resolved_fallback_dns | length > 0 %}
 FallbackDNS={{ network_resolved_fallback_dns | join(' ') }}
 {% endif %}
-{% if network_resolved_domains | length > 0 %}
-Domains={{ network_resolved_domains | join(' ') }}
+{% if _domains | length > 0 %}
+Domains={{ _domains | join(' ') }}
 {% endif %}
 LLMNR={{ network_resolved_llmnr }}
 MulticastDNS={{ network_resolved_multicast_dns }}

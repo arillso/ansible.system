@@ -15,12 +15,12 @@ argument_specs:
                 type: bool
                 default: false
             network_dns_nameservers:
-                description: "List of DNS nameservers"
+                description: "List of DNS nameservers, also used for systemd-resolved unless network_resolved_dns is set"
                 type: list
                 elements: str
                 default: []
             network_dns_search:
-                description: "List of DNS search domains"
+                description: "List of DNS search domains, also used for systemd-resolved unless network_resolved_domains is set"
                 type: list
                 elements: str
                 default: []
@@ -29,7 +29,7 @@ argument_specs:
                 type: str
                 default: ""
             network_dns_options:
-                description: "DNS resolver options"
+                description: "DNS resolver options, only for a traditional /etc/resolv.conf"
                 type: list
                 elements: str
                 default: []
@@ -38,7 +38,7 @@ argument_specs:
                 type: bool
                 default: true
             network_resolved_dns:
-                description: "DNS servers for systemd-resolved"
+                description: "DNS servers for systemd-resolved, overrides network_dns_nameservers"
                 type: list
                 elements: str
                 default: []
@@ -50,18 +50,18 @@ argument_specs:
                     - 8.8.8.8
                     - 8.8.4.4
             network_resolved_domains:
-                description: "Search domains for systemd-resolved"
+                description: "Search domains for systemd-resolved, overrides network_dns_domain and network_dns_search"
                 type: list
                 elements: str
                 default: []
             network_resolved_llmnr:
                 description: "LLMNR setting for systemd-resolved"
                 type: str
-                default: "yes"
+                default: "no"
             network_resolved_multicast_dns:
                 description: "Multicast DNS setting for systemd-resolved"
                 type: str
-                default: "yes"
+                default: "no"
             network_resolved_dnssec:
                 description: "DNSSEC setting for systemd-resolved"
                 type: str
@@ -90,22 +90,14 @@ argument_specs:
                 description: "Apply netplan configuration after writing"
                 type: bool
                 default: false
-            network_netplan_renderer:
-                description: "Netplan renderer backend"
-                type: str
-                default: "networkd"
             network_restart_services:
-                description: "Restart network services after configuration changes"
+                description: "Master switch for the role's service restarts and reloads"
                 type: bool
                 default: true
             network_systemd_resolved_restart:
                 description: "Restart systemd-resolved after DNS changes"
                 type: bool
                 default: true
-            network_systemd_networkd_restart:
-                description: "Restart systemd-networkd after network changes"
-                type: bool
-                default: false
             network_retry_count:
                 description: "Number of retry attempts for tasks"
                 type: int
@@ -122,24 +114,20 @@ argument_specs:
                 description: "Validate netplan configuration before applying"
                 type: bool
                 default: true
-            network_debug_mode:
-                description: "Enable debug output for troubleshooting"
-                type: bool
-                default: false
 
-    dns:
+    resolv:
         short_description: "DNS configuration entry point"
         description:
             - "Entry point for configuring DNS resolution"
             - "Supports systemd-resolved and traditional resolv.conf"
         options:
             network_dns_nameservers:
-                description: "List of DNS nameservers"
+                description: "List of DNS nameservers, also used for systemd-resolved unless network_resolved_dns is set"
                 type: list
                 elements: str
-                required: true
+                default: []
             network_dns_search:
-                description: "List of DNS search domains"
+                description: "List of DNS search domains, also used for systemd-resolved unless network_resolved_domains is set"
                 type: list
                 elements: str
                 default: []
@@ -148,7 +136,7 @@ argument_specs:
                 type: str
                 default: ""
             network_dns_options:
-                description: "DNS resolver options"
+                description: "DNS resolver options, only for a traditional /etc/resolv.conf"
                 type: list
                 elements: str
                 default: []
@@ -157,7 +145,7 @@ argument_specs:
                 type: bool
                 default: true
             network_resolved_dns:
-                description: "DNS servers for systemd-resolved"
+                description: "DNS servers for systemd-resolved, overrides network_dns_nameservers"
                 type: list
                 elements: str
                 default: []
@@ -169,18 +157,18 @@ argument_specs:
                     - 8.8.8.8
                     - 8.8.4.4
             network_resolved_domains:
-                description: "Search domains for systemd-resolved"
+                description: "Search domains for systemd-resolved, overrides network_dns_domain and network_dns_search"
                 type: list
                 elements: str
                 default: []
             network_resolved_llmnr:
                 description: "LLMNR setting for systemd-resolved"
                 type: str
-                default: "yes"
+                default: "no"
             network_resolved_multicast_dns:
                 description: "Multicast DNS setting for systemd-resolved"
                 type: str
-                default: "yes"
+                default: "no"
             network_resolved_dnssec:
                 description: "DNSSEC setting for systemd-resolved"
                 type: str
@@ -216,10 +204,6 @@ argument_specs:
                 description: "Apply netplan configuration after writing"
                 type: bool
                 default: false
-            network_netplan_renderer:
-                description: "Netplan renderer backend"
-                type: str
-                default: "networkd"
             network_validate_netplan:
                 description: "Validate netplan configuration before applying"
                 type: bool

@@ -3,12 +3,16 @@
   ansible.builtin.systemd:
       name: systemd-resolved
       state: restarted
-  when: network_systemd_resolved_restart | default(true)
+  become: true
+  when:
+      - network_restart_services | bool
+      - network_systemd_resolved_restart | bool
   listen: "network: restart resolved"
 
-- name: Restart systemd-networkd to apply network interface changes
+- name: Reload NetworkManager to apply DNS mode changes
   ansible.builtin.systemd:
-      name: systemd-networkd
-      state: restarted
-  when: network_systemd_networkd_restart | default(false)
-  listen: "network: restart networkd"
+      name: NetworkManager
+      state: reloaded
+  become: true
+  when: network_restart_services | bool
+  listen: "network: reload NetworkManager"

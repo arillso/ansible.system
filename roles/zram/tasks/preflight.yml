@@ -1,0 +1,34 @@
+---
+# zramswap passes these values straight to zramctl and `swapon -p`; out of
+# range they only fail later inside the service.
+- name: Assert zram variables are within valid ranges
+  ansible.builtin.assert:
+      that:
+          - zram_percent | int >= 1
+          - zram_percent | int <= 100
+          - zram_priority | int >= 0
+          - zram_priority | int <= 32767
+      fail_msg: >-
+          zram_percent must be 1..100 (got {{ zram_percent }}) and
+          zram_priority must be 0..32767 (got {{ zram_priority }}).
+      quiet: true
+
+- name: Gather installed packages to detect competing zram setups
+  ansible.builtin.package_facts:
+
+# These tools create their own zram swap devices and collide with zramswap on
+# /dev/zram0. The role does not remove them, because that would switch off a
+# swap backend that is in use.
+- name: Assert no competing zram setup is installed
+  ansible.builtin.assert:
+      that:
+          - _zram_conflicts | length == 0
+      fail_msg: >-
+          {{ _zram_conflicts | join(', ') }} also manage zram swap devices and
+          collide with zramswap. Remove them before applying this role.
+      quiet: true
+  vars:
+      _zram_conflicts: >-
+          {{ ['systemd-zram-generator', 'zram-config']
+             | select('in', ansible_facts.packages)
+             | list }}

@@ -1,7 +1,43 @@
 ---
+# Restarting zramswap runs swapoff, which pulls every page stored in zram back
+# into RAM and can stall the host or wake the OOM killer. The restart therefore
+# only runs while the zram swap is empty or when zram_restart_on_change opts
+# in; otherwise the new config waits for a reboot. A fresh install does not
+# depend on it: tasks/main.yml writes the config before zram-tools starts.
+- name: Read zram swap usage before restarting zramswap
+  ansible.builtin.command:
+      cmd: swapon --show=NAME,USED --bytes --noheadings
+  register: _zram_swap_usage
+  changed_when: false
+  check_mode: false
+  listen: "zram: restart zramswap"
+
+- name: Decide whether zramswap can be restarted safely
+  ansible.builtin.set_fact:
+      _zram_restart_safe: >-
+          {{ zram_restart_on_change | bool
+             or (_zram_swap_usage.stdout_lines
+                 | select('match', '^/dev/zram')
+                 | map('regex_replace', '^\S+\s+', '')
+                 | map('int') | sum) == 0 }}
+  listen: "zram: restart zramswap"
+
 - name: Restart zramswap to apply /etc/default/zramswap configuration changes
   ansible.builtin.systemd:
       name: zramswap
       state: restarted
   become: true
+  # Under --check on a fresh host the unit is not installed yet.
+  when:
+      - _zram_restart_safe | bool
+      - not ansible_check_mode or (_zram_unit.stdout | default('')) | length > 0
+  listen: "zram: restart zramswap"
+
+- name: Report that the zramswap restart was deferred
+  ansible.builtin.debug:
+      msg: >-
+          /etc/default/zramswap changed, but zram swap is in use; zramswap was
+          not restarted to avoid swapoff. The new settings apply after the next
+          reboot, or set zram_restart_on_change: true to restart now.
+  when: not _zram_restart_safe | bool
   listen: "zram: restart zramswap"

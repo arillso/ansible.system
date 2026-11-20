@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **zram**: `zram_enabled: false` now disables an existing `zramswap.service`
+  instead of leaving it enabled. zram stays active until the next reboot; the
+  role does not stop it, because swapoff can fail when RAM is short.
+- **zram**: a changed `/etc/default/zramswap` restarts `zramswap` only while the
+  zram swap is empty; otherwise the change waits for the next reboot. The new
+  `zram_restart_on_change` restarts anyway.
 - **access**: `access_ssh_subsystem_sftp` defaults to `internal-sftp` instead of
   the Debian-only `/usr/lib/openssh/sftp-server`, so sftp works on EL 8/9.
 - **access**: `sshd_config` now sets `UsePAM yes` (`access_ssh_use_pam`) and
@@ -119,7 +125,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`reject with icmp-admin-prohibited`).
 - **firewall**: `log_prefix: ""` still rendered a log statement; it now
   switches logging off for the rule.
-
+- **zram**: the new opt-in `zram_kernel_module_meta_package` installs a kernel
+  flavour metapackage, so a kernel upgrade no longer leaves zram without its
+  module. The README documents that `linux-modules-extra-<kernel>` alone only
+  covers the running kernel.
+- **zram**: `linux-modules-extra-<kernel>` is installed only when `modinfo zram`
+  fails or the package is already there, so built-in modules and custom kernels
+  no longer break the run.
+- **zram**: `--check` on a host without `zram-tools` no longer fails on the
+  unknown `zramswap` unit.
+- **zram**: the role asserts `zram_percent` (1..100) and `zram_priority`
+  (0..32767) and fails when `systemd-zram-generator` or `zram-config` is
+  installed.
+- **zram**: the no-op `packages_update_cache` on the cache include is removed.
 - **access**: with `exclusive: true`, each key removed the keys written before
   it, so only the last key stayed in `authorized_keys`. All present keys of a
   user with an exclusive key, from `access_users[].ssh_keys` and

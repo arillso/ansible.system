@@ -9,7 +9,7 @@ argument_specs:
             - "Arillso"
         options:
             zram_enabled:
-                description: "Enable or disable the zram role; false makes every task a no-op"
+                description: "Enable or disable zram; false disables an existing zramswap.service; zram stays active until the next reboot"
                 type: "bool"
                 required: false
                 default: true
@@ -18,6 +18,7 @@ argument_specs:
                 description:
                     - "Percentage of physical RAM to allocate as the zram swap device"
                     - "50 means a 16 GB host gets an 8 GB zram device"
+                    - "Must be 1..100"
                 type: "int"
                 required: false
                 default: 50
@@ -34,6 +35,7 @@ argument_specs:
                 description:
                     - "Linux swap priority for the zram device (higher wins)"
                     - "Should be greater than any disk-based swap priority so the kernel fills zram first"
+                    - "Must be 0..32767"
                 type: "int"
                 required: false
                 default: 100
@@ -49,7 +51,25 @@ argument_specs:
             zram_kernel_module_package:
                 description:
                     - "Package that provides the zram kernel module; empty value skips the install"
-                    - "On Ubuntu, resolved at runtime to linux-modules-extra-<kernel> so kernel upgrades pull the matching package"
+                    - "On Ubuntu, resolved at runtime to linux-modules-extra-<kernel> for the running kernel"
+                    - "Installed only when modinfo zram fails or the package is already installed"
                     - "Empty on Debian, which ships the zram module in the stock kernel with no separate package"
                 type: "str"
                 required: false
+
+            zram_kernel_module_meta_package:
+                description:
+                    - "Flavour metapackage installed with zram_kernel_module_package so kernel upgrades pull the matching module"
+                    - "Empty by default; without it the role must run again after a kernel upgrade"
+                    - "Examples: linux-image-extra-virtual, linux-image-extra-virtual-hwe-<release>, linux-modules-extra-aws"
+                type: "str"
+                required: false
+                default: ""
+
+            zram_restart_on_change:
+                description:
+                    - "Restart zramswap on a config change even while zram swap holds data"
+                    - "false restarts only an empty zram swap and leaves the new config for the next reboot"
+                type: "bool"
+                required: false
+                default: false

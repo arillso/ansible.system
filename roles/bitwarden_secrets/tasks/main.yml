@@ -1,5 +1,5 @@
 ---
-# Read-only probes run with every tag selection, so `--tags install` or
+# Read-only probes carry the install and download tags, so `--tags install` or
 # `--tags download` still has the facts the install block depends on.
 - name: Gather architecture fact
   ansible.builtin.setup:
@@ -7,7 +7,7 @@
   when:
       - bitwarden_secrets_state == 'present'
       - ansible_facts['architecture'] is not defined
-  tags: ["bitwarden_secrets", "always"]
+  tags: ["bitwarden_secrets", "install", "download"]
 
 - name: Assert supported architecture
   ansible.builtin.assert:
@@ -18,7 +18,7 @@
           Set bitwarden_secrets_arch to override.
       quiet: true
   when: bitwarden_secrets_state == 'present'
-  tags: ["bitwarden_secrets", "always"]
+  tags: ["bitwarden_secrets", "install", "download"]
 
 - name: Install required packages
   ansible.builtin.package:
@@ -36,7 +36,7 @@
   ansible.builtin.stat:
       path: "{{ bitwarden_secrets_install_path }}/{{ bitwarden_secrets_binary_name }}"
   register: _bitwarden_secrets_installed
-  tags: ["bitwarden_secrets", "always"]
+  tags: ["bitwarden_secrets", "install", "download"]
 
 - name: Get installed bws version
   # Read-only probe; an existing binary that errors on --version is
@@ -49,7 +49,7 @@
   failed_when: false
   check_mode: false
   when: _bitwarden_secrets_installed.stat.exists
-  tags: ["bitwarden_secrets", "always"]
+  tags: ["bitwarden_secrets", "install", "download"]
 
 - name: Determine if installation is needed
   ansible.builtin.set_fact:
@@ -63,7 +63,7 @@
               (_bitwarden_secrets_current_version.stdout | default('') | trim) != ('bws ' ~ bitwarden_secrets_version)
             )
           }}
-  tags: ["bitwarden_secrets", "always"]
+  tags: ["bitwarden_secrets", "install", "download"]
 
 - name: Report pending bws install (check mode)
   ansible.builtin.debug:

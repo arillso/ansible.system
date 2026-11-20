@@ -28,8 +28,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   repo's `ansible.cfg`; keep others via `ansible_otel_extra_callbacks`.
   OpenTelemetry now requires `ansible_install_method: pipx`.
 
+- **ready**: the role waits with `wait_for_connection` and
+  `cloud-init status --wait` instead of `wait_for` on port 22 and polling
+  `status.json`. It uses the inventory's connection settings (`ansible_host`,
+  `ansible_port`, ProxyJump) and no longer needs `community.general`.
+
 ### Removed
 
+- **ready**: `ready_ssh_port`, `ready_check_retries`, `ready_check_delay` and
+  `ready_rescue_pause`. Use `ready_cloud_init_timeout` for the cloud-init wait.
 - **access**: `access_sudoers_validate` was never read. Use
   `access_validate_sudoers`.
 - **ansible**: unused `ansible_debug_mode`, internal arch vars and the
@@ -58,6 +65,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `state: absent` may still use `.` and `~` to clean up such files.
 - **access**: a sudoers entry without `commands` failed to render on
   ansible-core 2.19+; it defaults to `ALL` again.
+
+- **ready**: a reboot by cloud-init made the host unreachable, which the
+  `rescue` path never caught. The role now waits for the connection again and
+  repeats the cloud-init check.
+- **ready**: the role reported a host as ready while cloud-init was still
+  running, between two stages or after `rescue`, and ignored cloud-init errors.
+- **ready**: the role failed without `ansible_host` in the inventory and with
+  `ansible_port`, ProxyJump or SSH servers other than OpenSSH.
+- **ready**: hosts without cloud-init (bare metal, containers) spent about
+  160 seconds in the failure path on every run; the cloud-init wait is now
+  skipped there.
+- **ready**: the README example used the undefined `ready_timeout` and lacked
+  `gather_facts: false`; the check mode section was wrong.
 
 - **shell**: the MOTD scripts parse every JSON value with `jq`, but the role
   relied on the `facts` role to install it. With `shell_facts_dependency: false`

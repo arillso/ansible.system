@@ -6,45 +6,31 @@ argument_specs:
     main:
         short_description: "Wait for system readiness before configuration"
         description: |
-            This role waits for system readiness by checking SSH connectivity
-            and cloud-init completion. Includes automatic error recovery for
-            scenarios where cloud-init triggers a system restart.
+            This role waits until the host accepts an Ansible connection and
+            cloud-init has finished. A reboot triggered by cloud-init is
+            handled once. Run it in a play with `gather_facts: false`.
         options:
-            ready_ssh_port:
-                type: "int"
-                required: false
-                default: 22
-                description: "SSH port to check for availability"
-
             ready_ssh_delay:
                 type: "int"
                 required: false
                 default: 10
-                description: "Delay in seconds between SSH availability checks"
+                description: "Delay in seconds before the first connection attempt"
 
             ready_ssh_timeout:
                 type: "int"
                 required: false
                 default: 300
-                description: "Maximum time in seconds to wait for SSH availability"
+                description: |
+                    Maximum time in seconds to wait for a working connection,
+                    before and after a reboot triggered by cloud-init
 
-            ready_check_retries:
+            ready_cloud_init_timeout:
                 type: "int"
                 required: false
-                default: 60
-                description: "Number of retries for cloud-init status checks"
-
-            ready_check_delay:
-                type: "int"
-                required: false
-                default: 2
-                description: "Delay in seconds between cloud-init status checks"
-
-            ready_rescue_pause:
-                type: "int"
-                required: false
-                default: 30
-                description: "Pause in seconds after failed check before retry"
+                default: 900
+                description: |
+                    Maximum time in seconds for `cloud-init status --wait`.
+                    Skipped on hosts without /run/cloud-init.
 
             ready_gather_facts:
                 type: "bool"
@@ -59,5 +45,5 @@ argument_specs:
                 default: []
                 description: |
                     Subset of facts to gather. Example:
-                    ['!all', '!any', 'network', 'hardware']
+                    ['!all', 'network', 'hardware']
                     Empty list for full fact gathering.

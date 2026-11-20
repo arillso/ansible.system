@@ -1,48 +1,49 @@
 ---
-# Wait for system readiness (SSH, cloud-init) with error recovery
+# Wait for system readiness: a working Ansible connection, then cloud-init.
 
-- name: System readiness check
+- name: Wait for the connection
+  ansible.builtin.wait_for_connection:
+      delay: "{{ ready_ssh_delay }}"
+      timeout: "{{ ready_ssh_timeout }}"
+
+- name: Check whether cloud-init is present
+  ansible.builtin.stat:
+      path: /run/cloud-init
+  register: _ready_cloud_init_dir
+
+- name: Wait for cloud-init
+  when: _ready_cloud_init_dir.stat.exists
   block:
-      - name: Wait for SSH to become available
-        ansible.builtin.wait_for:
-            port: "{{ ready_ssh_port }}"
-            host: "{{ ansible_host }}"
-            search_regex: OpenSSH
+      # A reboot by cloud-init drops the connection. That is an unreachable
+      # result, which neither `rescue` nor `until`/`retries` catch, so it is
+      # ignored here and the wait is repeated once the host is back.
+      # ponytail: handles one reboot; loop over an include if a host reboots twice.
+      - name: Wait for cloud-init to finish
+        ansible.builtin.command: cloud-init status --wait
+        register: _ready_cloud_init
+        changed_when: false
+        # rc 2: finished with recoverable errors (e.g. deprecated keys)
+        failed_when: _ready_cloud_init.rc | default(0) not in [0, 2]
+        ignore_unreachable: true
+        check_mode: false
+        timeout: "{{ ready_cloud_init_timeout }}"
+
+      - name: Wait for the connection after a reboot
+        ansible.builtin.wait_for_connection:
             delay: "{{ ready_ssh_delay }}"
             timeout: "{{ ready_ssh_timeout }}"
-        delegate_to: localhost
+        when: _ready_cloud_init is unreachable
 
-      - name: Test SSH connectivity
-        ansible.builtin.ping:
-        retries: 5
-        delay: "{{ ready_ssh_delay }}"
+      - name: Wait for cloud-init to finish after a reboot
+        ansible.builtin.command: cloud-init status --wait
+        register: _ready_cloud_init_after_reboot
+        changed_when: false
+        failed_when: _ready_cloud_init_after_reboot.rc not in [0, 2]
+        check_mode: false
+        timeout: "{{ ready_cloud_init_timeout }}"
+        when: _ready_cloud_init is unreachable
 
-      - name: Wait for cloud-init to complete
-        community.general.cloud_init_data_facts:
-            filter: status
-        register: _ready_cloud_init_status
-        until: >-
-            _ready_cloud_init_status.cloud_init_data_facts.status.v1.stage is defined
-            and not _ready_cloud_init_status.cloud_init_data_facts.status.v1.stage
-        retries: "{{ ready_check_retries }}"
-        delay: "{{ ready_check_delay }}"
-
-  rescue:
-      - name: Pause for potential restart
-        ansible.builtin.pause:
-            seconds: "{{ ready_rescue_pause }}"
-
-      - name: Wait for SSH after restart
-        ansible.builtin.wait_for:
-            port: "{{ ready_ssh_port }}"
-            host: "{{ ansible_host }}"
-            search_regex: OpenSSH
-            delay: "{{ ready_ssh_delay }}"
-            timeout: "{{ ready_ssh_timeout }}"
-        delegate_to: localhost
-
-  always:
-      - name: Gather system facts
-        ansible.builtin.setup:
-            gather_subset: "{{ ready_gather_subset if ready_gather_subset | length > 0 else omit }}"
-        when: ready_gather_facts | bool
+- name: Gather system facts
+  ansible.builtin.setup:
+      gather_subset: "{{ ready_gather_subset if ready_gather_subset | length > 0 else omit }}"
+  when: ready_gather_facts | bool

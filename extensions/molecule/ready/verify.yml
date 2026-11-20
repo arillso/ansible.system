@@ -1,12 +1,20 @@
 ---
 - name: Verify — arillso.system.ready
   hosts: all
-  become: true
   gather_facts: false
 
   tasks:
-      - name: Assert the converge step finished without errors
+      - name: Run the role with fact gathering
+        ansible.builtin.include_role:
+            name: arillso.system.ready
+        vars:
+            ready_ssh_delay: 0
+            ready_ssh_timeout: 30
+            ready_gather_subset: ["!all"]
+
+      - name: Assert the cloud-init wait was skipped and facts were gathered
         ansible.builtin.assert:
             that:
-                - true
-            success_msg: "ready role completed converge without raising"
+                - not _ready_cloud_init_dir.stat.exists
+                - _ready_cloud_init is skipped
+                - ansible_facts.distribution is defined

@@ -26,6 +26,3 @@ galaxy_info:
         - bootstrap
 
 dependencies: []
-
-collections:
-    - community.general

@@ -31,11 +31,15 @@ _access_ssh_validation_commands:
     default: sshd -t -f %s
 
 # Keys from access_users[].ssh_keys in the access_ssh_keys format; a per-key
-# `user` overrides the parent user's name.
+# `user` overrides the parent user's name. Keys whose effective user is absent
+# in access_users are dropped, since that user is removed in the same run.
 _access_ssh_user_keys: >-
+    {%- set _absent = access_users | selectattr('state', 'defined')
+        | selectattr('state', 'equalto', 'absent') | map(attribute='name') | list -%}
     {%- set _keys = [] -%}
     {%- for _u in access_users if _u.state | default('present') == 'present' -%}
-    {%- for _k in _u.ssh_keys | default([]) if _k.key is defined -%}
+    {%- for _k in _u.ssh_keys | default([]) if _k.key is defined
+        and _k.user | default(_u.name) not in _absent -%}
     {%- set _ = _keys.append(_k | combine({'user': _k.user | default(_u.name)})) -%}
     {%- endfor -%}
     {%- endfor -%}

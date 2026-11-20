@@ -1,4 +1,18 @@
 ---
+# sshd supports Include only from OpenSSH 8.2; distros with older versions
+# (EL 8) ship no drop-in directory, so its presence gates the Include.
+- name: Check SSH drop-in directory
+  ansible.builtin.stat:
+      path: "{{ access_ssh_include_dir }}"
+  register: _access_ssh_include_dir_stat
+  when: access_ssh_include_dir | length > 0
+
+- name: Decide whether to include SSH drop-ins
+  ansible.builtin.set_fact:
+      _access_ssh_include_enabled: >-
+          {{ access_ssh_include_dir | length > 0
+             and (_access_ssh_include_dir_stat.stat.isdir | default(false)) }}
+
 - name: Deploy SSH server configuration
   ansible.builtin.template:
       src: etc/ssh/sshd_config.j2

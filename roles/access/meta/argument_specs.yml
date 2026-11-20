@@ -341,7 +341,7 @@ argument_specs:
                 type: bool
                 default: true
             access_ssh_include_dir:
-                description: "Drop-in directory included at the end of sshd_config; empty string disables"
+                description: "Drop-in directory included after the role settings and before any Match in access_ssh_config_extra; skipped if missing; empty string disables"
                 type: str
                 default: /etc/ssh/sshd_config.d
             access_ssh_config_extra:
@@ -759,7 +759,7 @@ argument_specs:
                 type: bool
                 default: true
             access_ssh_include_dir:
-                description: "Drop-in directory included at the end of sshd_config; empty string disables"
+                description: "Drop-in directory included after the role settings and before any Match in access_ssh_config_extra; skipped if missing; empty string disables"
                 type: str
                 default: /etc/ssh/sshd_config.d
             access_ssh_config_extra:

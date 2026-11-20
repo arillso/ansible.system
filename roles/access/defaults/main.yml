@@ -88,10 +88,11 @@ access_ssh_deny_groups: []
 # internal-sftp is built into sshd, so no distro-specific binary path is needed
 access_ssh_subsystem_sftp: internal-sftp
 access_ssh_use_pam: true
-# Drop-in directory included after the role's settings and before
-# access_ssh_config_extra; empty string disables. sshd uses the first value of
-# a single-value option, so the role's settings win over drop-ins. List options
-# (AllowUsers, ListenAddress, HostKey, AcceptEnv) add up.
+# Drop-in directory included after the role's settings and the
+# access_ssh_config_extra options before any Match key; empty string disables.
+# Skipped when the directory does not exist (EL 8, OpenSSH < 8.2). sshd uses the
+# first value of a single-value option, so the role's settings win over
+# drop-ins. List options (AllowUsers, ListenAddress, HostKey, AcceptEnv) add up.
 access_ssh_include_dir: /etc/ssh/sshd_config.d
 access_ssh_config_extra: {}
 # Example:

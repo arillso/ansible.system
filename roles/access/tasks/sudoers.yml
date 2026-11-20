@@ -2,14 +2,20 @@
 - name: Validate sudoers entries
   ansible.builtin.assert:
       that:
-          # sudo skips files in sudoers.d whose name contains '.' or ends in '~'
-          - _access_sudoer_item.name is match('^[A-Za-z0-9_-]+$')
+          # sudo skips files in sudoers.d whose name contains '.' or ends in '~';
+          # absent entries may use them to clean up such files, but never '/'
+          - >-
+              _access_sudoer_item.name is match('^[A-Za-z0-9_-]+$')
+              or (_access_sudoer_item.state | default('present') == 'absent'
+                  and _access_sudoer_item.name is match('^[A-Za-z0-9_.~-]+$')
+                  and _access_sudoer_item.name not in ['.', '..'])
           - >-
               _access_sudoer_item.state | default('present') == 'absent'
               or (_access_sudoer_item.user is defined) != (_access_sudoer_item.group is defined)
       fail_msg: >-
           sudoers entry '{{ _access_sudoer_item.name }}': name may only contain
-          letters, digits, '_' and '-', and exactly one of user or group is required
+          letters, digits, '_' and '-' ('.' and '~' only with state absent), and
+          exactly one of user or group is required
       quiet: true
   loop: "{{ access_sudoers }}"
   loop_control:

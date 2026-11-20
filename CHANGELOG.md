@@ -12,9 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **access**: `access_ssh_subsystem_sftp` defaults to `internal-sftp` instead of
   the Debian-only `/usr/lib/openssh/sftp-server`, so sftp works on EL 8/9.
 - **access**: `sshd_config` now sets `UsePAM yes` (`access_ssh_use_pam`) and
-  includes `/etc/ssh/sshd_config.d/*.conf` after its own settings (`access_ssh_include_dir`,
-  empty string disables). The role's own single-value settings keep precedence
-  over drop-ins; list options such as `AllowUsers` add up.
+  includes `/etc/ssh/sshd_config.d/*.conf` (`access_ssh_include_dir`, empty
+  string disables) when that directory exists, which skips EL 8 (OpenSSH < 8.2).
+  The Include follows the role's settings and the `access_ssh_config_extra`
+  options before any `Match` key, so those single-value settings keep
+  precedence over drop-ins; list options such as `AllowUsers` add up.
 - **access**: the argument spec entry point `ssh` is renamed to `ssh_server` to
   match `tasks/ssh_server.yml`.
 
@@ -31,14 +33,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `access_ssh_keys` together, are now written in one call. An exclusive key
   with `state: absent` no longer makes the user exclusive.
 - **access**: the per-key `user` in `access_users[].ssh_keys` was ignored and
-  the key went to the parent user.
+  the key went to the parent user. Keys for a user marked `state: absent` are
+  skipped.
 - **access**: `append` in `access_users` is now declared in the argument spec;
   `append: false` was rejected by validation.
 - **access**: groups with `state: absent` are removed after users, so removing
   a user and its primary group in one run no longer fails.
 - **access**: sudoers entries are checked before deployment. A name with `.` or
   `~` (silently ignored by sudo) or `/`, and an entry with neither or both of
-  `user` and `group`, now fail with a clear message.
+  `user` and `group`, now fail with a clear message. Entries with
+  `state: absent` may still use `.` and `~` to clean up such files.
 - **access**: a sudoers entry without `commands` failed to render on
   ansible-core 2.19+; it defaults to `ALL` again.
 

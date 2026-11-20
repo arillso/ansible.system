@@ -7,9 +7,9 @@
 # of that user's present keys from both sources (_access_ssh_all_keys), so the
 # users.yml run and the main.yml run write the same content. key_options are
 # written as the line prefix, because the module parameter would apply to
-# every key in the call. URL and file:// keys only work as the single key of
-# an exclusive user, since the module fetches them only when `key` starts
-# with the scheme.
+# every key in the call. URL and file:// keys are fetched by the module only
+# when `key` starts with the scheme, so an exclusive user may use one only as
+# the single key; the assert below rejects other combinations.
 - name: Manage SSH authorized keys
   ansible.posix.authorized_key:
       user: "{{ _access_ssh_key_item.user }}"
@@ -26,6 +26,28 @@
   register: _access_ssh_keys_result
   until: _access_ssh_keys_result is succeeded
 
+- name: Validate exclusive SSH keys
+  ansible.builtin.assert:
+      that:
+          - >-
+              _access_ssh_user_lines | length == 1
+              or _access_ssh_user_lines | select('match', '^(https?|file)://') | list | length == 0
+      fail_msg: >-
+          SSH user '{{ _access_ssh_user }}' has an exclusive key: a URL or file:// key
+          must then be the only present key of that user
+      quiet: true
+  vars:
+      _access_ssh_user_lines: >-
+          {%- set _lines = [] -%}
+          {%- for _k in _access_ssh_all_keys
+              if _k.user == _access_ssh_user and _k.state | default('present') == 'present' -%}
+          {%- set _ = _lines.append(_k.key) -%}
+          {%- endfor -%}
+          {{ _lines }}
+  loop: "{{ _access_ssh_exclusive_users | intersect(_access_ssh_keys | map(attribute='user') | list) }}"
+  loop_control:
+      loop_var: _access_ssh_user
+
 - name: Manage exclusive SSH authorized keys
   ansible.posix.authorized_key:
       user: "{{ _access_ssh_user }}"
@@ -37,7 +59,7 @@
           {%- set _lines = [] -%}
           {%- for _k in _access_ssh_all_keys
               if _k.user == _access_ssh_user and _k.state | default('present') == 'present' -%}
-          {%- set _ = _lines.append((_k.key_options ~ ' ' if _k.key_options is defined else '') ~ _k.key) -%}
+          {%- set _ = _lines.append((_k.key_options ~ ' ' if _k.key_options | default('') else '') ~ _k.key) -%}
           {%- endfor -%}
           {{ _lines }}
   become: true

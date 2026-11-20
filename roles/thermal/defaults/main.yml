@@ -5,7 +5,6 @@ thermal_enabled: true
 # Packages to install
 thermal_packages:
     - lm-sensors
-    - fancontrol
     - thermald
 
 # Platform name

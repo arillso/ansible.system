@@ -2,16 +2,24 @@
 # Hardware sensor detection and coretemp kernel module setup
 
 - name: Detect hardware sensors
-  ansible.builtin.command:
-      cmd: sensors-detect --auto
+  ansible.builtin.shell:
+      # sensors-detect may append driver modules to /etc/modules; compare
+      # the file before and after to report that as a change.
+      cmd: |
+          before=$(cksum /etc/modules 2>/dev/null)
+          sensors-detect --auto
+          rc=$?
+          after=$(cksum /etc/modules 2>/dev/null)
+          [ "$before" = "$after" ] || echo "THERMAL_MODULES_CHANGED"
+          exit $rc
   become: true
   when: thermal_run_sensors_detect
   register: _thermal_sensors_detect_result
-  # sensors-detect is interactive by default; running non-interactively
-  # the success is host-dependent (no sensors found is rc != 0). Probe
-  # task only — actual fan/thermal config is written by templates below.
-  changed_when: false
-  failed_when: false
+  changed_when: "'THERMAL_MODULES_CHANGED' in _thermal_sensors_detect_result.stdout"
+  # A host without any sensor is not an error.
+  failed_when:
+      - _thermal_sensors_detect_result.rc != 0
+      - "'no sensors were detected' not in _thermal_sensors_detect_result.stdout"
 
 - name: Load coretemp kernel module
   community.general.modprobe:

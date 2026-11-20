@@ -3,7 +3,7 @@ argument_specs:
     main:
         short_description: "Manage thermal and sensor monitoring on Linux systems"
         description:
-            - "Installs and configures thermal management tools including thermald, lm-sensors, and fancontrol"
+            - "Installs and configures thermald and lm-sensors on Intel x86_64 hosts; other CPUs are skipped"
             - "Manages temperature thresholds and thermal zones for CPU and ACPI"
             - "Configures thermal preferences for performance, quiet, or balanced operation"
             - "Arillso"
@@ -21,7 +21,6 @@ argument_specs:
                 required: false
                 default:
                     - lm-sensors
-                    - fancontrol
                     - thermald
 
             thermal_platform_name:
@@ -40,7 +39,7 @@ argument_specs:
                     - "BALANCED"
 
             thermal_acpitz_passive_temp:
-                description: "ACPI thermal zone passive cooling threshold in millidegrees Celsius (e.g., 70000 = 70°C)"
+                description: "ACPI thermal zone passive cooling threshold in millidegrees Celsius (e.g., 70000 = 70°C); 20000-120000, below the active threshold"
                 type: "int"
                 required: false
                 default: 70000
@@ -52,7 +51,7 @@ argument_specs:
                 default: 80000
 
             thermal_cpu_passive_temp:
-                description: "CPU package passive cooling threshold in millidegrees Celsius (e.g., 75000 = 75°C)"
+                description: "CPU package passive cooling threshold in millidegrees Celsius (e.g., 75000 = 75°C); 20000-120000, below the active threshold"
                 type: "int"
                 required: false
                 default: 75000

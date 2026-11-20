@@ -7,10 +7,3 @@
       state: restarted
   become: true
   listen: "thermal: restart thermald"
-
-- name: Restart cpufrequtils to apply thermal-driven CPU governor changes
-  ansible.builtin.systemd:
-      name: cpufrequtils
-      state: restarted
-  become: true
-  listen: "thermal: restart cpufrequtils"

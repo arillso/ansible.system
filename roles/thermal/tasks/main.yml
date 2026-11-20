@@ -1,18 +1,52 @@
 ---
 # Main tasks for thermal management role
 
-- name: Install thermal management packages
-  ansible.builtin.include_tasks: packages.yml
-  when: thermal_enabled
+- name: Report unsupported CPU
+  ansible.builtin.debug:
+      msg: >-
+          Skipping thermal management: thermald and coretemp need an Intel
+          x86_64 CPU, this host has {{ ansible_facts['architecture'] | default('unknown') }}
+          ({{ ansible_facts['processor'][1] | default('unknown vendor') }}).
+  when:
+      - thermal_enabled
+      - not _thermal_cpu_supported
 
-- name: Detect sensors and load kernel modules
-  ansible.builtin.include_tasks: sensors.yml
-  when: thermal_enabled
+- name: Configure thermal management
+  when:
+      - thermal_enabled
+      - _thermal_cpu_supported
+  block:
+      - name: Validate temperature thresholds
+        ansible.builtin.assert:
+            that:
+                - item.passive | int >= 20000
+                - item.active | int <= 120000
+                - item.passive | int < item.active | int
+            fail_msg: >-
+                {{ item.zone }}: thresholds are millidegrees Celsius
+                (e.g. 75000 = 75 °C), must lie within 20000-120000 and passive
+                ({{ item.passive }}) must be below active ({{ item.active }}).
+            quiet: true
+        loop:
+            - zone: acpitz
+              passive: "{{ thermal_acpitz_passive_temp }}"
+              active: "{{ thermal_acpitz_active_temp }}"
+            - zone: cpu
+              passive: "{{ thermal_cpu_passive_temp }}"
+              active: "{{ thermal_cpu_active_temp }}"
+        loop_control:
+            label: "{{ item.zone }}"
 
-- name: Configure thermald
-  ansible.builtin.include_tasks: thermald.yml
-  when: thermal_enabled
+      - name: Install thermal management packages
+        ansible.builtin.include_tasks: packages.yml
 
-- name: Manage thermal services
-  ansible.builtin.include_tasks: service.yml
-  when: thermal_enabled
+      - name: Detect sensors and load kernel modules
+        ansible.builtin.include_tasks: sensors.yml
+
+      - name: Configure thermald
+        ansible.builtin.include_tasks: thermald.yml
+
+      - name: Manage thermal services
+        ansible.builtin.include_tasks: service.yml
+        # In check mode a fresh host has no thermald unit yet.
+        when: not (ansible_check_mode and _thermal_packages_result is changed)

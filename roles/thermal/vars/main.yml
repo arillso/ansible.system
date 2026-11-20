@@ -1,0 +1,5 @@
+---
+# thermald and the coretemp module only support Intel x86_64 CPUs.
+_thermal_cpu_supported: >-
+    {{ ansible_facts['architecture'] | default('') == 'x86_64'
+       and 'GenuineIntel' in ansible_facts['processor'] | default([]) }}

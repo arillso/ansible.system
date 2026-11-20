@@ -6,3 +6,4 @@
       name: "{{ thermal_packages }}"
       state: present
   become: true
+  register: _thermal_packages_result

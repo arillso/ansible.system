@@ -50,10 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `facts: update motd` and the variable `facts_ssh_service_names`. No task
   notified them.
 - **facts**: variables that were never read and have no sensible
-  implementation: `facts_cache_ttl_network`, `facts_security_check_method`,
-  `facts_logging_level`, `facts_concurrent_execution`,
-  `facts_cache_compression_enabled`, `facts_network_collect_*` and
-  `facts_container_collect_*`.
+  implementation: `facts_security_check_method`, `facts_logging_level`,
+  `facts_concurrent_execution` and `facts_cache_compression_enabled`.
 
 ### Fixed
 
@@ -157,6 +155,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `system.fact`. `storage` (root filesystem) and `performance` (load average,
   uptime) are new fields, collected on every run instead of from the 24-hour
   cache.
+- **facts**: `facts_container_collect_*` now switch the inventory section,
+  the health probes and new `volumes_count`/`networks_count` per docker/podman
+  engine. `facts_network_collect_*` and `facts_cache_ttl_network` drive the new
+  `network.fact` (interfaces, routes, DNS, firewall frontend).
+- **shell**: the MOTD never showed the external IP: `10-sysinfo` read the
+  nonexistent `.cloud_provider.generic.ipv4` from `system.json`. `cloud.fact`
+  now reports `public_ipv4` from the metadata service and the MOTD reads it
+  from `cloud.json`. `10-sysinfo` also aborted under `set -e` when
+  `system.json` was missing.
 
 ## [2.0.4] - 2026-11-04
 

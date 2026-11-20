@@ -170,6 +170,51 @@ argument_specs:
                 default: true
                 description: "Report virtualization_type in system facts"
 
+            facts_cache_ttl_network:
+                type: int
+                default: 1800
+                description: "Cache TTL for network facts (30 minutes)"
+
+            facts_container_collect_inventory:
+                type: bool
+                default: true
+                description: "Report Ansible inventory groups in container facts"
+
+            facts_container_collect_health:
+                type: bool
+                default: true
+                description: "Run runtime health probes (docker info, kubectl get nodes, ...)"
+
+            facts_container_collect_volumes:
+                type: bool
+                default: true
+                description: "Report volumes_count of a running docker/podman engine"
+
+            facts_container_collect_networks:
+                type: bool
+                default: true
+                description: "Report networks_count of a running docker/podman engine"
+
+            facts_network_collect_interfaces:
+                type: bool
+                default: true
+                description: "Report interfaces with state, MAC and addresses in network facts"
+
+            facts_network_collect_routes:
+                type: bool
+                default: true
+                description: "Report default gateways and route counts in network facts"
+
+            facts_network_collect_dns:
+                type: bool
+                default: true
+                description: "Report nameservers and search domains in network facts"
+
+            facts_network_collect_firewall:
+                type: bool
+                default: true
+                description: "Report the active firewall frontend in network facts"
+
             # Cloud metadata configuration
             facts_cloud_metadata_base_url:
                 type: str

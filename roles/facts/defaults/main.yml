@@ -40,6 +40,7 @@ facts_cache_ttl_cloud: 3600
 facts_cache_ttl_container: 300
 facts_cache_ttl_security: 300
 facts_cache_ttl_system: 86400
+facts_cache_ttl_network: 1800
 
 # Delete files in facts_cache_dir older than this many days at every role run.
 # last_run.json is kept: it is the deployment record, not a cache.
@@ -79,3 +80,15 @@ facts_container_detect_docker: true
 facts_container_detect_podman: true
 facts_container_detect_kubernetes: true
 facts_container_detect_containerd: true
+
+# Container facts details
+facts_container_collect_inventory: true # Ansible inventory groups (containers, k3s_*, docker, podman)
+facts_container_collect_health: true # health probes (docker info, kubectl get nodes, ...)
+facts_container_collect_volumes: true # volumes_count of a running docker/podman engine
+facts_container_collect_networks: true # networks_count of a running docker/podman engine
+
+# Sections of network.fact
+facts_network_collect_interfaces: true # interfaces with state, MAC, IPv4/IPv6
+facts_network_collect_routes: true # default gateways, route counts
+facts_network_collect_dns: true # nameservers and search domains
+facts_network_collect_firewall: true # active firewall frontend (ufw, firewalld, nftables, iptables)

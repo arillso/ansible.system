@@ -35,3 +35,4 @@ _facts_collection_scripts:
     - run.fact
     - security.fact
     - container.fact
+    - network.fact

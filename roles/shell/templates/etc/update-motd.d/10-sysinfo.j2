@@ -8,6 +8,7 @@ set -euo pipefail
 
 # Configuration
 readonly STATUS_CACHE_FILE="{% endraw %}{{ facts_cache_dir | default('/var/cache/ansible-facts') }}{% raw %}/system.json"
+readonly CLOUD_CACHE_FILE="{% endraw %}{{ facts_cache_dir | default('/var/cache/ansible-facts') }}{% raw %}/cloud.json"
 readonly STATUS_MAX_AGE=86400
 readonly DEBUG_MODE="${MOTD_DEBUG:-0}"
 
@@ -209,7 +210,8 @@ get_external_ip() {
     local json="$1"
     local external_ip
 
-    external_ip=$(get_json_value "$json" ".cloud_provider.generic.ipv4" "")
+    # Public IPv4 from the cloud metadata service (cloud.fact), empty off-cloud
+    external_ip=$(get_json_value "$json" ".public_ipv4" "")
 
     if [ -n "$external_ip" ] && [ "$external_ip" != "null" ]; then
         echo "$external_ip"
@@ -222,8 +224,6 @@ get_external_ip() {
 main() {
     debug_log "Starting system information display"
 
-    local status_json
-    status_json=$(get_cached_status "$STATUS_CACHE_FILE")
 
     # Get basic system information
     local hostname fqdn cpu_cores cpu_freq
@@ -236,7 +236,7 @@ main() {
 
     # Get external IP
     local external_ip
-    external_ip=$(get_external_ip "$status_json")
+    external_ip=$(get_external_ip "$(get_cached_status "$CLOUD_CACHE_FILE")")
 
     # Display information with proper alignment
     echo

@@ -43,6 +43,10 @@
                 - not _facts_stale.stat.exists
                 - ansible_local.system.storage.root.size_mb > 0
                 - ansible_local.system.performance.load_average['1m'] is number
+                - ansible_local.network.interfaces | length > 0
+                - ansible_local.network.dns.nameservers is sequence
+                - ansible_local.network.firewall.backend is string
+                - ansible_local.container.inventory is defined
                 - ansible_local.security.meta.check_method == 'disabled'
                 - ansible_local.container.cache.enabled
                 - ansible_local.run.last_run.playbook == 'facts'

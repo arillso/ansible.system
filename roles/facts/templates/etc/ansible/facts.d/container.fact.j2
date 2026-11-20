@@ -25,6 +25,9 @@ DEBUG_ENABLED="{{ facts_debug_enabled | bool | lower }}"
 DETECT_DOCKER="{{ (facts_enable_container_detection | bool and facts_container_detect_docker | bool) | lower }}"
 DETECT_PODMAN="{{ (facts_enable_container_detection | bool and facts_container_detect_podman | bool) | lower }}"
 DETECT_KUBERNETES="{{ (facts_enable_container_detection | bool and facts_container_detect_kubernetes | bool) | lower }}"
+COLLECT_HEALTH="{{ facts_container_collect_health | bool | lower }}"
+COLLECT_VOLUMES="{{ facts_container_collect_volumes | bool | lower }}"
+COLLECT_NETWORKS="{{ facts_container_collect_networks | bool | lower }}"
 DETECT_CONTAINERD="{{ (facts_enable_container_detection | bool and facts_container_detect_containerd | bool) | lower }}"
 
 # Cache file paths (standardized)
@@ -71,6 +74,28 @@ declare -A RUNTIMES_DETECTED
 declare -A RUNTIME_VERSIONS
 declare -A RUNTIME_HEALTH
 declare -A RUNTIME_SERVICES
+declare -A RUNTIME_VOLUMES
+declare -A RUNTIME_NETWORKS
+
+# Health probes only when facts_container_collect_health is set
+probe_health() {
+    if [[ "${COLLECT_HEALTH}" != "true" ]]; then
+        echo "not_collected"
+        return 0
+    fi
+    safe_exec_with_retry "$@"
+}
+
+# Volume and network counts of a running docker/podman engine
+collect_engine_counts() {
+    local engine="$1"
+    if [[ "${COLLECT_VOLUMES}" == "true" ]]; then
+        RUNTIME_VOLUMES["${engine}"]=$(safe_exec_with_retry "${engine} volume ls -q | wc -l" "-1" "${API_TIMEOUT}")
+    fi
+    if [[ "${COLLECT_NETWORKS}" == "true" ]]; then
+        RUNTIME_NETWORKS["${engine}"]=$(safe_exec_with_retry "${engine} network ls -q | wc -l" "-1" "${API_TIMEOUT}")
+    fi
+}
 
 # Cache management functions
 setup_cache() {
@@ -124,7 +149,8 @@ detect_docker() {
 
         if systemctl is-active docker.service >/dev/null 2>&1; then
             RUNTIME_SERVICES["docker"]="active"
-            RUNTIME_HEALTH["docker"]=$(safe_exec_with_retry "docker info >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
+            collect_engine_counts docker
+            RUNTIME_HEALTH["docker"]=$(probe_health "docker info >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
         else
             RUNTIME_SERVICES["docker"]="inactive"
             RUNTIME_HEALTH["docker"]="unavailable"
@@ -145,7 +171,8 @@ detect_podman() {
 
         if systemctl is-active podman.service >/dev/null 2>&1 || pgrep -f "podman" >/dev/null 2>&1; then
             RUNTIME_SERVICES["podman"]="active"
-            RUNTIME_HEALTH["podman"]=$(safe_exec_with_retry "podman info >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
+            collect_engine_counts podman
+            RUNTIME_HEALTH["podman"]=$(probe_health "podman info >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
         else
             RUNTIME_SERVICES["podman"]="inactive"
             RUNTIME_HEALTH["podman"]="unavailable"
@@ -171,7 +198,7 @@ detect_kubernetes() {
         k8s_version=$(safe_exec_with_retry "k3s --version | head -n1 | cut -d' ' -f3" "unknown" "${API_TIMEOUT}")
         if systemctl is-active k3s.service >/dev/null 2>&1; then
             k8s_service="active"
-            k8s_health=$(safe_exec_with_retry "k3s kubectl get nodes >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
+            k8s_health=$(probe_health "k3s kubectl get nodes >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
         fi
     # Check for standard Kubernetes
     elif command -v kubelet >/dev/null 2>&1; then
@@ -179,14 +206,14 @@ detect_kubernetes() {
         k8s_version=$(safe_exec_with_retry "kubelet --version | cut -d' ' -f2" "unknown" "${API_TIMEOUT}")
         if systemctl is-active kubelet.service >/dev/null 2>&1; then
             k8s_service="active"
-            k8s_health=$(safe_exec_with_retry "kubectl get nodes >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
+            k8s_health=$(probe_health "kubectl get nodes >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
         fi
     # Check for MicroK8s
     elif command -v microk8s >/dev/null 2>&1; then
         k8s_variant="microk8s"
         k8s_version=$(safe_exec_with_retry "microk8s version | grep -o 'v[0-9]*\.[0-9]*\.[0-9]*' | head -n1" "unknown" "${API_TIMEOUT}")
         k8s_service=$(safe_exec_with_retry "microk8s status --wait-ready --timeout 5 >/dev/null 2>&1 && echo 'active' || echo 'inactive'" "inactive" "${HEALTH_TIMEOUT}")
-        k8s_health=$(safe_exec_with_retry "microk8s kubectl get nodes >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
+        k8s_health=$(probe_health "microk8s kubectl get nodes >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
     fi
 
     if [[ "${k8s_variant}" != "none" ]]; then
@@ -210,7 +237,7 @@ detect_containerd() {
 
         if systemctl is-active containerd.service >/dev/null 2>&1; then
             RUNTIME_SERVICES["containerd"]="active"
-            RUNTIME_HEALTH["containerd"]=$(safe_exec_with_retry "ctr version >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
+            RUNTIME_HEALTH["containerd"]=$(probe_health "ctr version >/dev/null 2>&1 && echo 'healthy' || echo 'unhealthy'" "unhealthy" "${HEALTH_TIMEOUT}")
         else
             RUNTIME_SERVICES["containerd"]="inactive"
             RUNTIME_HEALTH["containerd"]="unavailable"
@@ -273,6 +300,10 @@ generate_facts_json() {
         --arg containerd_version "${containerd_version}" \
         --arg containerd_service "${containerd_service}" \
         --arg containerd_health "${containerd_health}" \
+        --arg docker_volumes "${RUNTIME_VOLUMES["docker"]:-}" \
+        --arg docker_networks "${RUNTIME_NETWORKS["docker"]:-}" \
+        --arg podman_volumes "${RUNTIME_VOLUMES["podman"]:-}" \
+        --arg podman_networks "${RUNTIME_NETWORKS["podman"]:-}" \
         --arg cache_enabled "${CACHE_ENABLED}" \
         --arg cache_ttl "${CACHE_TTL}" \
         --arg cache_file "${CACHE_FILE}" \
@@ -291,13 +322,17 @@ generate_facts_json() {
                     detected: ($docker_detected | test("true")),
                     version: $docker_version,
                     service_status: $docker_service,
-                    health_status: $docker_health
+                    health_status: $docker_health,
+                    volumes_count: ($docker_volumes | if . == "" then null else tonumber end),
+                    networks_count: ($docker_networks | if . == "" then null else tonumber end)
                 },
                 podman: {
                     detected: ($podman_detected | test("true")),
                     version: $podman_version,
                     service_status: $podman_service,
-                    health_status: $podman_health
+                    health_status: $podman_health,
+                    volumes_count: ($podman_volumes | if . == "" then null else tonumber end),
+                    networks_count: ($podman_networks | if . == "" then null else tonumber end)
                 },
                 kubernetes: {
                     detected: ($kubernetes_detected | test("true")),
@@ -312,6 +347,7 @@ generate_facts_json() {
                     health_status: $containerd_health
                 }
             },
+{% if facts_container_collect_inventory | bool %}
             inventory: {
                 container_groups: [{{ '"' + (groups['containers'] | default([]) | join('", "')) + '"' if groups['containers'] is defined and groups['containers'] | length > 0 else '' }}],
                 k3s_servers: [{{ '"' + (groups['k3s_servers'] | default([]) | join('", "')) + '"' if groups['k3s_servers'] is defined and groups['k3s_servers'] | length > 0 else '' }}],
@@ -319,6 +355,7 @@ generate_facts_json() {
                 docker_hosts: [{{ '"' + (groups['docker'] | default([]) | join('", "')) + '"' if groups['docker'] is defined and groups['docker'] | length > 0 else '' }}],
                 podman_hosts: [{{ '"' + (groups['podman'] | default([]) | join('", "')) + '"' if groups['podman'] is defined and groups['podman'] | length > 0 else '' }}]
             },
+{% endif %}
             cache: {
                 enabled: ($cache_enabled | test("true")),
                 ttl_seconds: ($cache_ttl | tonumber),

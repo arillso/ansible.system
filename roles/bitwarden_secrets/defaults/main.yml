@@ -1,7 +1,7 @@
 ---
 # Binary Configuration
 # renovate: datasource=github-releases depName=bitwarden/sdk-sm extractVersion=^bws-v(?<version>.*)$
-bitwarden_secrets_version: "1.0.0"
+bitwarden_secrets_version: "2.1.0"
 bitwarden_secrets_install_path: "/usr/local/bin"
 bitwarden_secrets_binary_name: "bws"
 

@@ -3,11 +3,13 @@
 # includes this file with the keys flattened out of access_users.
 #
 # authorized_key with exclusive=true removes every key not passed in the same
-# call. A user with any exclusive key therefore gets one call with all of that
-# user's present keys; key_options are written as the line prefix, because the
-# module parameter would apply to every key in the call.
-# ponytail: exclusive is resolved per source list, so access_users[].ssh_keys
-# and access_ssh_keys must not both set exclusive for the same user.
+# call. A user with any present exclusive key therefore gets one call with all
+# of that user's present keys from both sources (_access_ssh_all_keys), so the
+# users.yml run and the main.yml run write the same content. key_options are
+# written as the line prefix, because the module parameter would apply to
+# every key in the call. URL and file:// keys only work as the single key of
+# an exclusive user, since the module fetches them only when `key` starts
+# with the scheme.
 - name: Manage SSH authorized keys
   ansible.posix.authorized_key:
       user: "{{ _access_ssh_key_item.user }}"
@@ -33,13 +35,14 @@
   vars:
       _access_ssh_user_lines: >-
           {%- set _lines = [] -%}
-          {%- for _k in _access_ssh_keys
+          {%- for _k in _access_ssh_all_keys
               if _k.user == _access_ssh_user and _k.state | default('present') == 'present' -%}
           {%- set _ = _lines.append((_k.key_options ~ ' ' if _k.key_options is defined else '') ~ _k.key) -%}
           {%- endfor -%}
           {{ _lines }}
   become: true
-  loop: "{{ _access_ssh_exclusive_users }}"
+  # Only users with keys in this run; the other run handles the rest
+  loop: "{{ _access_ssh_exclusive_users | intersect(_access_ssh_keys | map(attribute='user') | list) }}"
   loop_control:
       loop_var: _access_ssh_user
   retries: "{{ access_retry_count }}"

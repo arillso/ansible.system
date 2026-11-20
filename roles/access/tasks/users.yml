@@ -34,14 +34,5 @@
 - name: Manage SSH keys for users (from user definition)
   ansible.builtin.include_tasks: ssh_keys.yml
   vars:
-      # Flatten access_users[].ssh_keys into the access_ssh_keys format; a
-      # per-key `user` overrides the parent user's name.
-      _access_ssh_key_list: >-
-          {%- set _keys = [] -%}
-          {%- for _u in access_users if _u.state | default('present') == 'present' -%}
-          {%- for _k in _u.ssh_keys | default([]) if _k.key is defined -%}
-          {%- set _ = _keys.append(_k | combine({'user': _k.user | default(_u.name)})) -%}
-          {%- endfor -%}
-          {%- endfor -%}
-          {{ _keys }}
-  when: access_users | selectattr('ssh_keys', 'defined') | list | length > 0
+      _access_ssh_key_list: "{{ _access_ssh_user_keys }}"
+  when: _access_ssh_user_keys | length > 0

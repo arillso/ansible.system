@@ -12,8 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **access**: `access_ssh_subsystem_sftp` defaults to `internal-sftp` instead of
   the Debian-only `/usr/lib/openssh/sftp-server`, so sftp works on EL 8/9.
 - **access**: `sshd_config` now sets `UsePAM yes` (`access_ssh_use_pam`) and
-  includes `/etc/ssh/sshd_config.d/*.conf` at the end (`access_ssh_include_dir`,
-  empty string disables). The role's own settings keep precedence over drop-ins.
+  includes `/etc/ssh/sshd_config.d/*.conf` after its own settings (`access_ssh_include_dir`,
+  empty string disables). The role's own single-value settings keep precedence
+  over drop-ins; list options such as `AllowUsers` add up.
 - **access**: the argument spec entry point `ssh` is renamed to `ssh_server` to
   match `tasks/ssh_server.yml`.
 
@@ -26,7 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **access**: with `exclusive: true`, each key removed the keys written before
   it, so only the last key stayed in `authorized_keys`. All present keys of a
-  user with an exclusive key are now written in one call.
+  user with an exclusive key, from `access_users[].ssh_keys` and
+  `access_ssh_keys` together, are now written in one call. An exclusive key
+  with `state: absent` no longer makes the user exclusive.
 - **access**: the per-key `user` in `access_users[].ssh_keys` was ignored and
   the key went to the parent user.
 - **access**: `append` in `access_users` is now declared in the argument spec;

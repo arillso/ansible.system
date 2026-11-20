@@ -59,13 +59,14 @@ DenyGroups {{ access_ssh_deny_groups | join(' ') }}
 
 # Subsystems
 Subsystem sftp {{ access_ssh_subsystem_sftp }}
+{% if access_ssh_include_dir | length > 0 %}
+
+# Drop-ins (cloud-init, packages); single-value options set above take precedence.
+# Placed before the extra options so a Match block there does not scope them.
+Include {{ access_ssh_include_dir }}/*.conf
+{% endif %}
 
 # Additional configuration
 {% for key, value in access_ssh_config_extra.items() %}
 {{ key }} {{ value }}
 {% endfor %}
-{% if access_ssh_include_dir | length > 0 %}
-
-# Drop-ins (cloud-init, packages); options set above take precedence
-Include {{ access_ssh_include_dir }}/*.conf
-{% endif %}

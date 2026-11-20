@@ -8,6 +8,7 @@
       facts_enable_security_updates: false
       facts_enable_container_detection: true
       facts_enable_static_cache: true
+      facts_error_on_failure: true
 
   tasks:
       - name: Apply facts role

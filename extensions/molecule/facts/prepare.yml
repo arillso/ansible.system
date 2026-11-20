@@ -18,3 +18,24 @@
         ansible.builtin.dnf:
             update_cache: true
         when: ansible_facts['os_family'] == "RedHat"
+
+      # A stale cache file and an old deployment record: the role must
+      # delete the first and keep the second.
+      - name: Create the facts cache directory
+        ansible.builtin.file:
+            path: /var/cache/ansible-facts
+            state: directory
+            mode: "0700"
+
+      - name: Create stale cache fixtures
+        ansible.builtin.copy:
+            dest: "/var/cache/ansible-facts/{{ item }}"
+            content: "{}"
+            mode: "0600"
+        loop:
+            - stale.json
+            - last_run.json
+
+      - name: Age the cache fixtures by 30 days
+        ansible.builtin.command: touch -d "30 days ago" /var/cache/ansible-facts/stale.json /var/cache/ansible-facts/last_run.json
+        changed_when: true

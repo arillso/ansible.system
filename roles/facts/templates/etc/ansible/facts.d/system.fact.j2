@@ -6,13 +6,25 @@
 
 set -euo pipefail
 
+# Hard limit for the whole run (facts_script_execution_timeout)
+if [[ -z "${FACTS_TIMEOUT_WRAPPED:-}" ]]; then
+    export FACTS_TIMEOUT_WRAPPED=1
+    exec timeout {{ facts_script_execution_timeout | int }} "$0" "$@"
+fi
+
 # Universal configuration variables from Ansible (harmonized across all facts scripts)
 readonly SCRIPT_NAME="$(basename "${0}")"
 readonly TIMEOUT_SECONDS="{{ facts_timeout_default | default(5) }}"
 readonly CACHE_DIR="{{ facts_cache_dir | default('/var/cache/ansible-facts') }}"
 readonly CACHE_FILE="${CACHE_DIR}/system.json"
 readonly CACHE_TTL="{{ facts_cache_ttl_system | default(86400) }}"  # 24 hours cache TTL
-readonly DEBUG_ENABLED="{{ facts_debug_enabled | default(false) }}"
+readonly DEBUG_ENABLED="{{ facts_debug_enabled | bool | lower }}"
+{# Fields dropped from the output by the facts_system_collect_* switches #}
+{%- set _drop = [] %}
+{%- if not facts_system_collect_hardware | bool %}{% set _drop = _drop + ['processor_cores', 'memory_mb'] %}{% endif %}
+{%- if not facts_system_collect_network | bool %}{% set _drop = _drop + ['network_addresses', 'network_interfaces_count', 'ipv4', 'ipv6'] %}{% endif %}
+{%- if not facts_system_collect_virtualization | bool %}{% set _drop = _drop + ['virtualization_type'] %}{% endif %}
+readonly DROP_KEYS='{{ _drop | to_json }}'
 
 # Logging function for error handling
 log_error() {
@@ -94,11 +106,13 @@ safe_exec() {
     local cmd="$1"
     local default_value="${2:-unknown}"
 
-    if timeout "${TIMEOUT_SECONDS}" bash -c "${cmd}" 2>/dev/null; then
-        return 0
+    local output
+    # Print the default alone, not after partial output of a failed command.
+    # Always return 0: callers assign the output, and set -e would abort.
+    if output=$(timeout "${TIMEOUT_SECONDS}" bash -c "${cmd}" 2>/dev/null); then
+        echo "${output}"
     else
         echo "${default_value}"
-        return 1
     fi
 }
 
@@ -162,7 +176,8 @@ collect_system_facts() {
     platform=$(safe_exec "cat /etc/os-release | grep '^PRETTY_NAME=' | cut -d'=' -f2 | tr -d '\"'" "{{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}")
     architecture=$(safe_exec "uname -m" "{{ ansible_facts['architecture'] }}")
     kernel=$(safe_exec "uname -r" "{{ ansible_facts['kernel'] }}")
-    virtualization_type=$(safe_exec "systemd-detect-virt" "{{ ansible_facts['virtualization_type'] | default('unknown') }}")
+    # systemd-detect-virt prints "none" and exits 1 on bare metal: keep that answer
+    virtualization_type=$(safe_exec "systemd-detect-virt || [ \$? -eq 1 ]" "{{ ansible_facts['virtualization_type'] | default('unknown') }}")
     python_version=$(safe_exec "python3 --version 2>/dev/null | awk '{print \$2}'" "{{ ansible_facts['python_version'] | default('unknown') }}")
     managed_by="ansible"
     collection="{{ facts_collection_name }}"
@@ -224,46 +239,15 @@ collect_cloud_provider_info() {
     fi
 }
 
-# Collect security update information (semi-static - changes weekly/monthly)
-collect_security_updates() {
-{% if ansible_facts['os_family'] == "Debian" %}
-    if command -v apt &> /dev/null; then
-        local security_updates
-        security_updates=$(get_numeric_value "apt list --upgradable 2>/dev/null | grep -c security" "0")
-        jq -n --arg security_updates_available "${security_updates}" \
-            '{security_updates_available: ($security_updates_available | tonumber)}'
-    else
-        jq -n '{security_updates_available: 0}'
-    fi
-{% elif ansible_facts['os_family'] == "RedHat" %}
-    if command -v yum &> /dev/null; then
-        local security_updates
-        security_updates=$(get_numeric_value "yum check-update --security 2>/dev/null | grep -c 'Needed'" "0")
-        jq -n --arg security_updates_available "${security_updates}" \
-            '{security_updates_available: ($security_updates_available | tonumber)}'
-    elif command -v dnf &> /dev/null; then
-        local security_updates
-        security_updates=$(get_numeric_value "dnf check-update --security 2>/dev/null | grep -c 'Needed'" "0")
-        jq -n --arg security_updates_available "${security_updates}" \
-            '{security_updates_available: ($security_updates_available | tonumber)}'
-    else
-        jq -n '{security_updates_available: 0}'
-    fi
-{% else %}
-    jq -n '{security_updates_available: 0}'
-{% endif %}
-}
-
 # Collect all static facts
 collect_static_facts() {
-    local node_classification network_info timezone_info security_updates system_facts cloud_provider_info
+    local node_classification network_info timezone_info system_facts cloud_provider_info
     local iso_timestamp human_timestamp epoch_timestamp
 
     # Collect all static fact categories
     node_classification=$(collect_node_classification)
     network_info=$(collect_network_info)
     timezone_info=$(collect_timezone_info)
-    security_updates=$(collect_security_updates)
     system_facts=$(collect_system_facts)
     cloud_provider_info=$(collect_cloud_provider_info)
 
@@ -277,7 +261,6 @@ collect_static_facts() {
         --argjson node_classification "${node_classification}" \
         --argjson network_info "${network_info}" \
         --argjson timezone_info "${timezone_info}" \
-        --argjson security_updates "${security_updates}" \
         --argjson system_facts "${system_facts}" \
         --argjson cloud_provider_info "${cloud_provider_info}" \
         --arg iso_timestamp "${iso_timestamp}" \
@@ -287,7 +270,6 @@ collect_static_facts() {
         $node_classification +
         $network_info +
         $timezone_info +
-        $security_updates +
         $cloud_provider_info +
         ($system_facts | with_entries(select(.key | in({"platform": true, "architecture": true, "kernel": true, "virtualization_type": true, "python_version": true})))) +
         {
@@ -301,30 +283,47 @@ collect_static_facts() {
         '
 }
 
+# Storage and load change constantly: collected on every run, never cached
+collect_live_facts() {
+    local live='{}'
+{% if facts_system_collect_storage | bool %}
+    local root_fs size_kb used_kb avail_kb used_pct
+    root_fs=$(safe_exec "df -Pk / | awk 'NR==2{print \$2, \$3, \$4, \$5}'" "")
+    if read -r size_kb used_kb avail_kb used_pct <<<"${root_fs}" && [[ "${size_kb}" =~ ^[0-9]+$ ]]; then
+        live=$(jq -c --arg s "${size_kb}" --arg u "${used_kb}" --arg a "${avail_kb}" --arg p "${used_pct%\%}" \
+            '. + {storage: {root: {size_mb: ($s | tonumber / 1024 | floor), used_mb: ($u | tonumber / 1024 | floor),
+              available_mb: ($a | tonumber / 1024 | floor), used_percent: ($p | tonumber)}}}' <<<"${live}")
+    fi
+{% endif %}
+{% if facts_system_collect_performance | bool %}
+    local load1 load5 load15 uptime_s
+    if read -r load1 load5 load15 _ </proc/loadavg && uptime_s=$(cut -d. -f1 /proc/uptime); then
+        live=$(jq -c --arg l1 "${load1}" --arg l5 "${load5}" --arg l15 "${load15}" --arg up "${uptime_s}" \
+            '. + {performance: {load_average: {"1m": ($l1 | tonumber), "5m": ($l5 | tonumber), "15m": ($l15 | tonumber)},
+              uptime_seconds: ($up | tonumber)}}' <<<"${live}")
+    fi
+{% endif %}
+    echo "${live}"
+}
+
 # Main execution with caching logic
 main() {
-    # Check if static facts caching is disabled
-    if [[ "${facts_enable_static_cache:-true}" != "true" ]]; then
-        collect_static_facts
-        return 0
-    fi
+    local static_facts
 
-    # Try to use cached data first
-    if is_cache_valid "$CACHE_FILE" "$CACHE_TTL"; then
-        if read_cache "$CACHE_FILE"; then
-            return 0
+    # Static part: from the cache when enabled and fresh, otherwise collected
+    if [[ "{{ (facts_cache_enabled | bool and facts_enable_static_cache | bool) | lower }}" == "true" ]] \
+        && is_cache_valid "$CACHE_FILE" "$CACHE_TTL" && static_facts=$(read_cache "$CACHE_FILE"); then
+        :
+    else
+        static_facts=$(collect_static_facts)
+        if [[ "{{ (facts_cache_enabled | bool and facts_enable_static_cache | bool) | lower }}" == "true" ]]; then
+            write_cache "$CACHE_FILE" "$static_facts" || log_error "Cache write failed, but continuing with output"
         fi
     fi
 
-    # Cache miss or invalid - collect fresh static data
-    local static_facts
-    static_facts=$(collect_static_facts)
-
-    # Update cache with fresh data
-    write_cache "$CACHE_FILE" "$static_facts" || log_error "Cache write failed, but continuing with output"
-
-    # Always output the collected static facts
-    echo "$static_facts"
+    # Apply the facts_system_collect_* switches to cached and fresh data alike
+    jq --argjson drop "$DROP_KEYS" --argjson live "$(collect_live_facts)" \
+        'delpaths([$drop[] | [.]]) + $live' <<<"$static_facts"
     return 0
 }
 

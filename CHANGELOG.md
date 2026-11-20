@@ -28,6 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   repo's `ansible.cfg`; keep others via `ansible_otel_extra_callbacks`.
   OpenTelemetry now requires `ansible_install_method: pipx`.
 
+- **facts**: `last_run.json` is written by a role task instead of the
+  `last.fact` script, so it records the last deployment instead of the last
+  fact gather. The role removes `/etc/ansible/facts.d/last.fact`.
+- **facts**: container detection now actually runs (see Fixed), which adds the
+  runtime version and health probes to every fact gather on container hosts.
+- **facts**: `system.fact` no longer reports `security_updates_available`;
+  `security.fact` is the only source.
+
 ### Removed
 
 - **access**: `access_sudoers_validate` was never read. Use
@@ -37,6 +45,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **bitwarden_secrets**: `armv7l` support (no upstream release asset exists),
   `bitwarden_secrets_state: latest` (it was accepted but never installed
   anything) and the unused `bitwarden_secrets_debug_mode`.
+
+- **facts**: the handlers `facts: refresh`, `facts: restart ssh` and
+  `facts: update motd` and the variable `facts_ssh_service_names`. No task
+  notified them.
+- **facts**: variables that were never read and have no sensible
+  implementation: `facts_security_check_method`, `facts_logging_level`,
+  `facts_concurrent_execution` and `facts_cache_compression_enabled`.
 
 ### Fixed
 
@@ -102,6 +117,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   run as root. A mirrored `bitwarden_secrets_download_url` keeps working while
   the list is reachable; air-gapped hosts set `bitwarden_secrets_checksum` or
   skip the check with `bitwarden_secrets_checksum_url: ""`.
+
+- **facts**: boolean settings reached the fact scripts as `True`/`False` and
+  never matched `true`. Container detection and the container cache were
+  always off, and `facts_debug_enabled` had no effect.
+  `facts_enable_container_detection` now gates all runtime probes.
+- **facts**: `facts_enable_security_updates` and `facts_enable_static_cache`
+  were read as shell variables and had no effect.
+- **facts**: `facts_cache_enabled` was ignored by the cloud, security and system
+  facts. With `false` the shell MOTD now runs `security.fact` and `cloud.fact`
+  on every login, which adds their probe time to each SSH login.
+- **facts**: `facts_debug_enabled` had no effect on `run.fact`.
+- **shell**: the MOTD scripts read the facts cache from the hardcoded
+  `/var/cache/ansible-facts` and ignored `facts_cache_dir`.
+- **facts**: a timed-out container probe aborted `container.fact` without
+  output.
+- **facts**: `container.fact` reset the cache directory to `0755` on every
+  gather, and wrote its cache file as `0644`. Both are now `0700`/`0600`.
+- **facts**: the role created `/var/cache/ansible-facts` regardless of
+  `facts_cache_dir`.
+- **facts**: `facts_version` contained the whole `ansible-galaxy` output line
+  instead of the version. It is read from `MANIFEST.json` or `galaxy.yml`.
+- **facts**: a failed probe in `system.fact` and `security.fact` returned its
+  partial output plus the default, e.g. `virtualization_type: "none\n…"` on
+  bare metal.
+- **facts**: `cloud.fact` cached failed metadata lookups for the full
+  `facts_cache_ttl_cloud` and kept serving a cache written for another
+  provider. Failed lookups now expire after `facts_cache_default_ttl`.
+- **facts**: the local facts refresh had no tag and was skipped with
+  `--tags facts`.
+- **facts**: the README example used the nonexistent `facts_cache_ttl`.
+- **facts**: settings that were documented but never read now work:
+  `facts_cache_cleanup_enabled`/`facts_cache_cleanup_age_days` delete stale
+  cache files (not `last_run.json`), `facts_script_execution_timeout` limits
+  each fact script, `facts_error_on_failure` fails the role on a fact script
+  without valid JSON, and `facts_system_collect_*` switch sections of
+  `system.fact`. `storage` (root filesystem) and `performance` (load average,
+  uptime) are new fields, collected on every run instead of from the 24-hour
+  cache.
+- **facts**: `facts_container_collect_*` now switch the inventory section,
+  the health probes and new `volumes_count`/`networks_count` per docker/podman
+  engine. `facts_network_collect_*` and `facts_cache_ttl_network` drive the new
+  `network.fact` (interfaces, routes, DNS, firewall frontend).
+- **shell**: the MOTD never showed the external IP: `10-sysinfo` read the
+  nonexistent `.cloud_provider.generic.ipv4` from `system.json`. `cloud.fact`
+  now reports `public_ipv4` from the metadata service and the MOTD reads it
+  from `cloud.json`. `10-sysinfo` also aborted under `set -e` when
+  `system.json` was missing.
 
 ## [2.0.4] - 2026-11-04
 

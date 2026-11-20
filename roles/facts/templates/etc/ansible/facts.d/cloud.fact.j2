@@ -4,6 +4,12 @@
 
 set -euo pipefail
 
+# Hard limit for the whole run (facts_script_execution_timeout)
+if [[ -z "${FACTS_TIMEOUT_WRAPPED:-}" ]]; then
+    export FACTS_TIMEOUT_WRAPPED=1
+    exec timeout {{ facts_script_execution_timeout | int }} "$0" "$@"
+fi
+
 # Universal configuration variables from Ansible (harmonized across all facts scripts)
 readonly CACHE_DIR="{{ facts_cache_dir | default('/var/cache/ansible-facts') }}"
 readonly CACHE_FILE="${CACHE_DIR}/cloud.json"
@@ -11,7 +17,9 @@ readonly CACHE_TTL="{{ facts_cache_ttl_cloud | default(facts_cache_default_ttl) 
 readonly TIMEOUT="{{ facts_timeout_default | default(5) }}"
 readonly MAX_RETRIES="{{ facts_max_retries | default(1) }}"
 readonly METADATA_BASE_URL="{{ facts_cloud_metadata_base_url | default('http://169.254.169.254') }}"
-readonly DEBUG_ENABLED="{{ facts_debug_enabled | default(false) }}"
+readonly FAILED_LOOKUP_TTL="{{ [facts_cache_default_ttl | default(300) | int, facts_cache_ttl_cloud | default(3600) | int] | min }}"
+readonly CACHE_ENABLED="{{ facts_cache_enabled | bool | lower }}"
+readonly DEBUG_ENABLED="{{ facts_debug_enabled | bool | lower }}"
 {# Default provider from the gathered DMI facts; containers report the host's DMI, so they stay generic #}
 {%- set _vendor = ansible_facts['system_vendor'] | default('') | lower %}
 {%- set _bios = ansible_facts['bios_version'] | default('') | lower %}
@@ -48,6 +56,10 @@ log_warn() {
 is_cache_valid() {
     local cache_file="$1"
     local ttl="$2"
+
+    if [[ "$CACHE_ENABLED" != "true" ]]; then
+        return 1
+    fi
 
     if [[ ! -f "$cache_file" ]]; then
         log_debug "Cache file does not exist: $cache_file"
@@ -98,6 +110,10 @@ write_cache() {
     local cache_file="$1"
     local data="$2"
 
+    if [[ "$CACHE_ENABLED" != "true" ]]; then
+        return 0
+    fi
+
     if create_cache_dir; then
         echo "$data" > "$cache_file" 2>/dev/null || {
             log_warn "Cannot write cache file: $cache_file"
@@ -147,6 +163,7 @@ get_cloud_metadata() {
     local hostname="unknown"
     local instance_id="unknown"
     local region="unknown"
+    local public_ipv4=""
 
     case "$provider" in
         aws)
@@ -160,28 +177,33 @@ get_cloud_metadata() {
                 hostname=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/latest/meta-data/hostname" || echo "unknown")
                 instance_id=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/latest/meta-data/instance-id" || echo "unknown")
                 region=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/latest/meta-data/placement/region" || echo "unknown")
+                public_ipv4=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/latest/meta-data/public-ipv4" || echo "")
             fi
             ;;
         digitalocean)
             hostname=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/metadata/v1/hostname" || echo "unknown")
             instance_id=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/metadata/v1/id" || echo "unknown")
             region=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/metadata/v1/region" || echo "unknown")
+            public_ipv4=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/metadata/v1/interfaces/public/0/ipv4/address" || echo "")
             ;;
         hetzner)
             hostname=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/hetzner/v1/metadata/hostname" || echo "unknown")
             instance_id=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/hetzner/v1/metadata/instance-id" || echo "unknown")
             region=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/hetzner/v1/metadata/availability-zone" || echo "unknown")
+            public_ipv4=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/hetzner/v1/metadata/public-ipv4" || echo "")
             ;;
         vultr)
             hostname=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/v1/hostname" || echo "unknown")
             instance_id=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/v1/instanceid" || echo "unknown")
             region=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/v1/region" || echo "unknown")
+            public_ipv4=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/v1/interfaces/0/ipv4/address" || echo "")
             ;;
         gcp)
             METADATA_HEADERS=(-H "Metadata-Flavor: Google")
             hostname=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/computeMetadata/v1/instance/hostname" || echo "unknown")
             instance_id=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/computeMetadata/v1/instance/id" || echo "unknown")
             region=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/computeMetadata/v1/instance/zone" || echo "unknown")
+            public_ipv4=$(fetch_metadata_with_retry "${METADATA_BASE_URL}/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip" || echo "")
             ;;
         generic)
             hostname=$(hostname -f)
@@ -207,6 +229,7 @@ get_cloud_metadata() {
         --arg hostname "$hostname" \
         --arg instance_id "$instance_id" \
         --arg region "$region" \
+        --arg public_ipv4 "$public_ipv4" \
         --arg iso_timestamp "$iso_timestamp" \
         --arg human_timestamp "$human_timestamp" \
         --arg epoch_timestamp "$epoch_timestamp" \
@@ -216,6 +239,7 @@ get_cloud_metadata() {
             hostname: $hostname,
             instance_id: $instance_id,
             region: $region,
+            public_ipv4: $public_ipv4,
             metadata_available: ($metadata_available | test("true")),
             meta: {
                 collection_timestamp: $iso_timestamp,
@@ -251,8 +275,17 @@ main() {
         return 0
     fi
 
-    # Try to use cached data first
-    if is_cache_valid "$CACHE_FILE" "$CACHE_TTL"; then
+    # A failed lookup stays cached only for the short default TTL: an outage
+    # must not pin "unknown" for the whole TTL, yet an unreachable metadata
+    # service must not be re-probed on every fact gather and MOTD login
+    local ttl="$CACHE_TTL"
+    if [[ "$CACHE_ENABLED" == "true" ]] && ! jq -e '.metadata_available or .provider == "generic"' "$CACHE_FILE" >/dev/null 2>&1; then
+        ttl="$FAILED_LOOKUP_TTL"
+    fi
+
+    # Use the cache only if it was written for the current provider
+    if is_cache_valid "$CACHE_FILE" "$ttl" \
+        && jq -e --arg p "$CLOUD_PROVIDER" '.provider == $p' "$CACHE_FILE" >/dev/null 2>&1; then
         if read_cache "$CACHE_FILE"; then
             return 0
         fi
@@ -261,7 +294,6 @@ main() {
     local metadata
     metadata=$(get_cloud_metadata "$CLOUD_PROVIDER")
 
-    # Update cache with fresh data (but don't depend on success for output)
     write_cache "$CACHE_FILE" "$metadata" || log_error "Cache write failed, but continuing with output"
 
     # Always output the collected metadata

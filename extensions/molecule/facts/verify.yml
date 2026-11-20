@@ -15,3 +15,39 @@
             that:
                 - _facts_cache.stat.exists
                 - _facts_cache.stat.isdir
+                - _facts_cache.stat.mode == '0700'
+
+      - name: Stat the stale cache fixture
+        ansible.builtin.stat:
+            path: /var/cache/ansible-facts/stale.json
+        register: _facts_stale
+
+      - name: Stat the retired last.fact script
+        ansible.builtin.stat:
+            path: /etc/ansible/facts.d/last.fact
+        register: _facts_last_fact
+
+      # Converge disables security updates and enables container detection:
+      # both flags must reach the scripts as lowercase "true"/"false".
+      - name: Gather local facts
+        ansible.builtin.setup:
+            gather_subset:
+                - "!all"
+                - "!any"
+                - "local"
+
+      - name: Assert the fact scripts honour the role flags
+        ansible.builtin.assert:
+            that:
+                - not _facts_last_fact.stat.exists
+                - not _facts_stale.stat.exists
+                - ansible_local.system.storage.root.size_mb > 0
+                - ansible_local.system.performance.load_average['1m'] is number
+                - ansible_local.network.interfaces | length > 0
+                - ansible_local.network.dns.nameservers is sequence
+                - ansible_local.network.firewall.backend is string
+                - ansible_local.container.inventory is defined
+                - ansible_local.security.meta.check_method == 'disabled'
+                - ansible_local.container.cache.enabled
+                - ansible_local.run.last_run.playbook == 'facts'
+                - ansible_local.run.last_run.epoch > 0

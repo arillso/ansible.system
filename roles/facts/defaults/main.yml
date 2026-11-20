@@ -1,11 +1,14 @@
 ---
 # Core role identification
-facts_role_name: "{{ ansible_role_name }}"
-facts_collection_name: "{{ ansible_collection_name }}"
+facts_role_name: "{{ ansible_role_name | default('facts') }}"
+facts_collection_name: "{{ ansible_collection_name | default('arillso.system') }}"
+# Version of the collection on the controller: MANIFEST.json for an installed
+# collection, galaxy.yml for a source checkout, empty when neither is found.
 facts_version: >-
-    {{ lookup('pipe',
-       'ansible-galaxy collection list ' + ansible_collection_name +
-       ' | grep ' + ansible_collection_name + ' | awk "{print $2}"') }}
+    {{ (lookup('ansible.builtin.file', role_path ~ '/../../MANIFEST.json', errors='ignore')
+        | default('{}', true) | from_json).collection_info.version
+       | default((lookup('ansible.builtin.file', role_path ~ '/../../galaxy.yml', errors='ignore')
+        | default('{}', true) | from_yaml).version | default(''), true) }}
 
 # Node classification
 facts_node_type: "generic"
@@ -15,15 +18,8 @@ facts_system_owner: "ops-team"
 facts_system_tags:
     - "managed"
     - "facts"
+# Playbook name recorded in last_run.json at every role run
 facts_playbook_name: "facts"
-
-# SSH service configuration
-facts_ssh_service_names:
-    Debian: "ssh"
-    RedHat: "sshd"
-    Suse: "sshd"
-    Alpine: "openssh"
-    default: "sshd"
 
 # Feature flags for facts collection scripts
 facts_enable_cloud_metadata: true
@@ -46,6 +42,23 @@ facts_cache_ttl_security: 300
 facts_cache_ttl_system: 86400
 facts_cache_ttl_network: 1800
 
+# Delete files in facts_cache_dir older than this many days at every role run.
+# last_run.json is kept: it is the deployment record, not a cache.
+facts_cache_cleanup_enabled: true
+facts_cache_cleanup_age_days: 7
+
+# Hard limit in seconds for one run of a fact script (wrapped in `timeout`)
+facts_script_execution_timeout: 30
+# Fail the role when a fact script returns no valid JSON after the refresh
+facts_error_on_failure: false
+
+# Sections of system.fact; storage and performance are collected on every run
+facts_system_collect_hardware: true # processor_cores, memory_mb
+facts_system_collect_network: true # network_addresses, network_interfaces_count, ipv4, ipv6
+facts_system_collect_storage: true # storage.root: size, used, available, used_percent
+facts_system_collect_performance: true # performance: load_average, uptime_seconds
+facts_system_collect_virtualization: true # virtualization_type
+
 # Cloud metadata collection configuration
 facts_cloud_metadata_base_url: "http://169.254.169.254"
 facts_cloud_providers_enabled:
@@ -57,40 +70,25 @@ facts_cloud_providers_enabled:
     - "generic"
 
 # Security facts configuration
-facts_security_check_method: "auto"
 facts_security_command_timeout: 15
 
-# Debug and logging configuration
+# Debug output of the fact scripts on stderr
 facts_debug_enabled: false
-facts_logging_level: "info"
-facts_error_on_failure: false
 
-# Performance and reliability configuration
-facts_concurrent_execution: false
-facts_script_execution_timeout: 30
-facts_cache_compression_enabled: false
-facts_cache_cleanup_enabled: true
-facts_cache_cleanup_age_days: 7
-
-# System facts collection granularity
-facts_system_collect_hardware: true
-facts_system_collect_network: true
-facts_system_collect_storage: true
-facts_system_collect_performance: true
-facts_system_collect_virtualization: true
-
-# Network facts collection granularity
-facts_network_collect_interfaces: true
-facts_network_collect_routes: true
-facts_network_collect_dns: true
-facts_network_collect_firewall: true
-
-# Container runtime detection and facts configuration
+# Container runtime detection (all also require facts_enable_container_detection)
 facts_container_detect_docker: true
 facts_container_detect_podman: true
 facts_container_detect_kubernetes: true
 facts_container_detect_containerd: true
-facts_container_collect_inventory: true
-facts_container_collect_health: true
-facts_container_collect_volumes: true
-facts_container_collect_networks: true
+
+# Container facts details
+facts_container_collect_inventory: true # Ansible inventory groups (containers, k3s_*, docker, podman)
+facts_container_collect_health: true # health probes (docker info, kubectl get nodes, ...)
+facts_container_collect_volumes: true # volumes_count of a running docker/podman engine
+facts_container_collect_networks: true # networks_count of a running docker/podman engine
+
+# Sections of network.fact
+facts_network_collect_interfaces: true # interfaces with state, MAC, IPv4/IPv6
+facts_network_collect_routes: true # default gateways, route counts
+facts_network_collect_dns: true # nameservers and search domains
+facts_network_collect_firewall: true # active firewall frontend (ufw, firewalld, nftables, iptables)

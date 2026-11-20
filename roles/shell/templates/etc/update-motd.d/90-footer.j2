@@ -7,9 +7,9 @@
 set -euo pipefail
 
 # Configuration
-readonly SYSTEM_CACHE_FILE="/var/cache/ansible-facts/system.json"
-readonly RUN_CACHE_FILE="/var/cache/ansible-facts/last_run.json"
-readonly CLOUD_CACHE_FILE="/var/cache/ansible-facts/cloud.json"
+readonly SYSTEM_CACHE_FILE="{% endraw %}{{ facts_cache_dir | default('/var/cache/ansible-facts') }}{% raw %}/system.json"
+readonly RUN_CACHE_FILE="{% endraw %}{{ facts_cache_dir | default('/var/cache/ansible-facts') }}{% raw %}/last_run.json"
+readonly CLOUD_CACHE_FILE="{% endraw %}{{ facts_cache_dir | default('/var/cache/ansible-facts') }}{% raw %}/cloud.json"
 readonly CACHE_MAX_AGE=86400
 readonly DEBUG_MODE="${MOTD_DEBUG:-0}"
 
@@ -100,7 +100,7 @@ get_system_data() {
     echo "$system_json"
 }
 
-# Get run data (no refresh: last_run.json is written by last.fact, not run.fact)
+# Get run data (no refresh: last_run.json is written by the facts role, not run.fact)
 get_run_data() {
     debug_log "Getting run data"
     # The deployment timestamp is historical, not cache freshness: no age limit
@@ -133,7 +133,7 @@ get_cloud_data() {
 
 # Get security updates from dedicated fact with short cache
 get_security_updates_from_fact() {
-    local security_cache_file="/var/cache/ansible-facts/security.json"
+    local security_cache_file="{% endraw %}{{ facts_cache_dir | default('/var/cache/ansible-facts') }}{% raw %}/security.json"
     local security_fact_script="/etc/ansible/facts.d/security.fact"
 
     # Try to get data from fact script

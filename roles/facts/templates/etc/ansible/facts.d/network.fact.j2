@@ -1,0 +1,150 @@
+{{ "#!/bin/bash" }}
+# Network facts: interfaces, routes, DNS and firewall backend
+# Sections are switched by facts_network_collect_*; output is cached for
+# facts_cache_ttl_network seconds.
+
+set -euo pipefail
+
+# Hard limit for the whole run (facts_script_execution_timeout)
+if [[ -z "${FACTS_TIMEOUT_WRAPPED:-}" ]]; then
+    export FACTS_TIMEOUT_WRAPPED=1
+    exec timeout {{ facts_script_execution_timeout | int }} "$0" "$@"
+fi
+
+readonly CACHE_DIR="{{ facts_cache_dir | default('/var/cache/ansible-facts') }}"
+readonly CACHE_FILE="${CACHE_DIR}/network.json"
+readonly CACHE_TTL="{{ facts_cache_ttl_network | default(1800) }}"
+readonly CACHE_ENABLED="{{ facts_cache_enabled | bool | lower }}"
+readonly TIMEOUT_SECONDS="{{ facts_timeout_default | default(5) }}"
+readonly DEBUG_ENABLED="{{ facts_debug_enabled | bool | lower }}"
+
+log_debug() {
+    if [[ "${DEBUG_ENABLED}" == "true" ]]; then
+        echo "[DEBUG] $*" >&2
+    fi
+}
+
+log_error() {
+    echo "[ERROR] $*" >&2
+}
+
+# Print the command output, or the default when it fails. Always returns 0.
+safe_exec() {
+    local output
+    if output=$(timeout "${TIMEOUT_SECONDS}" bash -c "$1" 2>/dev/null); then
+        echo "${output}"
+    else
+        echo "${2:-}"
+    fi
+}
+
+is_cache_valid() {
+    [[ "${CACHE_ENABLED}" == "true" && -f "${CACHE_FILE}" ]] || return 1
+    (( $(date +%s) - $(stat -c %Y "${CACHE_FILE}" 2>/dev/null || echo 0) <= CACHE_TTL )) || return 1
+    jq -e . "${CACHE_FILE}" >/dev/null 2>&1
+}
+
+write_cache() {
+    [[ "${CACHE_ENABLED}" == "true" ]] || return 0
+    if [[ ! -d "${CACHE_DIR}" ]]; then
+        mkdir -p "${CACHE_DIR}" && chmod 700 "${CACHE_DIR}"
+    fi
+    (umask 077 && echo "$1" > "${CACHE_FILE}")
+}
+
+# Non-loopback interfaces with state, MAC and addresses
+collect_interfaces() {
+    safe_exec "ip -j addr show" "[]" | jq -c '{interfaces: [.[] | select(.ifname != "lo") | {
+        name: .ifname,
+        state: .operstate,
+        mac: (.address // ""),
+        ipv4: [.addr_info[]? | select(.family == "inet") | "\(.local)/\(.prefixlen)"],
+        ipv6: [.addr_info[]? | select(.family == "inet6" and .scope == "global") | "\(.local)/\(.prefixlen)"]
+    }]}'
+}
+
+# Default gateways and the size of the routing table
+collect_routes() {
+    local v4 v6
+    v4=$(safe_exec "ip -j -4 route show" "[]")
+    v6=$(safe_exec "ip -j -6 route show" "[]")
+    jq -cn --argjson v4 "${v4}" --argjson v6 "${v6}" '{routes: {
+        default_ipv4: ([$v4[] | select(.dst == "default") | {gateway: (.gateway // ""), interface: .dev}] | first // null),
+        default_ipv6: ([$v6[] | select(.dst == "default") | {gateway: (.gateway // ""), interface: .dev}] | first // null),
+        count_ipv4: ($v4 | length),
+        count_ipv6: ($v6 | length)
+    }}'
+}
+
+# Upstream resolvers; behind the systemd-resolved stub the real list is elsewhere
+collect_dns() {
+    local resolv="/etc/resolv.conf"
+    if grep -q '^nameserver 127\.0\.0\.53' "${resolv}" 2>/dev/null \
+        && [[ -r /run/systemd/resolve/resolv.conf ]]; then
+        resolv="/run/systemd/resolve/resolv.conf"
+    fi
+    awk '/^nameserver/ {ns[++n] = $2} /^(search|domain)/ {for (i = 2; i <= NF; i++) s[++m] = $i}
+         END {for (i = 1; i <= n; i++) print "ns " ns[i]; for (i = 1; i <= m; i++) print "search " s[i]}' \
+        "${resolv}" 2>/dev/null \
+        | jq -Rcn '[inputs | split(" ")] | {dns: {
+            nameservers: [.[] | select(.[0] == "ns") | .[1]],
+            search: [.[] | select(.[0] == "search") | .[1]] | unique
+        }}'
+}
+
+# Active firewall frontend; nftables counts rules when nothing else manages them
+collect_firewall() {
+    local backend="none" active="false"
+    if command -v ufw >/dev/null 2>&1 && safe_exec "ufw status" "" | grep -q '^Status: active'; then
+        backend="ufw"; active="true"
+    elif command -v firewall-cmd >/dev/null 2>&1 && [[ "$(safe_exec 'firewall-cmd --state' '')" == "running" ]]; then
+        backend="firewalld"; active="true"
+    elif command -v nft >/dev/null 2>&1; then
+        backend="nftables"
+        if (( $(safe_exec "nft list ruleset | grep -c -E '^\s+(ip|ip6|tcp|udp|iif|oif|ct|counter|drop|accept|reject)'" "0") > 0 )); then
+            active="true"
+        fi
+    elif command -v iptables >/dev/null 2>&1; then
+        backend="iptables"
+        if (( $(safe_exec "iptables -S | grep -c -v -E '^-P'" "0") > 0 )); then
+            active="true"
+        fi
+    fi
+    jq -cn --arg backend "${backend}" --arg active "${active}" \
+        '{firewall: {backend: $backend, active: ($active == "true")}}'
+}
+
+collect_network_facts() {
+    local parts=()
+{% if facts_network_collect_interfaces | bool %}
+    parts+=("$(collect_interfaces)")
+{% endif %}
+{% if facts_network_collect_routes | bool %}
+    parts+=("$(collect_routes)")
+{% endif %}
+{% if facts_network_collect_dns | bool %}
+    parts+=("$(collect_dns)")
+{% endif %}
+{% if facts_network_collect_firewall | bool %}
+    parts+=("$(collect_firewall)")
+{% endif %}
+    printf '%s\n' "${parts[@]+"${parts[@]}"}" | jq -cs \
+        --arg ts "$(date -Iseconds)" --arg epoch "$(date +%s)" \
+        'add // {} | . + {meta: {collection_timestamp: $ts, collection_timestamp_epoch: ($epoch | tonumber),
+            cache_used: false, script_type: "network", managed_by: "ansible"}}'
+}
+
+main() {
+    if is_cache_valid; then
+        jq '.meta.cache_used = true' "${CACHE_FILE}"
+        return 0
+    fi
+
+    local facts
+    facts=$(collect_network_facts)
+    write_cache "${facts}" || log_error "Cache write failed, but continuing with output"
+    log_debug "Collected network facts"
+    echo "${facts}"
+}
+
+main "$@"

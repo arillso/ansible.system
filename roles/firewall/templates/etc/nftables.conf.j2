@@ -9,13 +9,13 @@
    iptables-nft, kube-proxy, manual entries). `_firewall_reset_tables` holds
    the current tables plus those of the previous config, so a table removed
    from the YAML is deleted too. Deleting instead of flushing also drops
-   removed chains and sets and allows changing a chain's type or hook. The
-   empty `table { }` stub makes `delete table` safe on a fresh host. The whole
-   file is one nft transaction, so the old ruleset stays until the new one
-   loads. #}
+   removed chains and sets and allows changing a chain's type or hook.
+   `add table` makes `delete table` safe on a fresh host; it must not be
+   written as `table ... {`, or the next run would read it back as a managed
+   table and keep deleting it forever. The whole file is one nft
+   transaction, so the old ruleset stays until the new one loads. #}
 {% for table in _firewall_reset_tables | default([]) %}
-table {{ table }} {
-}
+add table {{ table }}
 delete table {{ table }}
 {% endfor %}
 

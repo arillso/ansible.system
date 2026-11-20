@@ -7,6 +7,8 @@ Hierarchical merge: firewall_tables → firewall_global → firewall_group → f
 import json
 import os
 
+from ansible.module_utils.parsing.convert_bool import boolean
+
 
 class FilterModule:
     """Ansible filter plugins for nftables YAML structure processing"""
@@ -66,7 +68,9 @@ class FilterModule:
                     chain.setdefault("priority", 0)
                     chain.setdefault("policy", "accept")
                 chain["rules"].sort(
-                    key=lambda rule: bool(isinstance(rule, dict) and rule.get("final"))
+                    key=lambda rule: (
+                        isinstance(rule, dict) and boolean(rule.get("final", False), strict=False)
+                    )
                 )
             # Regular chains first, so jump/goto targets precede their callers.
             table["chains"].sort(key=lambda chain: "hook" in chain)
@@ -86,6 +90,7 @@ class FilterModule:
         for chain in override["chains"]:
             if chain["name"] not in chains:
                 base["chains"].append(chain)
+                chains[chain["name"]] = chain
                 continue
             target = chains[chain["name"]]
             for key in self.BASE_CHAIN_KEYS:
@@ -124,9 +129,11 @@ class FilterModule:
                 self._debug_print(f"WARNING: {config_name}[{i}].table is not a dict: {type(table)}")
                 continue
 
-            if "name" not in table or "family" not in table:
-                self._debug_print(f"WARNING: {config_name}[{i}].table missing name/family")
+            if "name" not in table:
+                self._debug_print(f"WARNING: {config_name}[{i}].table missing name")
                 continue
+            # Same default as the argument spec, which does not write it back.
+            table = {**table, "family": table.get("family") or "inet"}
 
             # Normalize chains
             chains = table.get("chains") or []
@@ -179,7 +186,8 @@ class FilterModule:
                 "table": {
                     "name": table["name"],
                     "family": table["family"],
-                    "replace": bool(table.get("replace", False)),
+                    # Inventory values can be strings such as "false".
+                    "replace": boolean(table.get("replace", False), strict=False),
                     "sets": normalized_sets,
                     "chains": normalized_chains,
                 }

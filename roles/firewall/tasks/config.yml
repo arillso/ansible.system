@@ -11,6 +11,14 @@
               'firewall_host': firewall_host | default([])
           } | arillso.system.to_nftables_hierarchy }}
 
+- name: Collect the tables this config manages
+  ansible.builtin.set_fact:
+      # "family name" per table; service.yml reuses it for ExecStop.
+      _firewall_table_ids: >-
+          {{ _firewall_tables | map(attribute='table.family')
+             | zip(_firewall_tables | map(attribute='table.name'))
+             | map('join', ' ') | list }}
+
 # The previous config names the tables the last run managed. Tables no
 # longer in the YAML are deleted by the new config instead of staying in
 # the kernel.
@@ -21,15 +29,14 @@
   failed_when: false
   become: true
 
+# Only `table ... {` definitions match; the template writes its reset lines
+# as `add table`, so a removed table is deleted once and then dropped.
 - name: Collect tables to reset
   ansible.builtin.set_fact:
       _firewall_reset_tables: >-
-          {{ ((_firewall_previous_conf.content | default('') | b64decode
-               | regex_findall('(?m)^table ([^ ]+ [^ ]+) [{]'))
-              + (_firewall_tables | default([]) | map(attribute='table.family')
-                 | zip(_firewall_tables | default([]) | map(attribute='table.name'))
-                 | map('join', ' ') | list))
-             | unique }}
+          {{ (_firewall_previous_conf.content | default('') | b64decode
+              | regex_findall('(?m)^table ([^ ]+ [^ ]+) [{]'))
+             | union(_firewall_table_ids) }}
 
 # Validate before install: a broken file would otherwise replace a working
 # one and fail to load.

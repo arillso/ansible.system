@@ -23,10 +23,7 @@
       # which would otherwise run before ours (EL's ExecReload flushes the
       # whole ruleset). The "-" prefix ignores a table that does not exist.
       _firewall_execstop_cmds: >-
-          {{ [''] + (_firewall_tables | default([])
-                     | map(attribute='table.family')
-                     | zip(_firewall_tables | default([]) | map(attribute='table.name'))
-                     | map('join', ' ')
+          {{ [''] + (_firewall_table_ids
                      | map('regex_replace', '^', '-/usr/sbin/nft delete table ')
                      | list) }}
       # Unit dict is built from a static base plus the Tailscale

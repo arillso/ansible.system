@@ -233,6 +233,28 @@ class TestMergeNftablesStructure:
             {"name": "trusted", "type": "ipv4_addr", "flags": [], "elements": ["192.0.2.1"]}
         ]
 
+    def test_string_false_does_not_replace_or_finalize(self, fm):
+        cfg = self._base()
+        cfg["firewall_tables"][0]["table"]["chains"][0]["rules"] = [
+            {"action": "drop", "final": "false"},
+            {"action": "accept"},
+        ]
+        cfg["firewall_host"] = [
+            {"table": {"name": "filter", "family": "inet", "replace": "false", "chains": []}},
+        ]
+        rules = fm.merge_nftables_structure(cfg)[0]["table"]["chains"][0]["rules"]
+        assert [r["action"] for r in rules] == ["drop", "accept"]
+
+    def test_new_chain_twice_in_one_table_is_merged(self, fm):
+        cfg = self._base()
+        web = {"name": "web", "rules": [{"action": "accept"}]}
+        cfg["firewall_host"] = [
+            {"table": {"name": "filter", "family": "inet", "chains": [web, web]}},
+        ]
+        chains = fm.merge_nftables_structure(cfg)[0]["table"]["chains"]
+        assert [c["name"] for c in chains] == ["input", "web"]
+        assert len(chains[1]["rules"]) == 2
+
     def test_invalid_input_returns_empty(self, fm):
         assert fm.merge_nftables_structure("nope") == []
         assert fm.merge_nftables_structure(None) == []
@@ -246,14 +268,28 @@ class TestMergeNftablesStructure:
         }
         assert fm.merge_nftables_structure(cfg) == []
 
-    def test_missing_name_or_family_is_skipped(self, fm):
+    def test_missing_name_is_skipped(self, fm):
         cfg = {
-            "firewall_tables": [{"table": {"name": "filter"}}],
+            "firewall_tables": [{"table": {"family": "inet"}}],
             "firewall_global": [],
             "firewall_group": [],
             "firewall_host": [],
         }
         assert fm.merge_nftables_structure(cfg) == []
+
+    def test_missing_family_defaults_to_inet(self, fm):
+        cfg = self._base()
+        cfg["firewall_host"] = [
+            {
+                "table": {
+                    "name": "filter",
+                    "chains": [{"name": "input", "rules": [{"tcp_dport": 443}]}],
+                }
+            },
+        ]
+        result = fm.merge_nftables_structure(cfg)
+        assert len(result) == 1
+        assert result[0]["table"]["chains"][0]["rules"][-1] == {"tcp_dport": 443}
 
 
 class TestFilterModuleRegistration:

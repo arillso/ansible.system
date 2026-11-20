@@ -1,0 +1,15 @@
+---
+# Included by main.yml: once before and once after a reboot.
+
+- name: Wait for cloud-init to finish
+  ansible.builtin.command: cloud-init status --wait
+  register: _ready_cloud_init
+  changed_when: false
+  # rc 2: finished with recoverable errors (e.g. deprecated keys). A missing
+  # binary also yields rc 2, but without "status:" in stdout. An unreachable
+  # result skips failed_when, so `rc` is always set when it is evaluated.
+  failed_when: >-
+      _ready_cloud_init.rc not in [0, 2]
+      or 'status:' not in _ready_cloud_init.stdout
+  check_mode: false
+  timeout: "{{ ready_cloud_init_timeout }}"

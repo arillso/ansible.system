@@ -31,7 +31,9 @@ argument_specs:
                 required: false
                 default: 900
                 description: |
-                    Maximum time in seconds for `cloud-init status --wait`.
+                    Maximum time in seconds for each `cloud-init status --wait`
+                    (applies again after a reboot, so the worst case is twice
+                    this plus the connection waits).
                     Skipped on hosts without /run/cloud-init.
 
             ready_gather_facts:

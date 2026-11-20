@@ -16,41 +16,28 @@
   block:
       # A reboot during the cloud-init run (e.g. package_reboot_if_required)
       # drops the connection. That is an unreachable result, which neither
-      # `rescue` nor `until`/`retries` catch, so it is ignored here and the
-      # wait is repeated once the host is back. An unreachable result skips
-      # failed_when, so `rc` is always set when it is evaluated.
+      # `rescue` nor `until`/`retries` catch, so the first wait ignores it and
+      # the wait is repeated once the host is back. A skipped include leaves
+      # `_ready_cloud_init` untouched, unlike a skipped task with `register`.
       # ponytail: one reboot during the run; a `power_state` reboot after
       # cloud-init reports done is not detected (would need a boot_id check).
-      - name: Wait for cloud-init to finish
-        ansible.builtin.command: cloud-init status --wait
-        register: _ready_cloud_init
-        changed_when: false
-        # rc 2: finished with recoverable errors (e.g. deprecated keys). A
-        # missing binary also yields rc 2, but without "status:" in stdout.
-        failed_when: >-
-            _ready_cloud_init.rc not in [0, 2]
-            or 'status:' not in _ready_cloud_init.stdout
-        ignore_unreachable: true
-        check_mode: false
-        timeout: "{{ ready_cloud_init_timeout }}"
+      - name: Wait for cloud-init
+        ansible.builtin.include_tasks:
+            file: cloud_init.yml
+            apply:
+                ignore_unreachable: true
 
       - name: Wait for the connection after a reboot
         ansible.builtin.wait_for_connection:
             delay: "{{ ready_ssh_delay }}"
             timeout: "{{ ready_ssh_timeout }}"
-        # Skipped in --check otherwise, while the next task still runs.
+        # Skipped in --check otherwise, while the next wait still runs.
         check_mode: false
         when: _ready_cloud_init is unreachable
 
-      - name: Wait for cloud-init to finish after a reboot
-        ansible.builtin.command: cloud-init status --wait
-        register: _ready_cloud_init_after_reboot
-        changed_when: false
-        failed_when: >-
-            _ready_cloud_init_after_reboot.rc not in [0, 2]
-            or 'status:' not in _ready_cloud_init_after_reboot.stdout
-        check_mode: false
-        timeout: "{{ ready_cloud_init_timeout }}"
+      - name: Wait for cloud-init after a reboot
+        ansible.builtin.include_tasks:
+            file: cloud_init.yml
         when: _ready_cloud_init is unreachable
 
 - name: Gather system facts

@@ -33,13 +33,13 @@ For detailed documentation including all variables, examples, and usage instruct
 
 ## Variables
 
-| Variable                   | Default | Description                                       |
-| -------------------------- | ------- | ------------------------------------------------- |
-| `ready_ssh_delay`          | `10`    | Delay before each connection wait (seconds)       |
-| `ready_ssh_timeout`        | `300`   | Max time to wait for a connection (seconds)       |
-| `ready_cloud_init_timeout` | `900`   | Max time for `cloud-init status --wait` (seconds) |
-| `ready_gather_facts`       | `true`  | Gather facts once the system is ready             |
-| `ready_gather_subset`      | `[]`    | Fact subset to gather                             |
+| Variable                   | Default | Description                                           |
+| -------------------------- | ------- | ----------------------------------------------------- |
+| `ready_ssh_delay`          | `10`    | Delay before each connection wait (seconds)           |
+| `ready_ssh_timeout`        | `300`   | Max time to wait for a connection (seconds)           |
+| `ready_cloud_init_timeout` | `900`   | Max time per `cloud-init status --wait` run (seconds) |
+| `ready_gather_facts`       | `true`  | Gather facts once the system is ready                 |
+| `ready_gather_subset`      | `[]`    | Fact subset to gather                                 |
 
 See [`defaults/main.yml`](defaults/main.yml) for the complete list and [the guide](https://guide.arillso.io/collections/arillso/system/ready_role.html) for detailed docs.
 

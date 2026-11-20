@@ -80,19 +80,21 @@
           --force
   when: ansible_install_roles | bool
 
-- name: Deploy checkout sync script
-  ansible.builtin.template:
-      src: usr/local/sbin/ansible-sync.j2
-      dest: "/usr/local/sbin/{{ ansible_service_name }}-sync"
-      mode: "0750"
-      owner: root
-      group: root
-  become: true
-
+# ansible-pull installs no requirements, so the checkout has to exist before
+# the galaxy installs. No shell: systemd passes each argument as is.
+# "-" on clone: fails harmlessly once the repo exists. "-" on fetch: a git
+# host outage keeps the existing checkout. checkout has no "-", so a run
+# without any checkout stops here. core.sshCommand mirrors ansible-pull
+# --accept-host-key for these two commands only.
+# ponytail: ansible_branch must be a branch or tag here, not a commit SHA.
 - name: Build ExecStartPre commands
   ansible.builtin.set_fact:
       ansible_role_exec_start_pre: >-
-          {{ ['/usr/local/sbin/' + ansible_service_name + '-sync'] +
+          {{ ['-/usr/bin/git -c "core.sshCommand=ssh -o StrictHostKeyChecking=accept-new" clone --no-checkout ' +
+              ansible_repo + ' ' + ansible_checkout_dir + '/repo',
+              '-/usr/bin/git -c "core.sshCommand=ssh -o StrictHostKeyChecking=accept-new" -C ' +
+              ansible_checkout_dir + '/repo fetch origin ' + ansible_branch,
+              '/usr/bin/git -C ' + ansible_checkout_dir + '/repo checkout --force --detach FETCH_HEAD'] +
              (ansible_install_collections | bool | ternary([ansible_role_galaxy_collections_cmd], [])) +
              (ansible_install_roles | bool | ternary([ansible_role_galaxy_roles_cmd], [])) }}
 

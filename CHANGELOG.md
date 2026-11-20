@@ -64,8 +64,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ansible_otel_workload_type` (now defaults to `ansible`) and never enabled
   the `community.general.opentelemetry` callback.
 - **ansible**: the service now clones or updates the checkout (fetch plus
-  forced checkout, via `/usr/local/sbin/<service>-sync`) before the galaxy
-  installs; a failed fetch keeps the existing checkout. Playbook mode never
+  forced checkout) before the galaxy installs; a failed fetch keeps the
+  existing checkout. Playbook mode never
   cloned the repo, and pull mode installed requirements from the previous
   revision.
 - **ansible**: an empty `ansible_environment` rendered an omit placeholder as

@@ -36,6 +36,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **zram**: a changed `/etc/default/zramswap` restarts `zramswap` only while the
   zram swap is empty; otherwise the change waits for the next reboot and the
   role reports it on every run until then.
+- **systemd**: unit file changes trigger an immediate `daemon-reload` at the end
+  of `unit.yml` instead of a handler, so services managed in the same run start
+  with the new definition.
+- **systemd**: `systemd_validate_units` now runs `systemd-analyze verify` on each
+  unit with a known suffix before it is written; drop-ins are not verified.
+- **systemd**: `systemd_backup_units` defaults to `false`, because backups pile
+  up in the unit directories.
+- **systemd**: a unit with `state: absent` is stopped and disabled before its
+  file is removed.
 - **access**: `access_ssh_subsystem_sftp` defaults to `internal-sftp` instead of
   the Debian-only `/usr/lib/openssh/sftp-server`, so sftp works on EL 8/9.
 - **access**: `sshd_config` now sets `UsePAM yes` (`access_ssh_use_pam`) and
@@ -140,6 +149,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `shell_motd_show_network` and `shell_motd_show_cloud_info`. The role removes
   the old cron job and files from existing hosts.
 
+- **systemd**: unused `systemd_debug_mode` variable.
 - **access**: `access_sudoers_validate` was never read. Use
   `access_validate_sudoers`.
 - **ansible**: unused `ansible_debug_mode`, internal arch vars and the
@@ -252,6 +262,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **shell**: `shell_motd_show_system_info` and `shell_motd_show_footer` now
   enable or remove `10-sysinfo` and `90-footer`.
 
+
+- **systemd**: the journald restart handler escalates with `become`, honours
+  `systemd_journald_restart_on_change` given as a string and no longer restarts
+  journald a second time when `systemd_journald_service_state` is `restarted`.
+- **systemd**: unit items must set exactly one of `content` or `unit`, and
+  structured sections must be mappings; a `null` option value renders as a
+  reset line (`ExecStart=`) instead of being dropped.
+- **systemd**: local template and copy tasks no longer retry on failure.
 - **access**: with `exclusive: true`, each key removed the keys written before
   it, so only the last key stayed in `authorized_keys`. All present keys of a
   user with an exclusive key, from `access_users[].ssh_keys` and

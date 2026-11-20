@@ -216,13 +216,13 @@ argument_specs:
 
             # Validation
             systemd_validate_units:
-                description: "Validate unit files before deploying"
+                description: "Run systemd-analyze verify on units with a known unit suffix before writing them"
                 type: bool
                 default: true
             systemd_backup_units:
-                description: "Create backups before modifying unit files"
+                description: "Keep a backup copy next to a changed unit or journald.conf"
                 type: bool
-                default: true
+                default: false
 
             # Systemd Daemon Configuration
             systemd_daemon_reload:
@@ -239,12 +239,6 @@ argument_specs:
                 description: "Delay in seconds between retry attempts"
                 type: int
                 default: 5
-
-            # Debug Configuration
-            systemd_debug_mode:
-                description: "Enable debug output for troubleshooting"
-                type: bool
-                default: false
 
     service:
         short_description: "Service management entry point"
@@ -324,13 +318,13 @@ argument_specs:
                 type: str
                 default: "0755"
             systemd_validate_units:
-                description: "Validate unit files before deploying"
+                description: "Run systemd-analyze verify on units with a known unit suffix before writing them"
                 type: bool
                 default: true
             systemd_backup_units:
-                description: "Create backups before modifying unit files"
+                description: "Keep a backup copy next to a changed unit or journald.conf"
                 type: bool
-                default: true
+                default: false
 
     journald:
         short_description: "Journald configuration entry point"

@@ -1,7 +1,8 @@
 ---
 # Internal variables for systemd role
 
-# Common systemd unit types
+# Suffixes systemd-analyze verify accepts as standalone units. Anything else
+# (e.g. a drop-in override.conf) is deployed without validation.
 _systemd_unit_types:
     - service
     - socket
@@ -14,3 +15,12 @@ _systemd_unit_types:
     - timer
     - slice
     - scope
+
+_systemd_unit_validate: >-
+    {{ systemd_validate_units | bool
+       and _systemd_unit_item.name.split('.') | last in _systemd_unit_types }}
+
+# verify needs the real unit name, so copy the temp file to <tmpdir>/<name> first.
+_systemd_validate_cmd: >-
+    /bin/sh -c 'd=$(mktemp -d) && cp "$1" "$d/$2" && systemd-analyze verify "$d/$2"; r=$?; rm -rf "$d"; exit $r'
+    _ %s {{ _systemd_unit_item.name }}

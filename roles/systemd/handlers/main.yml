@@ -1,12 +1,11 @@
 ---
-- name: Reload systemd manager configuration after unit file changes
-  ansible.builtin.systemd:
-      daemon_reload: true
-  listen: "systemd: daemon-reload"
-
 - name: Restart systemd-journald to apply journald.conf changes
   ansible.builtin.systemd:
       name: systemd-journald
       state: restarted
-  when: systemd_journald_restart_on_change | default(true)
+  become: true
+  when:
+      - systemd_journald_restart_on_change | bool
+      # journald.yml restarts it already in that case
+      - systemd_journald_service_state != 'restarted'
   listen: "systemd: restart journald"

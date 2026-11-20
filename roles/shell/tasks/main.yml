@@ -1,16 +1,12 @@
 ---
-- name: "Create shell cache and working directories"
+- name: "Create profile.d directory"
   ansible.builtin.file:
-      path: "{{ item }}"
+      path: /etc/profile.d
       state: directory
       mode: "0755"
       owner: root
       group: root
   become: true
-  loop:
-      - "{{ shell_status_cache_dir }}"
-      - /usr/local/bin
-      - /etc/profile.d
   tags:
       - shell
       - directories

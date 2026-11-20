@@ -1,0 +1,18 @@
+{#- Debian builds the MOTD from /etc/update-motd.d, so /etc/motd stays empty
+    there. Other families have no update-motd and get a static banner. -#}
+{% if ansible_facts['os_family'] != 'Debian' %}
+================================================================================
+  {{ shell_company_name }}
+================================================================================
+
+AUTHORIZED ACCESS ONLY - All activities are monitored
+
+Host        : {{ ansible_facts['fqdn'] | default(inventory_hostname) }}
+Environment : {{ shell_environment }}
+Node Type   : {{ shell_node_type | default('generic') }}
+{% if shell_motd_show_footer %}
+Contact     : {{ shell_company_contact }}
+Support     : {{ shell_company_support_url }}
+{% endif %}
+
+{% endif %}

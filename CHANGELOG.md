@@ -133,6 +133,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **logging**: the unused handler `logging: reload rsyslog` and the unused
   internal variable `_logging_logrotate_default_options`.
+- **shell**: the `system-status-precompute` cron job and `motd-utils.sh`, whose
+  output nothing read, plus the variables `shell_enable_background_processing`,
+  `shell_status_precompute_interval`, `shell_status_cache_ttl`,
+  `shell_status_cache_dir`, `shell_motd_show_performance`,
+  `shell_motd_show_network` and `shell_motd_show_cloud_info`. The role removes
+  the old cron job and files from existing hosts.
+
 - **access**: `access_sudoers_validate` was never read. Use
   `access_validate_sudoers`.
 - **ansible**: unused `ansible_debug_mode`, internal arch vars and the
@@ -225,6 +232,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   when the stub listener is off, and every boolean spelling of
   `network_resolved_dnsstublistener` that systemd accepts is recognised.
 - **network**: handlers set `become: true`.
+
+- **shell**: the SSH banner is set via the drop-in
+  `/etc/ssh/sshd_config.d/50-arillso-shell-banner.conf` instead of editing
+  `sshd_config`, so it no longer conflicts with the access role or lands inside
+  a `Match` block. Hosts without `sshd_config.d` (EL 8) get no banner line.
+- **shell**: `/etc/profile.d/bash_history.sh` and `custom_prompt.sh` only act in
+  bash, so sh and zsh logins no longer print `shopt: not found`.
+- **shell**: bash completion comes from the `bash-completion` package's own
+  hook instead of a template that broke completion on EL. EL hosts with the old
+  hook get the package hook restored.
+- **shell**: `/etc/motd` shows a static banner on non-Debian hosts instead of
+  being emptied.
+- **shell**: `shell_ssh_banner_show_legal_notice: false` hides the legal notice.
+- **shell**: company name, node type and environment are shell-quoted in the
+  MOTD scripts.
+- **shell**: `shell_motd_show_system_info` and `shell_motd_show_footer` now
+  enable or remove `10-sysinfo` and `90-footer`.
+
 - **access**: with `exclusive: true`, each key removed the keys written before
   it, so only the last key stayed in `authorized_keys`. All present keys of a
   user with an exclusive key, from `access_users[].ssh_keys` and

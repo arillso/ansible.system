@@ -22,9 +22,11 @@ WARNING:
 {% endif %}
 Contact your system administrator for access requests.
 
+{% if shell_ssh_banner_show_legal_notice %}
 Legal Notice:
 - Use of this system constitutes consent to monitoring
 - Unauthorized use may violate local and federal laws
 - All connections are logged with timestamp and source
 
+{% endif %}
 {% endif %}

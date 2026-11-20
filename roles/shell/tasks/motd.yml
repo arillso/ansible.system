@@ -10,18 +10,6 @@
       - motd
       - packages
 
-- name: "Install MOTD utility functions"
-  ansible.builtin.template:
-      src: usr/local/bin/motd-utils.sh.j2
-      dest: /usr/local/bin/motd-utils.sh
-      mode: "0755"
-      owner: root
-      group: root
-  become: true
-  tags:
-      - motd
-      - utils
-
 - name: "Create update-motd.d directory"
   ansible.builtin.file:
       path: /etc/update-motd.d
@@ -36,13 +24,27 @@
 
 - name: "Install dynamic MOTD scripts"
   ansible.builtin.template:
-      src: "etc/update-motd.d/{{ item }}.j2"
-      dest: "/etc/update-motd.d/{{ item }}"
+      src: "etc/update-motd.d/{{ item.key }}.j2"
+      dest: "/etc/update-motd.d/{{ item.key }}"
       mode: "0755"
       owner: root
       group: root
   become: true
-  loop: "{{ _shell_motd_scripts }}"
+  loop: "{{ _shell_motd_scripts | dict2items | selectattr('value') | list }}"
+  loop_control:
+      label: "{{ item.key }}"
+  when: ansible_facts['os_family'] == "Debian"
+  tags:
+      - motd
+
+- name: "Remove disabled dynamic MOTD scripts"
+  ansible.builtin.file:
+      path: "/etc/update-motd.d/{{ item.key }}"
+      state: absent
+  become: true
+  loop: "{{ _shell_motd_scripts | dict2items | rejectattr('value') | list }}"
+  loop_control:
+      label: "{{ item.key }}"
   when: ansible_facts['os_family'] == "Debian"
   tags:
       - motd
@@ -69,28 +71,32 @@
       - motd
       - cleanup
 
-- name: "Install system status pre-compute script"
-  ansible.builtin.template:
-      src: usr/local/bin/system-status-precompute.sh.j2
-      dest: /usr/local/bin/system-status-precompute.sh
-      mode: "0755"
-      owner: root
-      group: root
-  become: true
-  when: shell_enable_background_processing
+- name: "Check for the system status script from earlier versions"
+  ansible.builtin.stat:
+      path: /usr/local/bin/system-status-precompute.sh
+  register: _shell_precompute_script
   tags:
       - motd
-      - performance
+      - cleanup
 
-- name: "Create system status cron job for background processing"
+# Only where the old script exists, so hosts without crontab are not touched.
+- name: "Remove system status cron job from earlier versions"
   ansible.builtin.cron:
       name: "system-status-precompute"
-      minute: "{{ shell_status_precompute_interval }}"
-      job: "/usr/local/bin/system-status-precompute.sh >/dev/null 2>&1"
       user: root
-      state: present
+      state: absent
   become: true
-  when: shell_enable_background_processing
+  when: _shell_precompute_script.stat.exists
   tags:
       - motd
-      - cron
+      - cleanup
+
+- name: "Remove files from earlier versions"
+  ansible.builtin.file:
+      path: "{{ item }}"
+      state: absent
+  become: true
+  loop: "{{ _shell_obsolete_files }}"
+  tags:
+      - motd
+      - cleanup

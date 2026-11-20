@@ -14,15 +14,43 @@
       - terminal
       - colors
 
-- name: "Configure bash completion"
-  ansible.builtin.template:
-      src: etc/profile.d/bash_completion.sh.j2
-      dest: /etc/profile.d/bash_completion.sh
-      mode: "0644"
-      owner: root
-      group: root
+# The package ships its own /etc/profile.d hook with the right path per
+# distribution (Debian: /etc/bash_completion, EL: /usr/share/bash-completion).
+- name: "Install bash completion"
+  ansible.builtin.package:
+      name: bash-completion
+      state: present
   become: true
   when: shell_terminal_completion_enabled
+  tags:
+      - terminal
+      - completion
+
+# Earlier versions overwrote the package's hook with one that only sources
+# /etc/bash_completion, which EL lacks. On Debian that file still works.
+- name: "Check for the bash completion hook from earlier versions"
+  ansible.builtin.command:
+      cmd: grep -q 'arillso.system.ui' /etc/profile.d/bash_completion.sh
+  register: _shell_old_completion_hook
+  failed_when: _shell_old_completion_hook.rc > 1
+  changed_when: false
+  check_mode: false
+  when:
+      - shell_terminal_completion_enabled
+      - ansible_facts['os_family'] == "RedHat"
+  tags:
+      - terminal
+      - completion
+
+- name: "Restore the bash completion hook from the package"
+  ansible.builtin.shell:
+      cmd: rm -f /etc/profile.d/bash_completion.sh && dnf -y reinstall bash-completion
+  become: true
+  changed_when: true
+  when:
+      - shell_terminal_completion_enabled
+      - ansible_facts['os_family'] == "RedHat"
+      - _shell_old_completion_hook.rc == 0
   tags:
       - terminal
       - completion

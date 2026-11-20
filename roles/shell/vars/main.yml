@@ -14,11 +14,18 @@ _shell_required_packages:
     default:
         - figlet
 
-# MOTD scripts for Debian-based systems
+# MOTD scripts for Debian-based systems, keyed by the flag that enables them
 _shell_motd_scripts:
-    - 00-header
-    - 10-sysinfo
-    - 90-footer
+    00-header: true
+    10-sysinfo: "{{ shell_motd_show_system_info }}"
+    90-footer: "{{ shell_motd_show_footer }}"
+
+# Files and cron jobs from earlier role versions, removed on every run
+_shell_obsolete_files:
+    - /usr/local/bin/motd-utils.sh
+    - /usr/local/bin/system-status-precompute.sh
+    - /var/cache/ansible-facts/system-status.json
+    - /var/cache/arillso-system-shell
 
 # Unwanted default MOTD scripts to remove
 _shell_unwanted_motd_scripts:

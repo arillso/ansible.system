@@ -5,8 +5,8 @@ Installs the Bitwarden Secrets Manager CLI (`bws`) for secret management.
 ## Features
 
 - **Binary Installation**: Downloads and installs the `bws` CLI tool
-- **Version Management**: Install specific versions or latest
-- **Multi-Architecture**: Supports x86_64, aarch64, armv7l
+- **Version Management**: Installs a pinned version, verified against the upstream SHA-256 list
+- **Multi-Architecture**: Supports x86_64 and aarch64; other architectures fail early
 - **Idempotent**: Only downloads if version doesn't match
 - **Uninstall Support**: Clean removal when needed
 
@@ -42,7 +42,7 @@ See [`defaults/main.yml`](defaults/main.yml) for the complete list and [the guid
 
 ## Check Mode
 
-This role is partially `--check` compatible. The installed-version probe (`bws --version`) returns no output in check mode, so the "needs install" decision and download steps cannot be evaluated accurately on a host where the binary is not yet present.
+This role supports `--check`. On a host that needs an install, the download task reports `changed` and the extract step is skipped.
 
 ## License
 

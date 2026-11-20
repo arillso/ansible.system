@@ -57,7 +57,7 @@ tuning_swap_priority: 0
 
 # I/O Scheduler: `auto` picks `none` for NVMe and `mq-deadline` otherwise; any
 # other value is used for every device. The override takes precedence.
-# tuning_io_scheduler_devices limits the devices (empty = all detected disks).
+# tuning_io_scheduler_devices replaces the detected disks (udev KERNEL patterns).
 tuning_io_scheduler: auto
 tuning_io_scheduler_override: null
 tuning_io_scheduler_devices: []

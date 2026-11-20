@@ -10,6 +10,17 @@
 # ones are tracked via a separate task that captures `ignore_errors`
 # and reports a list of misses for the report task below.
 
+# net.ipv4.tcp_fack was removed in kernel 4.15. Earlier role versions wrote it
+# into the drop-in, where it breaks `sysctl --system` on every newer kernel.
+- name: Remove obsolete tcp_fack from the network sysctl file
+  ansible.posix.sysctl:
+      name: net.ipv4.tcp_fack
+      state: absent
+      reload: false
+      sysctl_file: "{{ tuning_network_sysctl_file }}"
+  become: true
+  when: "'net.ipv4.tcp_fack' not in tuning_network_sysctl_config"
+
 - name: Configure required network sysctl parameters
   ansible.posix.sysctl:
       name: "{{ _net_sysctl_item.key }}"
@@ -25,6 +36,18 @@
   when: _net_sysctl_item.key not in (tuning_optional_network_sysctl_params | default([]))
   register: _tuning_network_sysctl_required
 
+- name: Probe optional network sysctl parameters
+  ansible.builtin.command: sysctl -n {{ _net_sysctl_key }}
+  loop: >-
+      {{ tuning_network_sysctl_config.keys()
+         | select('in', tuning_optional_network_sysctl_params | default([])) | list }}
+  loop_control:
+      loop_var: _net_sysctl_key
+  register: _tuning_network_sysctl_probe
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
 - name: Configure optional network sysctl parameters
   ansible.posix.sysctl:
       name: "{{ _net_sysctl_item.key }}"
@@ -37,7 +60,11 @@
   loop_control:
       loop_var: _net_sysctl_item
       label: "{{ _net_sysctl_item.key }}"
-  when: _net_sysctl_item.key in (tuning_optional_network_sysctl_params | default([]))
+  when:
+      - _net_sysctl_item.key in (tuning_optional_network_sysctl_params | default([]))
+      - >-
+          _net_sysctl_item.key not in (_tuning_network_sysctl_probe.results
+            | rejectattr('rc', 'eq', 0) | map(attribute='_net_sysctl_key') | list)
   register: _tuning_network_sysctl_optional
   ignore_errors: true
 
@@ -68,17 +95,6 @@
   when:
       - _net_sysctl_item.failed | default(false)
       - not _net_sysctl_item.skipped | default(false)
-
-# net.ipv4.tcp_fack was removed in kernel 4.15. Earlier role versions wrote it
-# into the drop-in, where it breaks `sysctl --system` on every newer kernel.
-- name: Remove obsolete tcp_fack from the network sysctl file
-  ansible.posix.sysctl:
-      name: net.ipv4.tcp_fack
-      state: absent
-      reload: false
-      sysctl_file: "{{ tuning_network_sysctl_file }}"
-  become: true
-  when: "'net.ipv4.tcp_fack' not in tuning_network_sysctl_config"
 
 - name: Configure network ring buffers
   block:

@@ -45,7 +45,7 @@
         changed_when: _tuning_scheduler_result.rc == 0
         when:
             - not item.failed
-            - item.item.scheduler not in (item.content | b64decode)
+            - ('[' ~ item.item.scheduler ~ ']') not in (item.content | b64decode)
         loop: "{{ _tuning_current_scheduler.results }}"
 
       - name: Report I/O scheduler configuration status

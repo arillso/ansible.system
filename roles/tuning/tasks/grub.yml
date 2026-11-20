@@ -16,17 +16,32 @@
                     regex_search('GRUB_CMDLINE_LINUX="([^"]+)"', '\\1') -%}
                 {{ match[0] if match else '' }}
 
-      # Drop every existing parameter whose key (the part before `=`) is in
-      # the append list, then append. A changed value replaces the old one
-      # instead of sitting next to it; an unchanged one leaves the line as is.
+      # A parameter whose key (the part before `=`) is already present is
+      # replaced in place, later duplicates are dropped, new keys are
+      # appended. A changed value replaces the old one instead of sitting
+      # next to it; an unchanged one leaves the line as is.
       - name: Build new GRUB_CMDLINE_LINUX
         ansible.builtin.set_fact:
             _tuning_new_grub_cmdline: >-
-                {%- set keys = tuning_grub_cmdline_linux_append.split() | map('regex_replace', '=.*$', '') | list -%}
-                {{ (_tuning_current_grub_cmdline.split()
-                    | reject('regex', '^(' ~ (keys | map('regex_escape') | join('|')) ~ ')(=|$)')
-                    | list
-                    + tuning_grub_cmdline_linux_append.split()) | join(' ') }}
+                {%- set new = {} -%}
+                {%- for t in tuning_grub_cmdline_linux_append.split() -%}
+                {%- set _ = new.update({t | regex_replace('=.*$', ''): t}) -%}
+                {%- endfor -%}
+                {%- set out = [] -%}
+                {%- set seen = [] -%}
+                {%- for t in _tuning_current_grub_cmdline.split() -%}
+                {%- set k = t | regex_replace('=.*$', '') -%}
+                {%- if k not in new -%}
+                {%- set _ = out.append(t) -%}
+                {%- elif k not in seen -%}
+                {%- set _ = out.append(new[k]) -%}
+                {%- set _ = seen.append(k) -%}
+                {%- endif -%}
+                {%- endfor -%}
+                {%- for k in new if k not in seen -%}
+                {%- set _ = out.append(new[k]) -%}
+                {%- endfor -%}
+                {{ out | join(' ') }}
 
       - name: Update GRUB_CMDLINE_LINUX with new parameters
         ansible.builtin.lineinfile:

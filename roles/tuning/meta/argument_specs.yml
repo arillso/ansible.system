@@ -111,7 +111,7 @@ argument_specs:
                 required: false
                 default: []
                 elements: "str"
-                description: "Block devices to set the I/O scheduler on (empty = all detected disks)"
+                description: "udev KERNEL patterns to set the I/O scheduler on, e.g. sda or dm-* (empty = all detected disks)"
 
             tuning_cpu_governor:
                 type: "str"

@@ -11,7 +11,6 @@
             mode: "0644"
             backup: "{{ network_backup_configs }}"
         become: true
-        notify: "network: restart resolved"
         retries: "{{ network_retry_count }}"
         delay: "{{ network_retry_delay }}"
         register: _network_resolved_config
@@ -20,9 +19,11 @@
       # Debian 12, Ubuntu 24.04 and EL 9 ship systemd-resolved as its own
       # package; older releases include it in systemd.
       - name: Check whether systemd-resolved is installed
-        ansible.builtin.stat:
-            path: /lib/systemd/systemd-resolved
-        register: _network_resolved_binary
+        ansible.builtin.command: systemctl cat systemd-resolved.service
+        register: _network_resolved_unit
+        changed_when: false
+        failed_when: false
+        check_mode: false
 
       # Installed after the config is in place, so the package's first start
       # already uses it.
@@ -35,7 +36,7 @@
         delay: "{{ network_retry_delay }}"
         register: _network_resolved_install
         until: _network_resolved_install is succeeded
-        when: not _network_resolved_binary.stat.exists
+        when: _network_resolved_unit.rc != 0
 
       - name: Check whether NetworkManager is installed
         ansible.builtin.stat:
@@ -56,7 +57,9 @@
             mode: "0644"
         become: true
         notify: "network: reload NetworkManager"
-        when: _network_nm_binary.stat.exists
+        when:
+            - network_resolved_manage_networkmanager | bool
+            - _network_nm_binary.stat.exists
 
       # In check mode a package that would be installed is still missing, so
       # the service cannot be found yet.
@@ -70,6 +73,19 @@
                 - name: systemd-resolved
                   enabled: true
                   state: started
+
+      # Restarted here rather than in a handler, so the running resolved
+      # already uses the DNSStubListener value the link below follows.
+      - name: Restart systemd-resolved to apply the new configuration
+        ansible.builtin.systemd:
+            name: systemd-resolved
+            state: restarted
+        become: true
+        when:
+            - _network_resolved_config is changed
+            - network_restart_services | bool
+            - network_systemd_resolved_restart | bool
+            - not (ansible_check_mode and _network_resolved_install is changed)
 
       - name: Link /etc/resolv.conf to systemd-resolved
         ansible.builtin.file:

@@ -24,7 +24,7 @@
   register: _network_netplan_config
   when: network_netplan_config | length > 0
 
-# ponytail: applies only on a change in this run. A file written while
+# Applies only on a change in this run. A file written while
 # network_netplan_apply was false needs a manual `netplan apply`.
 - name: Apply netplan configuration
   ansible.builtin.command: netplan apply

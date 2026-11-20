@@ -3,7 +3,7 @@
 
 # systemd accepts every boolean spelling for DNSStubListener.
 _network_resolved_stub_disabled: >-
-    {{ network_resolved_dnsstublistener | string | lower in ['no', 'false', '0', 'off'] }}
+    {{ network_resolved_dnsstublistener | string | lower in ['no', 'n', 'false', 'f', '0', 'off'] }}
 
 # Validates the candidate file together with the other netplan files inside a
 # scratch root, so a rejected config never reaches /etc/netplan. Exits before

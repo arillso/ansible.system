@@ -46,9 +46,13 @@ network_resolved_multicast_dns: "no"
 network_resolved_dnssec: "allow-downgrade"
 network_resolved_dns_over_tls: "no"
 network_resolved_cache: "yes"
-# "no"/"false"/"0"/"off" links /etc/resolv.conf to the full resolver list
+# Any boolean false ("no", "false", "0", "off", ...) links /etc/resolv.conf to the full resolver list
 # (/run/systemd/resolve/resolv.conf) instead of the 127.0.0.53 stub.
 network_resolved_dnsstublistener: "yes"
+# Writes dns=systemd-resolved to /etc/NetworkManager/conf.d when NetworkManager
+# is installed. Set to false to keep NetworkManager's own DNS mode (dnsmasq,
+# none, default).
+network_resolved_manage_networkmanager: true
 
 # Netplan Configuration
 network_netplan_config: {}
@@ -79,6 +83,9 @@ network_netplan_apply: false
 # Service Management
 # Master switch for the role's handlers (systemd-resolved, NetworkManager).
 network_restart_services: true
+# With a restart disabled, a changed resolved.conf (including the stub
+# listener and the /etc/resolv.conf link) takes effect only after a manual
+# `systemctl restart systemd-resolved`.
 network_systemd_resolved_restart: true
 
 # Retry Configuration

@@ -6,6 +6,8 @@
   vars:
       ansible_install_enabled: true
       ansible_timer_enabled: true
+      # Cannot fire during the test run, so the service never starts.
+      ansible_schedule: "2099-01-01"
       ansible_mode: pull
       ansible_repo: https://example.com/placeholder.git
       ansible_install_method: pipx

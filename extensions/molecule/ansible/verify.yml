@@ -34,6 +34,11 @@
             src: /etc/systemd/system/ansible-pull.service
         register: _service_unit
 
+      - name: Read rendered sync script
+        ansible.builtin.slurp:
+            src: /usr/local/sbin/ansible-pull-sync
+        register: _sync_script
+
       - name: Read rendered timer unit
         ansible.builtin.slurp:
             src: /etc/systemd/system/ansible-pull.timer
@@ -43,8 +48,8 @@
         ansible.builtin.assert:
             that:
                 - "'omit_place_holder' not in _service_unit.content | b64decode"
-                - "'git clone --no-checkout https://example.com/placeholder.git' in _service_unit.content | b64decode"
-                - "'checkout --force --detach FETCH_HEAD' in _service_unit.content | b64decode"
+                - "'ExecStartPre=/usr/local/sbin/ansible-pull-sync' in _service_unit.content | b64decode"
+                - "'git clone --no-checkout https://example.com/placeholder.git' in _sync_script.content | b64decode"
                 - "'Environment=' not in _service_unit.content | b64decode"
                 - "'Requires=' not in _timer_unit.content | b64decode"
 

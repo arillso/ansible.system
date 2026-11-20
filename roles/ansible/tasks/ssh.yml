@@ -19,13 +19,19 @@
 
 # Pre-2.0.5 versions of this role wrote this stanza unmarked; it would
 # shadow the managed block because ssh uses the first matching value.
+- name: Check for an existing SSH config
+  ansible.builtin.stat:
+      path: /root/.ssh/config
+  become: true
+  register: _ansible_ssh_config
+
 - name: Remove legacy unmanaged Git stanza
   ansible.builtin.replace:
       path: /root/.ssh/config
       regexp: '^Host github\.com gitlab\.com\n  IdentityFile .*\n  StrictHostKeyChecking accept-new\n'
       replace: ""
   become: true
-  failed_when: false
+  when: _ansible_ssh_config.stat.exists
 
 - name: Configure SSH for Git hosts
   ansible.builtin.blockinfile:
@@ -39,6 +45,8 @@
           Host {{ ansible_ssh_git_hosts | join(' ') }}
             IdentityFile {{ ansible_ssh_key_path }}
             StrictHostKeyChecking accept-new
+          # Reset to global scope for the rest of the file
+          Host *
   become: true
 
 - name: Display public key for Git Deploy Key

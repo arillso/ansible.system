@@ -1,8 +1,8 @@
 ---
-# Container-sicherer Converge: rendert die Konfiguration und prueft die nftables
-# Syntax, ohne sie wirklich in den Kernel zu laden (das schlaegt im Container
-# je nach Host-Kernel/Netfilter-Module fehl). Dafuer wird der notify-Restart
-# explizit unterdrueckt und stattdessen ein nft-Syntax-Check ausgefuehrt.
+# Container-safe converge: renders the config and checks the nftables syntax
+# without loading it into the kernel, which fails in containers depending on
+# the host kernel and netfilter modules. The role's reload handler is not run;
+# an nft syntax check runs instead.
 
 - name: Converge — arillso.system.firewall (syntax-mode)
   hosts: all
@@ -38,6 +38,42 @@
                             log_prefix: "nft-drop-input: "
                             log_level: info
                             action: drop
+                            order: 1000
+      # Host level exercises merging, order, sets, a regular chain and a
+      # second table.
+      firewall_host:
+          - table:
+                name: filter
+                family: inet
+                sets:
+                    - name: trusted
+                      type: ipv4_addr
+                      flags: [interval]
+                      elements: ["192.0.2.0/24"]
+                chains:
+                    - name: web
+                      rules:
+                          - comment: "Accept HTTP(S)"
+                            tcp_dport: [80, 443]
+                            action: accept
+                    - name: input
+                      rules:
+                          - comment: "Trusted networks reach web"
+                            ip_saddr_set: "@trusted"
+                            action: jump
+                            target_chain: web
+          - table:
+                name: nat
+                family: ip
+                chains:
+                    - name: postrouting
+                      type: nat
+                      hook: postrouting
+                      priority: 100
+                      policy: accept
+                      rules:
+                          - oifname: "eth0"
+                            action: masquerade
 
   tasks:
       - name: Render hierarchical firewall payload only
@@ -49,6 +85,12 @@
                     'firewall_group': firewall_group | default([]),
                     'firewall_host': firewall_host | default([])
                 } | arillso.system.to_nftables_hierarchy }}
+
+      # Normally built from /etc/nftables.managed; `ip stale` stands for a
+      # table removed from the YAML.
+      - name: Set tables to reset
+        ansible.builtin.set_fact:
+            _firewall_reset_tables: ["inet filter", "ip nat", "ip stale"]
 
       - name: Generate nftables.conf from template (controller-side render only)
         ansible.builtin.template:

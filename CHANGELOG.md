@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **firewall**: `firewall_ssh_port` sets the SSH port of the default input
+  chain and follows `access_ssh_port` when that is set.
+- **firewall**: tables take named `sets` (`name`, `type`, `flags`,
+  `elements`), referenced as `@name` in rules.
+- **firewall**: a chain without `hook` is a regular chain for `jump`/`goto`.
+- **firewall**: `replace: true` on a table drops what earlier levels defined
+  for it; `order` on a rule sorts it within its chain after merging (the
+  default log-and-drop rule uses `1000`).
+- **firewall**: `reject_with` accepts `icmpv6-*`, `icmpx-*` and `tcp-reset`.
+
 ### Changed
 
 - **access**: `access_ssh_subsystem_sftp` defaults to `internal-sftp` instead of
@@ -27,6 +39,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ANSIBLE_CALLBACKS_ENABLED`, which replaces `callbacks_enabled` from the
   repo's `ansible.cfg`; keep others via `ansible_otel_extra_callbacks`.
   OpenTelemetry now requires `ansible_install_method: pipx`.
+- **firewall** (breaking): `firewall_global`, `firewall_group` and
+  `firewall_host` are merged instead of replacing the level before. Tables
+  match on family and name, chains and sets on name; later levels override
+  chain settings and sets and append rules. Configs that repeated the base
+  rules now get them twice; set `replace: true` on the table for the old
+  behaviour.
+- **firewall** (breaking): a chain without `hook` no longer defaults to the
+  input hook; setting `type`, `priority` or `policy` without `hook` fails.
+- **firewall** (breaking): every config change deletes and recreates the
+  managed tables. Runtime state in them (set elements added by fail2ban or
+  crowdsec, rules inserted by other tools, counters) is lost; keep such tools
+  in their own tables.
+- **firewall**: config changes reload nftables (`firewall: reload`) instead of
+  restarting it, so the host is never left without rules between stop and
+  start.
+- **firewall**: the config deletes and recreates its tables instead of
+  flushing them, and stopping the service deletes them, so a stopped firewall
+  no longer leaves empty `policy drop` chains behind.
 
 - **facts**: `last_run.json` is written by a role task instead of the
   `last.fact` script, so it records the last deployment instead of the last
@@ -37,6 +67,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `security.fact` is the only source.
 
 ### Removed
+
+- **firewall**: the unused handlers `firewall: reload systemd`,
+  `firewall: start`, `firewall: stop` and `firewall: restart`, and the unused
+  `/etc/nftables` directory.
 
 - **access**: `access_sudoers_validate` was never read. Use
   `access_validate_sudoers`.
@@ -54,6 +88,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `facts_concurrent_execution` and `facts_cache_compression_enabled`.
 
 ### Fixed
+
+- **firewall**: `/etc/nftables.conf` is checked with `nft -c` before it is
+  installed. A broken config used to be installed and fail to load.
+- **firewall**: the default input chain accepts ICMPv6 neighbor discovery and
+  router advertisements; dual-stack hosts lost IPv6 without them.
+- **firewall**: the systemd override resets the distro's `ExecReload`. On EL it
+  flushed the whole ruleset, including Docker and kube-proxy tables.
+- **firewall**: tables removed from the YAML are deleted on the next run
+  instead of staying in the kernel.
+- **firewall**: `reject_with` rendered invalid nft syntax
+  (`reject with icmp-admin-prohibited`).
+- **firewall**: `log_prefix: ""` still rendered a log statement; it now
+  switches logging off for the rule.
 
 - **access**: with `exclusive: true`, each key removed the keys written before
   it, so only the last key stayed in `authorized_keys`. All present keys of a

@@ -3,11 +3,19 @@ argument_specs:
     main:
         short_description: Configure nftables firewall with intuitive YAML structure
         description:
-            - Manages nftables firewall using your elegant YAML table/chain/rule structure
-            - Supports hierarchical Global → Group → Host inheritance and merging
+            - Manages nftables firewall from a YAML table/chain/rule structure
+            - Merges the levels firewall_tables → firewall_global → firewall_group → firewall_host
+            - Tables match on family and name, chains and sets on name; later levels override
+              chain settings and sets and append their rules
             - Direct mapping from YAML to nftables configuration
 
         options:
+            firewall_ssh_port:
+                description:
+                    - TCP port the default input chain accepts SSH on
+                    - Defaults to access_ssh_port when set, else 22
+                type: int
+                required: false
             firewall_ssh_rate_limit:
                 description:
                     - Rate limit for new SSH connections in the default input chain
@@ -28,7 +36,9 @@ argument_specs:
                 required: false
                 default: "5/minute"
             firewall_log_drop_prefix:
-                description: Log prefix for packets dropped by the input chain policy
+                description:
+                    - Log prefix for packets dropped by the input chain policy
+                    - An empty string switches the drop log off
                 type: str
                 required: false
                 default: "nft-drop-input: "
@@ -61,6 +71,34 @@ argument_specs:
                                         "netdev",
                                     ]
                                 default: "inet"
+                            replace:
+                                description:
+                                    - Replace the table defined by earlier levels instead of merging into it
+                                type: bool
+                                default: false
+                            sets:
+                                description:
+                                    - Named sets, referenced in rules as "@name" (e.g. ip_saddr_set)
+                                    - A later level replaces a set with the same name
+                                type: list
+                                elements: dict
+                                options:
+                                    name:
+                                        description: Set name
+                                        type: str
+                                        required: true
+                                    type:
+                                        description: Element type, e.g. ipv4_addr, ipv6_addr, inet_service
+                                        type: str
+                                        required: true
+                                    flags:
+                                        description: Set flags, e.g. interval for CIDR ranges
+                                        type: list
+                                        elements: str
+                                    elements:
+                                        description: Set elements
+                                        type: list
+                                        elements: raw
                             chains:
                                 description: List of chains in this table
                                 type: list
@@ -71,12 +109,14 @@ argument_specs:
                                         type: str
                                         required: true
                                     type:
-                                        description: Chain type
+                                        description: Chain type, base chains only (default filter)
                                         type: str
                                         choices: ["filter", "nat", "route"]
-                                        required: true
                                     hook:
-                                        description: Netfilter hook
+                                        description:
+                                            - Netfilter hook. Makes the chain a base chain
+                                            - Without a hook the chain is a regular chain for jump/goto
+
                                         type: str
                                         choices:
                                             [
@@ -86,16 +126,13 @@ argument_specs:
                                                 "output",
                                                 "postrouting",
                                             ]
-                                        required: true
                                     priority:
-                                        description: Chain priority
+                                        description: Chain priority, base chains only (default 0)
                                         type: int
-                                        required: true
                                     policy:
-                                        description: Default chain policy
+                                        description: Default chain policy, base chains only (default accept)
                                         type: str
                                         choices: ["accept", "drop"]
-                                        required: true
                                     rules:
                                         description: List of rules in this chain
                                         type: list
@@ -105,6 +142,10 @@ argument_specs:
                                                 description: Rule comment/description
                                                 type: str
                                                 required: false
+                                            final:
+                                                description: Keep the rule at the end of its chain after merging
+                                                type: bool
+                                                default: false
                                             iifname:
                                                 description: Input interface name
                                                 type: str
@@ -258,7 +299,7 @@ argument_specs:
                                                 type: int
                                                 required: false
                                             log_prefix:
-                                                description: Log prefix for logging rules
+                                                description: Log prefix for logging rules; an empty string adds no log statement
                                                 type: str
                                                 required: false
                                             # Enhanced logging options
@@ -318,6 +359,15 @@ argument_specs:
                                                         "icmp-port-unreachable",
                                                         "icmp-net-unreachable",
                                                         "icmp-host-unreachable",
+                                                        "icmpv6-admin-prohibited",
+                                                        "icmpv6-port-unreachable",
+                                                        "icmpv6-no-route",
+                                                        "icmpv6-addr-unreachable",
+                                                        "icmpx-admin-prohibited",
+                                                        "icmpx-port-unreachable",
+                                                        "icmpx-host-unreachable",
+                                                        "icmpx-no-route",
+                                                        "tcp-reset",
                                                     ]
                                                 required: false
                                             queue_num:

@@ -4,26 +4,41 @@
 # Host: {{ inventory_hostname }}
 # Groups: {{ group_names | join(', ') }}
 
-{# Scoped flush: nur die Tables, die diese Rolle managed. Vorher stand
-   hier `flush ruleset`, was alle Tables anderer Quellen (Docker
-   iptables-nft, kube-proxy, manuelle Entries) bei jedem Config-Reload
-   mit-wipet — sichtbar z. B. wenn ein Container-Recreate danach mit
-   "iptables: No chain/target/match by that name" failed. Der leere
-   `table { }`-Stub vor dem Flush ist ein No-op wenn die Table bereits
-   existiert, legt sie auf Fresh-Hosts an und macht `flush table` damit
-   beim ersten Apply nicht-failable. #}
-{% for firewall_table in _firewall_tables | default([]) %}
-table {{ firewall_table.table.family }} {{ firewall_table.table.name }} {
+{# Delete and recreate only the tables this role manages, never
+   `flush ruleset`: that would also wipe tables from other sources (Docker
+   iptables-nft, kube-proxy, manual entries). `_firewall_reset_tables` holds
+   the current tables plus those of the previous config, so a table removed
+   from the YAML is deleted too. Deleting instead of flushing also drops
+   removed chains and sets and allows changing a chain's type or hook. The
+   empty `table { }` stub makes `delete table` safe on a fresh host. The whole
+   file is one nft transaction, so the old ruleset stays until the new one
+   loads. #}
+{% for table in _firewall_reset_tables | default([]) %}
+table {{ table }} {
 }
-flush table {{ firewall_table.table.family }} {{ firewall_table.table.name }}
+delete table {{ table }}
 {% endfor %}
 
 {% for firewall_table in _firewall_tables | default([]) %}
 table {{ firewall_table.table.family }} {{ firewall_table.table.name }} {
+{% for set in firewall_table.table.sets %}
+    set {{ set.name }} {
+        type {{ set.type }}
+{% if set.flags %}
+        flags {{ set.flags | join(', ') }}
+{% endif %}
+{% if set.elements %}
+        elements = { {{ set.elements | join(', ') }} }
+{% endif %}
+    }
+
+{% endfor %}
 {% for chain in firewall_table.table.chains %}
     chain {{ chain.name }} {
+{% if chain.hook is defined %}
         type {{ chain.type }} hook {{ chain.hook }} priority {{ chain.priority }}; policy {{ chain.policy }};
 
+{% endif %}
 {% for rule in chain.rules %}
         # {{ rule.comment | default('Rule') }}
         {{ rule | arillso.system.to_nftables_rule }}

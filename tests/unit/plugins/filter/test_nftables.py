@@ -50,6 +50,22 @@ class TestRuleToNft:
         rule = {"action": "reject", "reject_with": "icmp port-unreachable"}
         assert fm.rule_to_nft(rule) == "reject with icmp port-unreachable"
 
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("icmp-admin-prohibited", "reject with icmp type admin-prohibited"),
+            ("icmpv6-no-route", "reject with icmpv6 type no-route"),
+            ("icmpx-port-unreachable", "reject with icmpx type port-unreachable"),
+            ("tcp-reset", "reject with tcp reset"),
+        ],
+    )
+    def test_reject_with_choice_maps_to_nft_syntax(self, fm, value, expected):
+        assert fm.rule_to_nft({"action": "reject", "reject_with": value}) == expected
+
+    def test_empty_log_prefix_adds_no_log(self, fm):
+        rule = {"limit": "5/minute", "log_prefix": "", "log_level": "info", "action": "drop"}
+        assert fm.rule_to_nft(rule) == "limit rate 5/minute drop"
+
     def test_jump_with_target(self, fm):
         assert fm.rule_to_nft({"action": "jump", "target_chain": "ssh-acl"}) == "jump ssh-acl"
 
@@ -116,23 +132,106 @@ class TestMergeNftablesStructure:
         result = fm.merge_nftables_structure(self._base())
         assert len(result) == 1
         assert result[0]["table"]["name"] == "filter"
-        # Chain defaults are applied during validation.
-        chain = result[0]["table"]["chains"][0]
-        assert chain["type"] == "filter"
-        assert chain["hook"] == "input"
-        assert chain["policy"] == "accept"
-        assert chain["priority"] == 0
+        assert result[0]["table"]["sets"] == []
+        # Without a hook the chain stays a regular chain: no base-chain defaults.
+        assert result[0]["table"]["chains"][0] == {"name": "input", "rules": [{"action": "accept"}]}
 
-    def test_host_overrides_global(self, fm):
+    def test_base_chain_defaults(self, fm):
         cfg = self._base()
-        cfg["firewall_global"] = [
-            {"table": {"name": "global-table", "family": "inet", "chains": []}},
+        cfg["firewall_tables"][0]["table"]["chains"][0]["hook"] = "input"
+        chain = fm.merge_nftables_structure(cfg)[0]["table"]["chains"][0]
+        assert (chain["type"], chain["priority"], chain["policy"]) == ("filter", 0, "accept")
+
+    def test_host_rules_append_to_base_chain(self, fm):
+        cfg = self._base()
+        base_chain = cfg["firewall_tables"][0]["table"]["chains"][0]
+        base_chain.update(hook="input", policy="drop")
+        base_chain["rules"] = [
+            {"tcp_dport": 22, "action": "accept"},
+            {"log_prefix": "drop: ", "action": "drop", "final": True},
         ]
         cfg["firewall_host"] = [
-            {"table": {"name": "host-table", "family": "inet", "chains": []}},
+            {
+                "table": {
+                    "name": "filter",
+                    "family": "inet",
+                    "chains": [{"name": "input", "rules": [{"tcp_dport": 443}]}],
+                },
+            },
         ]
         result = fm.merge_nftables_structure(cfg)
-        assert result[0]["table"]["name"] == "host-table"
+        assert len(result) == 1
+        chain = result[0]["table"]["chains"][0]
+        assert chain["policy"] == "drop"  # not reset by the host level
+        assert [r.get("tcp_dport") for r in chain["rules"]] == [22, 443, None]
+        # Input lists stay untouched.
+        assert len(base_chain["rules"]) == 2
+
+    def test_override_changes_chain_settings(self, fm):
+        cfg = self._base()
+        cfg["firewall_group"] = [
+            {
+                "table": {
+                    "name": "filter",
+                    "family": "inet",
+                    "chains": [{"name": "input", "policy": "drop"}],
+                }
+            },
+        ]
+        chain = fm.merge_nftables_structure(cfg)[0]["table"]["chains"][0]
+        assert chain["policy"] == "drop"
+
+    def test_replace_drops_earlier_levels(self, fm):
+        cfg = self._base()
+        cfg["firewall_host"] = [
+            {"table": {"name": "filter", "family": "inet", "replace": True, "chains": []}},
+        ]
+        result = fm.merge_nftables_structure(cfg)
+        assert result[0]["table"]["chains"] == []
+        assert "replace" not in result[0]["table"]
+
+    def test_distinct_tables_are_kept(self, fm):
+        cfg = self._base()
+        cfg["firewall_host"] = [{"table": {"name": "nat", "family": "ip", "chains": []}}]
+        names = [t["table"]["name"] for t in fm.merge_nftables_structure(cfg)]
+        assert names == ["filter", "nat"]
+
+    def test_regular_chains_come_first(self, fm):
+        cfg = self._base()
+        cfg["firewall_tables"][0]["table"]["chains"] = [
+            {
+                "name": "input",
+                "hook": "input",
+                "rules": [{"action": "jump", "target_chain": "web"}],
+            },
+            {"name": "web", "rules": []},
+        ]
+        chains = fm.merge_nftables_structure(cfg)[0]["table"]["chains"]
+        assert [c["name"] for c in chains] == ["web", "input"]
+
+    def test_sets_are_normalized_and_overridden(self, fm):
+        cfg = self._base()
+        cfg["firewall_tables"][0]["table"]["sets"] = [
+            {
+                "name": "trusted",
+                "type": "ipv4_addr",
+                "flags": "interval",
+                "elements": ["10.0.0.0/8"],
+            },
+        ]
+        cfg["firewall_host"] = [
+            {
+                "table": {
+                    "name": "filter",
+                    "family": "inet",
+                    "sets": [{"name": "trusted", "type": "ipv4_addr", "elements": ["192.0.2.1"]}],
+                },
+            },
+        ]
+        sets = fm.merge_nftables_structure(cfg)[0]["table"]["sets"]
+        assert sets == [
+            {"name": "trusted", "type": "ipv4_addr", "flags": [], "elements": ["192.0.2.1"]}
+        ]
 
     def test_invalid_input_returns_empty(self, fm):
         assert fm.merge_nftables_structure("nope") == []

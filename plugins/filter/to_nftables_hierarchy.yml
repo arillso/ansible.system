@@ -7,7 +7,12 @@ DOCUMENTATION:
     description:
         - Converts multi-level firewall configurations to a single merged nftables structure.
         - Priority order (highest wins) - firewall_tables (base) → firewall_global → firewall_group → firewall_host
-        - Later configurations completely override earlier ones if they have content.
+        - Tables match on family and name, chains and sets on name. A later level overrides chain settings
+          (type, hook, priority, policy) and sets, and appends its rules to the chain.
+        - A table with C(replace=true) replaces what earlier levels defined for it.
+        - Rules with C(final=true) move to the end of their chain.
+        - Chains without a hook stay regular chains; base-chain defaults (filter, priority 0, policy accept)
+          apply only to chains with a hook.
         - Used by the C(arillso.system.firewall) role for multi-level firewall configuration.
     options:
         firewall_configs:

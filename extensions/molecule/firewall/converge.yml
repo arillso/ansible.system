@@ -1,8 +1,8 @@
 ---
-# Container-sicherer Converge: rendert die Konfiguration und prueft die nftables
-# Syntax, ohne sie wirklich in den Kernel zu laden (das schlaegt im Container
-# je nach Host-Kernel/Netfilter-Module fehl). Dafuer wird der notify-Restart
-# explizit unterdrueckt und stattdessen ein nft-Syntax-Check ausgefuehrt.
+# Container-safe converge: renders the config and checks the nftables syntax
+# without loading it into the kernel, which fails in containers depending on
+# the host kernel and netfilter modules. The role's reload handler is not run;
+# an nft syntax check runs instead.
 
 - name: Converge — arillso.system.firewall (syntax-mode)
   hosts: all

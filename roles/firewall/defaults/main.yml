@@ -2,8 +2,11 @@
 # Tunables for the default input chain below. A bastion behind a CI runner
 # that opens many short-lived sessions needs a higher ceiling than a single
 # admin host — raise firewall_ssh_rate_limit there rather than dropping the
-# rule. Set firewall_log_drop_prefix to "" only if the drop log is noisy
-# enough to matter; the rate limit already caps it.
+# rule. Set firewall_log_drop_prefix to "" to switch the drop log off; the
+# rate limit already caps it.
+#
+# Follows the sshd port of the access role when that is set.
+firewall_ssh_port: "{{ access_ssh_port | default(22) }}"
 firewall_ssh_rate_limit: "10/minute"
 firewall_ssh_rate_burst: 5
 firewall_log_drop_rate_limit: "5/minute"
@@ -26,22 +29,29 @@ firewall_tables:
                     - comment: "Accept established and related connections"
                       ct_state: ["established", "related"]
                       action: accept
+                    # IPv6 needs neighbor discovery and router advertisements;
+                    # neither is established/related, so without this rule a
+                    # dual-stack host loses IPv6 once its neighbor cache expires.
+                    - comment: "Accept ICMPv6 neighbor discovery and router advertisements"
+                      icmpv6_type: "{ nd-neighbor-solicit, nd-neighbor-advert, nd-router-advert }"
+                      action: accept
                     # Rate-limited on ct_state new only: established SSH
                     # sessions already match the rule above, so the limit
                     # applies to connection attempts and never throttles a
                     # session that is already up. Without the ct_state match
                     # a busy interactive session would eat its own budget.
                     - comment: "Accept new SSH connections, rate-limited"
-                      tcp_dport: 22
+                      tcp_dport: "{{ firewall_ssh_port }}"
                       ct_state: ["new"]
                       limit: "{{ firewall_ssh_rate_limit }}"
                       burst: "{{ firewall_ssh_rate_burst }}"
                       action: accept
                     # Anything reaching here is dropped by the chain policy
-                    # anyway; this rule only makes the drop visible. It must
-                    # stay last — an earlier log-and-drop would shadow the
-                    # accepts above.
+                    # anyway; this rule only makes the drop visible. `final`
+                    # keeps it last when other levels add rules to this
+                    # chain — an earlier log-and-drop would shadow them.
                     - comment: "Log packets before the chain policy drops them"
+                      final: true
                       limit: "{{ firewall_log_drop_rate_limit }}"
                       log_prefix: "{{ firewall_log_drop_prefix }}"
                       log_level: info

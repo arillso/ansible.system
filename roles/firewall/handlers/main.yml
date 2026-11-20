@@ -1,29 +1,11 @@
 ---
-# Simplified handlers for nftables firewall role
-
-- name: Reload systemd manager configuration after firewall unit changes
-  ansible.builtin.systemd:
-      daemon_reload: true
-  listen: "firewall: reload systemd"
-
-- name: Restart nftables service to load updated ruleset
+# Reload, not restart: ExecReload loads the file as one transaction, while a
+# restart first runs ExecStop and leaves the host without rules until
+# ExecStart has loaded the new file.
+- name: Reload nftables service to load updated ruleset
   ansible.builtin.systemd:
       name: nftables
-      state: restarted
+      state: reloaded
       daemon_reload: true
-  listen: "firewall: restart"
-
-- name: Start and enable nftables service
-  ansible.builtin.systemd:
-      name: nftables
-      state: started
-      enabled: true
-      daemon_reload: true
-  listen: "firewall: start"
-
-- name: Stop and disable nftables service
-  ansible.builtin.systemd:
-      name: nftables
-      state: stopped
-      enabled: false
-  listen: "firewall: stop"
+  become: true
+  listen: "firewall: reload"

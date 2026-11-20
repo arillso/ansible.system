@@ -1,7 +1,7 @@
 ---
 # Build the effective ruleset and render /etc/nftables.conf
 
-- name: Apply hierarchical override and generate final firewall configuration
+- name: Apply hierarchical merge and generate final firewall configuration
   ansible.builtin.set_fact:
       _firewall_tables: >-
           {{ {
@@ -11,6 +11,28 @@
               'firewall_host': firewall_host | default([])
           } | arillso.system.to_nftables_hierarchy }}
 
+# The previous config names the tables the last run managed. Tables no
+# longer in the YAML are deleted by the new config instead of staying in
+# the kernel.
+- name: Read previous nftables.conf
+  ansible.builtin.slurp:
+      src: /etc/nftables.conf
+  register: _firewall_previous_conf
+  failed_when: false
+  become: true
+
+- name: Collect tables to reset
+  ansible.builtin.set_fact:
+      _firewall_reset_tables: >-
+          {{ ((_firewall_previous_conf.content | default('') | b64decode
+               | regex_findall('(?m)^table ([^ ]+ [^ ]+) [{]'))
+              + (_firewall_tables | default([]) | map(attribute='table.family')
+                 | zip(_firewall_tables | default([]) | map(attribute='table.name'))
+                 | map('join', ' ') | list))
+             | unique }}
+
+# Validate before install: a broken file would otherwise replace a working
+# one and fail to load.
 - name: Generate nftables.conf from hierarchical YAML structure
   ansible.builtin.template:
       src: etc/nftables.conf.j2
@@ -19,5 +41,6 @@
       owner: root
       group: root
       backup: true
+      validate: /usr/sbin/nft -c -f %s
   become: true
-  notify: "firewall: restart"
+  notify: "firewall: reload"

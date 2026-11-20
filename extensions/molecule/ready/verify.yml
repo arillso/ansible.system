@@ -1,12 +1,76 @@
 ---
 - name: Verify — arillso.system.ready
   hosts: all
-  become: true
   gather_facts: false
 
   tasks:
-      - name: Assert the converge step finished without errors
+      - name: Run the role with fact gathering
+        ansible.builtin.include_role:
+            name: arillso.system.ready
+        vars:
+            ready_ssh_delay: 0
+            ready_ssh_timeout: 30
+            ready_gather_subset: ["!all"]
+
+      - name: Assert the cloud-init wait was skipped and facts were gathered
         ansible.builtin.assert:
             that:
-                - true
-            success_msg: "ready role completed converge without raising"
+                - not _ready_cloud_init_dir.stat.exists
+                - _ready_cloud_init is not defined
+                - ansible_facts.distribution is defined
+
+      # The container has no cloud-init; fake one to cover the cloud-init wait.
+      # The reboot path needs an SSH connection to turn into `unreachable` and
+      # is not covered here (the docker connection reports a plain failure).
+      - name: Fake a finished cloud-init
+        ansible.builtin.copy:
+            dest: /usr/local/bin/cloud-init
+            mode: "0755"
+            content: |
+                #!/bin/sh
+                echo "status: done"
+
+      - name: Create the cloud-init run directory
+        ansible.builtin.file:
+            path: /run/cloud-init
+            state: directory
+            mode: "0755"
+
+      - name: Run the role against the fake cloud-init
+        ansible.builtin.include_role:
+            name: arillso.system.ready
+        vars:
+            ready_ssh_delay: 0
+            ready_ssh_timeout: 30
+            ready_gather_facts: false
+
+      - name: Assert the cloud-init wait ran and passed
+        ansible.builtin.assert:
+            that:
+                - _ready_cloud_init.rc == 0
+                - "'status: done' in _ready_cloud_init.stdout"
+
+      - name: Remove the cloud-init binary
+        ansible.builtin.file:
+            path: /usr/local/bin/cloud-init
+            state: absent
+
+      - name: Run the role without a cloud-init binary
+        block:
+            - name: Run the role (expected to fail)
+              ansible.builtin.include_role:
+                  name: arillso.system.ready
+              vars:
+                  ready_ssh_delay: 0
+                  ready_ssh_timeout: 30
+                  ready_gather_facts: false
+
+            - name: Fail if the missing binary passed as ready
+              ansible.builtin.fail:
+                  msg: "missing cloud-init binary was reported as ready"
+        rescue:
+            - name: Assert the role failed on the missing binary
+              ansible.builtin.assert:
+                  that:
+                      - ansible_failed_task.name == 'Wait for cloud-init to finish'
+                      - ansible_failed_result.stdout == ''

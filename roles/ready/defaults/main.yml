@@ -1,15 +1,10 @@
 ---
-# SSH connection settings
-ready_ssh_port: 22
+# Connection wait (wait_for_connection, uses the inventory's connection settings)
 ready_ssh_delay: 10
 ready_ssh_timeout: 300
 
-# Cloud-init wait settings
-ready_check_retries: 60
-ready_check_delay: 2
-
-# Rescue behavior
-ready_rescue_pause: 30
+# Maximum time for `cloud-init status --wait` (seconds); skipped without cloud-init
+ready_cloud_init_timeout: 900
 
 # Fact gathering after system is ready
 ready_gather_facts: true

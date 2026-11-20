@@ -1,4 +1,12 @@
 ---
+# Not notified by this role any more (unit.yml reloads inline); kept so that
+# playbooks notifying "systemd: daemon-reload" keep working.
+- name: Reload systemd manager configuration
+  ansible.builtin.systemd:
+      daemon_reload: true
+  become: true
+  listen: "systemd: daemon-reload"
+
 - name: Restart systemd-journald to apply journald.conf changes
   ansible.builtin.systemd:
       name: systemd-journald

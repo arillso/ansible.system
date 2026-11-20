@@ -1,8 +1,8 @@
 ---
 # Internal variables for systemd role
 
-# Suffixes systemd-analyze verify accepts as standalone units. Anything else
-# (e.g. a drop-in override.conf) is deployed without validation.
+# Unit file suffixes. Anything else (e.g. a drop-in override.conf) is not a
+# unit of its own: not verified, not stopped on removal.
 _systemd_unit_types:
     - service
     - socket
@@ -14,11 +14,25 @@ _systemd_unit_types:
     - path
     - timer
     - slice
-    - scope
 
-_systemd_unit_is_unit: "{{ _systemd_unit_item.name.split('.') | last in _systemd_unit_types }}"
+# Units verified before writing. Triggering units (timer, socket, path,
+# automount) fail verify while their target unit is not written yet, and
+# templates (foo@.service) are refused by older systemd versions.
+_systemd_validate_types: [service, mount, swap, target, slice]
 
-_systemd_unit_validate: "{{ systemd_validate_units | bool and _systemd_unit_is_unit | bool }}"
+_systemd_unit_validate: >-
+    {{ systemd_validate_units | bool
+       and _systemd_unit_item.name.split('.') | last in _systemd_validate_types
+       and '@.' not in _systemd_unit_item.name }}
+
+# Units with state absent that are real units (no drop-ins, no templates:
+# foo@.service cannot be stopped without an instance).
+_systemd_units_absent: >-
+    {{ systemd_units | selectattr('state', 'defined') | selectattr('state', '==', 'absent')
+       | rejectattr('name', 'search', '@[.]')
+       | selectattr('name', 'search', '[.](' ~ _systemd_unit_types | join('|') ~ ')$') | list }}
+
+_systemd_unit_absent_paths: "{{ _systemd_unit_absent_find.files | default([]) | map(attribute='path') | list }}"
 
 # verify needs the real unit name, so copy the temp file to <tmpdir>/<name> first.
 # The name is quoted: validate splits the command shell-style and would drop the

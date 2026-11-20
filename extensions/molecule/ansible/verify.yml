@@ -43,8 +43,9 @@
         ansible.builtin.assert:
             that:
                 - "'omit_place_holder' not in _service_unit.content | b64decode"
-                - "'git clone --branch main https://example.com/placeholder.git' in _service_unit.content | b64decode"
-                - '''Environment="GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new"'' in _service_unit.content | b64decode'
+                - "'git clone --no-checkout https://example.com/placeholder.git' in _service_unit.content | b64decode"
+                - "'checkout --force --detach FETCH_HEAD' in _service_unit.content | b64decode"
+                - "'Environment=' not in _service_unit.content | b64decode"
                 - "'Requires=' not in _timer_unit.content | b64decode"
 
       - name: Check service did not run on timer start

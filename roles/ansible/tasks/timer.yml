@@ -17,6 +17,11 @@
       group: root
   become: true
 
+- name: Assert OpenTelemetry libraries can be installed
+  ansible.builtin.assert:
+      that: not ansible_otel_enabled or ansible_install_method == 'pipx'
+      fail_msg: ansible_otel_enabled requires ansible_install_method pipx (the OpenTelemetry libraries are injected via pipx)
+
 - name: Deploy Ansible environment file
   ansible.builtin.template:
       src: etc/ansible/ansible.env.j2
@@ -81,28 +86,30 @@
   when: ansible_install_roles | bool
 
 # Clone or update the checkout before the galaxy installs, so requirements
-# always come from the revision that is about to run. ansible-pull then
-# finds an up-to-date checkout; ansible-playbook needs it anyway.
+# always come from the revision that is about to run. fetch + forced detached
+# checkout recovers from force pushes, branch switches and local edits, like
+# ansible-pull's own checkout. accept-new mirrors --accept-host-key and is
+# scoped to this command only.
+# ponytail: ansible_branch must be a branch or tag here, not a commit SHA.
 - name: Build ExecStartPre commands
   ansible.builtin.set_fact:
       ansible_role_exec_start_pre: >-
-          {{ ['/bin/sh -c "if [ -d ' + ansible_checkout_dir + '/repo/.git ]; then /usr/bin/git -C ' +
-              ansible_checkout_dir + '/repo pull --ff-only origin ' + ansible_branch +
-              '; else /usr/bin/git clone --branch ' + ansible_branch + ' ' + ansible_repo + ' ' +
-              ansible_checkout_dir + '/repo; fi"'] +
-             (ansible_install_collections | bool | ternary([ansible_role_galaxy_collections_cmd | default('')], [])) +
-             (ansible_install_roles | bool | ternary([ansible_role_galaxy_roles_cmd | default('')], [])) }}
+          {{ ['/usr/bin/env "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" /bin/sh -c "' +
+              '[ -d ' + ansible_checkout_dir + '/repo/.git ] || /usr/bin/git clone --no-checkout ' +
+              ansible_repo + ' ' + ansible_checkout_dir + '/repo; ' +
+              '/usr/bin/git -C ' + ansible_checkout_dir + '/repo fetch origin ' + ansible_branch +
+              ' && /usr/bin/git -C ' + ansible_checkout_dir + '/repo checkout --force --detach FETCH_HEAD"'] +
+             (ansible_install_collections | bool | ternary([ansible_role_galaxy_collections_cmd], [])) +
+             (ansible_install_roles | bool | ternary([ansible_role_galaxy_roles_cmd], [])) }}
 
 - name: Build environment variables for systemd
   ansible.builtin.set_fact:
       # Quote each assignment so values with spaces survive; % is escaped
-      # because systemd expands specifiers. accept-new mirrors ansible-pull
-      # --accept-host-key for the git clone in ExecStartPre.
+      # because systemd expands specifiers.
       # ponytail: values containing " or \ are not escaped (backslash handling
       # in Jinja literals differs across ansible-core versions).
       ansible_role_env_list: >-
-          {{ (['GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new'] +
-              (ansible_environment.keys() | zip(ansible_environment.values()) | map('join', '=') | list))
+          {{ ansible_environment.keys() | zip(ansible_environment.values()) | map('join', '=')
              | map('replace', '%', '%%') | map('regex_replace', '^|$', '"') | list }}
 
 - name: Deploy ansible systemd units via systemd role
@@ -123,10 +130,14 @@
                 Service:
                     Type: oneshot
                     EnvironmentFile: "-/etc/ansible/ansible.env"
-                    ExecStartPre: "{{ ansible_role_exec_start_pre }}"
+                    # % and $ are systemd specifiers/expansions; ExecStart keeps $ so
+                    # ansible_extra_args can still reference EnvironmentFile variables.
+                    ExecStartPre: >-
+                        {{ ansible_role_exec_start_pre | map('replace', '%', '%%')
+                           | map('replace', '$', '$$') | list }}
                     ExecStart: >-
-                        {{ ansible_role_exec_start_pull if ansible_mode == 'pull'
-                           else ansible_role_exec_start_playbook }}
+                        {{ (ansible_role_exec_start_pull if ansible_mode == 'pull'
+                           else ansible_role_exec_start_playbook) | replace('%', '%%') }}
                     # "-": the checkout only exists after the first ExecStartPre clone
                     WorkingDirectory: >-
                         {{ ansible_checkout_dir if ansible_mode == 'pull'

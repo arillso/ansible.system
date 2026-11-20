@@ -189,6 +189,14 @@ argument_specs:
                 type: str
                 default: ansible
 
+            ansible_otel_extra_callbacks:
+                description: >-
+                    Callbacks enabled next to community.general.opentelemetry. The role sets
+                    ANSIBLE_CALLBACKS_ENABLED, which replaces callbacks_enabled from ansible.cfg.
+                type: list
+                elements: str
+                default: []
+
             ansible_environment:
                 description: Additional environment variables for Ansible execution
                 type: dict

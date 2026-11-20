@@ -73,6 +73,8 @@ ansible_otel_headers: ""
 ansible_otel_service_name: "ansible-automation"
 ansible_otel_environment: "production"
 ansible_otel_workload_type: "ansible"
+# Callbacks kept next to opentelemetry (ANSIBLE_CALLBACKS_ENABLED replaces ansible.cfg)
+ansible_otel_extra_callbacks: []
 
 # Environment Variables
 ansible_environment: {}

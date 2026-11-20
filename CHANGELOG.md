@@ -82,10 +82,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `security.fact` is the only source.
 - **network** (breaking): `network_resolved_llmnr` and
   `network_resolved_multicast_dns` default to `no`, so hosts stop resolving
-  `.local` and bare peer names over mDNS/LLMNR. Set both to `"yes"` to keep the
+  `.local` and bare peer names over mDNS/LLMNR. Set both to `true` to keep the
   old behaviour.
 - **network** (breaking): the argument spec entry point `dns` is renamed
   to `resolv` to match `tasks/resolv.yml`; use `tasks_from: resolv`.
+- **network**: the `network_resolved_*` options for `[Resolve]` take a bool,
+  rendered as `yes`/`no`, or a string for systemd's extra values such as
+  `resolve` or `allow-downgrade`. Unquoted `no` in YAML used to render as
+  `False`.
 - **network**: systemd-resolved is restarted inside the tasks, before
   `/etc/resolv.conf` is relinked, instead of in a handler at the end of the
   play. `network_restart_services` also gates the NetworkManager reload.

@@ -38,7 +38,7 @@ For detailed documentation including all variables, examples, and usage instruct
 | `network_dns_search`           | `[]`    | DNS search domains (both paths)            |
 | `network_use_systemd_resolved` | `true`  | Use systemd-resolved for DNS               |
 | `network_resolved_dns`         | `[]`    | Overrides `network_dns_nameservers`        |
-| `network_resolved_llmnr`       | `"no"`  | LLMNR in systemd-resolved                  |
+| `network_resolved_llmnr`       | `false` | LLMNR in systemd-resolved                  |
 | `network_netplan_config`       | `{}`    | Netplan network definition (dict)          |
 | `network_netplan_apply`        | `false` | Run `netplan apply` after rendering config |
 | `network_validate_netplan`     | `true`  | Run `netplan generate` to validate config  |

@@ -32,6 +32,10 @@ network_dns_options: []
 #   - ndots:1
 
 # Systemd-resolved configuration
+# The [Resolve] options below take a bool (rendered as yes/no) or a string for
+# systemd's extra values: LLMNR/MulticastDNS "resolve", DNSSEC
+# "allow-downgrade", DNSOverTLS "opportunistic", Cache "no-negative",
+# DNSStubListener "udp"/"tcp".
 network_use_systemd_resolved: true
 # Overrides network_dns_nameservers for resolved.conf when non-empty.
 network_resolved_dns: []
@@ -41,14 +45,14 @@ network_resolved_fallback_dns:
 # Overrides network_dns_domain + network_dns_search when non-empty.
 network_resolved_domains: []
 # LLMNR and mDNS answer name queries from anyone on the link; off for servers.
-network_resolved_llmnr: "no"
-network_resolved_multicast_dns: "no"
+network_resolved_llmnr: false
+network_resolved_multicast_dns: false
 network_resolved_dnssec: "allow-downgrade"
-network_resolved_dns_over_tls: "no"
-network_resolved_cache: "yes"
+network_resolved_dns_over_tls: false
+network_resolved_cache: true
 # Any boolean false ("no", "false", "0", "off", ...) links /etc/resolv.conf to the full resolver list
 # (/run/systemd/resolve/resolv.conf) instead of the 127.0.0.53 stub.
-network_resolved_dnsstublistener: "yes"
+network_resolved_dnsstublistener: true
 # Writes dns=systemd-resolved to /etc/NetworkManager/conf.d when NetworkManager
 # is installed. Set to false to keep NetworkManager's own DNS mode (dnsmasq,
 # none, default).

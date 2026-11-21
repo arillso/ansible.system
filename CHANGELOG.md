@@ -497,7 +497,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   run as root. A mirrored `bitwarden_secrets_download_url` keeps working while
   the list is reachable; air-gapped hosts set `bitwarden_secrets_checksum` or
   skip the check with `bitwarden_secrets_checksum_url: ""`.
-
 - **packages**: armored keys were staged as root at a fixed path
   `/tmp/<label>-armored.asc`, which a local user could replace with a symlink.
   They are now staged in a fresh temporary file that is always removed.

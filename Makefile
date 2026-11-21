@@ -1,4 +1,4 @@
-.PHONY: help lint lint-ansible lint-yaml lint-python format test test-unit test-integration test-molecule test-molecule-% build clean install-dev
+.PHONY: help lint lint-ansible lint-yaml lint-python format test test-unit coverage test-integration test-molecule test-molecule-% build clean install-dev
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -51,8 +51,11 @@ test-unit: ## Run pytest unit suite (skipped when pytest is missing; CI is the g
 		echo "SKIP: pytest not installed"; \
 	else \
 		echo "Running pytest..."; \
-		pytest tests/unit/; \
+		pytest tests/unit/ $(PYTEST_ARGS); \
 	fi
+
+coverage: PYTEST_ARGS = --cov=plugins --cov-report=term-missing
+coverage: test-unit ## Run the unit suite with plugin coverage (needs pytest-cov)
 
 test-integration: ## Run ansible-test integration targets (skipped when ansible-test/docker are missing; CI is the gate)
 	@if ! command -v ansible-test >/dev/null 2>&1; then \

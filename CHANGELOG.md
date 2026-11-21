@@ -80,6 +80,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   runtime version and health probes to every fact gather on container hosts.
 - **facts**: `system.fact` no longer reports `security_updates_available`;
   `security.fact` is the only source.
+- **network** (breaking): `network_resolved_llmnr` and
+  `network_resolved_multicast_dns` default to `no`, so hosts stop resolving
+  `.local` and bare peer names over mDNS/LLMNR. Set both to `true` to keep the
+  old behaviour.
+- **network** (breaking): the argument spec entry point `dns` is renamed
+  to `resolv` to match `tasks/resolv.yml`; use `tasks_from: resolv`.
+- **network**: the `network_resolved_*` options for `[Resolve]` take a bool,
+  rendered as `yes`/`no`, or a string for systemd's extra values such as
+  `resolve` or `allow-downgrade`. Unquoted `no` in YAML used to render as
+  `False`.
+- **network**: systemd-resolved is restarted inside the tasks, before
+  `/etc/resolv.conf` is relinked, instead of in a handler at the end of the
+  play. `network_restart_services` also gates the NetworkManager reload.
+- **network**: with systemd-resolved and NetworkManager installed, the role
+  sets `dns=systemd-resolved` in
+  `/etc/NetworkManager/conf.d/90-arillso-dns-resolved.conf`; opt out with
+  `network_resolved_manage_networkmanager: false`.
 
 - **ready**: the role waits with `wait_for_connection` and
   `cloud-init status --wait` instead of `wait_for` on port 22 and polling
@@ -125,6 +142,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   anything) and the unused `bitwarden_secrets_debug_mode`.
 - **ready**: `ready_ssh_port`, `ready_check_retries`, `ready_check_delay` and
   `ready_rescue_pause`. Use `ready_cloud_init_timeout` for the cloud-init wait.
+- **network** (breaking): the handlers `network: restart networkd` and
+  `network: restart resolved` are removed; drop `notify` entries for them
+  outside the role. `network_netplan_renderer`, `network_debug_mode`,
+  `network_systemd_networkd_restart` and `_network_common_dns_servers` were
+  never used.
 
 - **facts**: the handlers `facts: refresh`, `facts: restart ssh` and
   `facts: update motd` and the variable `facts_ssh_service_names`. No task
@@ -192,6 +214,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   restored and entries created in that run are removed.
 - **logging**: plays with `gather_facts: false` work; the role gathers the
   minimal facts it needs for the distro defaults.
+- **network**: with systemd-resolved, `network_dns_nameservers`,
+  `network_dns_search` and `network_dns_domain` now fill `DNS=` and `Domains=`
+  unless `network_resolved_dns` / `network_resolved_domains` are set.
+- **network**: `systemd-resolved` is installed when it is missing, as on
+  Debian 12, Ubuntu 24.04 and EL 9 where it is a separate package.
+- **network**: `netplan generate` validates the new file before it is written,
+  so an invalid config no longer stays in `/etc/netplan`.
+- **network**: `/etc/resolv.conf` links to `/run/systemd/resolve/resolv.conf`
+  when the stub listener is off, and every boolean spelling of
+  `network_resolved_dnsstublistener` that systemd accepts is recognised.
+- **network**: handlers set `become: true`.
 - **access**: with `exclusive: true`, each key removed the keys written before
   it, so only the last key stayed in `authorized_keys`. All present keys of a
   user with an exclusive key, from `access_users[].ssh_keys` and

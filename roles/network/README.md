@@ -34,9 +34,11 @@ For detailed documentation including all variables, examples, and usage instruct
 | ------------------------------ | ------- | ------------------------------------------ |
 | `network_resolv_enabled`       | `true`  | Manage DNS resolver configuration          |
 | `network_netplan_enabled`      | `false` | Manage netplan interface configuration     |
-| `network_dns_nameservers`      | `[]`    | DNS nameserver addresses                   |
-| `network_dns_search`           | `[]`    | DNS search domains                         |
+| `network_dns_nameservers`      | `[]`    | DNS nameserver addresses (both paths)      |
+| `network_dns_search`           | `[]`    | DNS search domains (both paths)            |
 | `network_use_systemd_resolved` | `true`  | Use systemd-resolved for DNS               |
+| `network_resolved_dns`         | `[]`    | Overrides `network_dns_nameservers`        |
+| `network_resolved_llmnr`       | `false` | LLMNR in systemd-resolved                  |
 | `network_netplan_config`       | `{}`    | Netplan network definition (dict)          |
 | `network_netplan_apply`        | `false` | Run `netplan apply` after rendering config |
 | `network_validate_netplan`     | `true`  | Run `netplan generate` to validate config  |
@@ -44,9 +46,24 @@ For detailed documentation including all variables, examples, and usage instruct
 
 See [`defaults/main.yml`](defaults/main.yml) for the complete list and [the guide](https://guide.arillso.io/collections/arillso/system/network_role.html) for detailed docs.
 
+## systemd-resolved
+
+With `network_use_systemd_resolved: true` the role installs `systemd-resolved`
+when it is missing (a separate package on Debian 12, Ubuntu 24.04, EL 9), links
+`/etc/resolv.conf` to it, and, if NetworkManager is installed, sets
+`dns=systemd-resolved` in `/etc/NetworkManager/conf.d/90-arillso-dns-resolved.conf`
+(opt out with `network_resolved_manage_networkmanager: false`).
+
+## Netplan
+
+`netplan generate` validates the new file before it is written. `netplan apply`
+runs only when the file changes in the same run; a file written while
+`network_netplan_apply` was `false` needs a manual `netplan apply`.
+
 ## Check Mode
 
-This role is partially `--check` compatible. Config rendering is check-safe, but `netplan generate` (validation) and `netplan apply` are gated on a changed config file and are not executed/validated meaningfully in check mode.
+This role is partially `--check` compatible. Config rendering is check-safe, but
+the netplan validation and `netplan apply` do not run in check mode.
 
 ## License
 

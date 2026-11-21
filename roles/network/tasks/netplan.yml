@@ -9,6 +9,8 @@
   register: _network_netplan_install
   until: _network_netplan_install is succeeded
 
+# validate runs netplan generate on the candidate before it is moved into
+# place, so an invalid config never lands in /etc/netplan.
 - name: Deploy netplan configuration
   ansible.builtin.copy:
       content: "{{ network_netplan_config | to_nice_yaml(indent=2) }}"
@@ -17,23 +19,18 @@
       group: root
       mode: "0600"
       backup: "{{ network_backup_configs }}"
+      validate: "{{ _network_netplan_validate_cmd if network_validate_netplan | bool else omit }}"
   become: true
   register: _network_netplan_config
   when: network_netplan_config | length > 0
 
-- name: Validate netplan configuration
-  ansible.builtin.command: netplan generate
-  become: true
-  changed_when: false
-  when:
-      - network_validate_netplan | default(true)
-      - _network_netplan_config is changed
-
+# Applies only on a change in this run. A file written while
+# network_netplan_apply was false needs a manual `netplan apply`.
 - name: Apply netplan configuration
   ansible.builtin.command: netplan apply
   become: true
   when:
-      - network_netplan_apply | default(false)
+      - network_netplan_apply | bool
       - _network_netplan_config is changed
   register: _network_netplan_apply
   changed_when: _network_netplan_apply.rc == 0

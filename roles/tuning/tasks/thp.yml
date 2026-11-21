@@ -3,26 +3,29 @@
 
 - name: Configure transparent huge pages
   block:
-      - name: Validate transparent huge pages setting
-        ansible.builtin.fail:
-            msg: "Invalid transparent_hugepages setting: {{ tuning_transparent_hugepages }}"
-        when: tuning_transparent_hugepages not in ['always', 'madvise', 'never']
-
       # Best-effort immediate apply: containers and minimal kernels can
       # have transparent_hugepage disabled at compile time (sysfs entry
-      # missing) or read-only. The disable-thp.service rendered below is
-      # the persistent path of record — failing here would prevent the
-      # systemd unit from being deployed on hosts that just happen not
-      # to expose the sysfs knob, which is the opposite of what we want.
+      # missing) or read-only. Without the knob the role skips both the
+      # write and disable-thp.service, whose ExecStartPost check would fail.
+      # `tee` writes in place; `copy` cannot, its temp-file-and-rename
+      # fails on sysfs.
+      - name: Read current transparent huge pages setting
+        ansible.builtin.slurp:
+            src: /sys/kernel/mm/transparent_hugepage/enabled
+        register: _tuning_thp_current
+        failed_when: false
+
       - name: Set transparent huge pages immediately
-        ansible.builtin.copy:
-            content: "{{ tuning_transparent_hugepages }}"
-            dest: /sys/kernel/mm/transparent_hugepage/enabled
-            mode: "0644"
+        ansible.builtin.command: tee /sys/kernel/mm/transparent_hugepage/enabled
+        args:
+            stdin: "{{ tuning_transparent_hugepages }}"
         become: true
         register: _tuning_thp_result
+        changed_when: _tuning_thp_result.rc == 0
         failed_when: false
-        when: tuning_transparent_hugepages is defined
+        when:
+            - _tuning_thp_current.content is defined
+            - ('[' ~ tuning_transparent_hugepages ~ ']') not in (_tuning_thp_current.content | b64decode)
 
       - name: Create systemd service for transparent huge pages
         ansible.builtin.template:
@@ -35,6 +38,4 @@
         notify:
             - "tuning: reload systemd"
             - "tuning: apply thp"
-        when:
-            - tuning_transparent_hugepages is defined
-            - _tuning_thp_result is not failed
+        when: _tuning_thp_current.content is defined

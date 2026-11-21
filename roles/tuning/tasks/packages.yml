@@ -14,7 +14,9 @@
       name: arillso.system.packages
       tasks_from: packages
   vars:
-      packages_list: "{{ tuning_packages_list | map('combine', {'state': 'present'}) | list }}"
-  loop_control:
-      loop_var: _tuning_outer_item
+      packages_list: >-
+          {{ tuning_packages_list
+             | map('community.general.dict_kv', 'name')
+             | map('combine', {'state': 'present'})
+             | list }}
   when: tuning_packages_list is defined and tuning_packages_list | length > 0

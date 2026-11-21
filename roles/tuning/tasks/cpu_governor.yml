@@ -4,7 +4,7 @@
 
 - name: Install CPU frequency utilities
   ansible.builtin.package:
-      name: "{{ 'cpufrequtils' if ansible_facts['os_family'] == 'Debian' else 'kernel-tools' }}"
+      name: "{{ _tuning_service_commands[ansible_facts['os_family']]['cpufreq_package'] | default('kernel-tools') }}"
       state: present
   become: true
 
@@ -55,16 +55,16 @@
       # cpufreq/cpupower service enabled below. The `Validate CPU
       # governor was applied` assert in the verify block is the real
       # gate — if both immediate apply and service failed, the assert
-      # fires and the role bails out.
+      # fires and the role bails out. `tee` writes in place; `copy`
+      # cannot, its temp-file-and-rename fails on sysfs.
       - name: Set CPU governor immediately
-        ansible.builtin.copy:
-            content: "{{ _tuning_final_cpu_governor }}"
-            dest: "{{ item.item.path }}/cpufreq/scaling_governor"
-            mode: "0644"
+        ansible.builtin.command: tee {{ item.item.path }}/cpufreq/scaling_governor
+        args:
+            stdin: "{{ _tuning_final_cpu_governor }}"
         become: true
         register: _tuning_governor_result
         failed_when: false
-        changed_when: _tuning_governor_result.rc is defined and _tuning_governor_result.rc == 0
+        changed_when: _tuning_governor_result.rc == 0
         when:
             - not item.failed
             - (item.content | b64decode | trim) != _tuning_final_cpu_governor
@@ -79,6 +79,14 @@
                 Current governor: {{ item.content | b64decode | trim }}{%- endif %}
         loop: "{{ _tuning_current_governor.results | default([]) }}"
         when: _tuning_current_governor.results is defined and _tuning_current_governor.results | length > 0
+
+- name: Enable CPU frequency service
+  ansible.builtin.systemd:
+      name: "{{ _tuning_service_commands[ansible_facts['os_family']]['cpufreq'] }}"
+      enabled: true
+      state: started
+  become: true
+  when: ansible_facts['os_family'] in _tuning_service_commands
 
 - name: Verify CPU governor configuration
   block:
@@ -101,11 +109,3 @@
         when:
             - not ansible_check_mode
             - _tuning_final_governor.results is defined
-
-- name: Enable CPU frequency service
-  ansible.builtin.systemd:
-      name: "{{ _tuning_service_commands[ansible_facts['os_family']]['cpufreq'] }}"
-      enabled: true
-      state: started
-  become: true
-  when: ansible_facts['os_family'] in _tuning_service_commands

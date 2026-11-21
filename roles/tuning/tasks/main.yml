@@ -1,5 +1,12 @@
 # File: roles/system_tuning/tasks/main.yml
 ---
+# Runs first: grub.yml derives the kernel cmdline from this value.
+- name: Validate transparent huge pages setting
+  ansible.builtin.assert:
+      that: tuning_transparent_hugepages in ['always', 'madvise', 'never']
+      fail_msg: "Invalid transparent_hugepages setting: {{ tuning_transparent_hugepages }}"
+      quiet: true
+
 - name: Install tuning packages
   ansible.builtin.include_tasks: packages.yml
 
@@ -13,12 +20,13 @@
 - name: Configure kernel parameters in GRUB
   ansible.builtin.include_tasks: grub.yml
 
-- name: Configure swap settings
-  ansible.builtin.include_tasks: swap_config.yml
+- name: Configure swap file
+  ansible.builtin.include_tasks: swap.yml
+  when: tuning_swap_file_enabled | default(false)
 
 - name: Configure I/O scheduler
   ansible.builtin.include_tasks: io_scheduler.yml
-  when: _tuning_detected_storage_devices is defined and _tuning_detected_storage_devices | length > 0
+  when: _tuning_optimized_storage_devices | default([]) | length > 0
 
 - name: Configure CPU governor
   ansible.builtin.include_tasks: cpu_governor.yml

@@ -1,0 +1,122 @@
+---
+# Apply one sysctl dict to one drop-in file. Shared by sysctl.yml and
+# network.yml so both paths behave the same.
+#
+# Inputs:
+#   _tuning_apply_config:   dict of sysctl key -> value
+#   _tuning_apply_optional: keys that may be missing on this kernel
+#   _tuning_apply_file:     drop-in file to write
+#
+# Required keys fail loudly. Optional keys are probed first: a key the kernel
+# does not offer (or a congestion control that is not loaded) is skipped and
+# removed from the drop-in, before the required loop reloads that file. A line
+# left by an earlier role version would otherwise break every `sysctl -p`.
+
+# become: some keys are mode 0600 and would read as missing for a non-root user.
+- name: Probe optional sysctl parameters
+  ansible.builtin.command: sysctl -n {{ _sysctl_key }}
+  loop: >-
+      {{ _tuning_apply_config.keys() | select('in', _tuning_apply_optional) | list
+         + ['net.ipv4.tcp_available_congestion_control'] }}
+  loop_control:
+      loop_var: _sysctl_key
+  become: true
+  register: _tuning_sysctl_probe
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Collect optional sysctl parameters this kernel does not offer
+  ansible.builtin.set_fact:
+      _tuning_sysctl_unavailable: >-
+          {%- set out = [] -%}
+          {%- set cc = _tuning_apply_config['net.ipv4.tcp_congestion_control'] | default('') | string -%}
+          {%- set avail = (_tuning_sysctl_probe.results | last).stdout | default('') -%}
+          {%- for r in _tuning_sysctl_probe.results[:-1] -%}
+          {%- if r.rc != 0 or (r._sysctl_key == 'net.ipv4.tcp_congestion_control' and cc not in avail.split()) -%}
+          {%- set _ = out.append(r._sysctl_key) -%}
+          {%- endif -%}
+          {%- endfor -%}
+          {{ out }}
+
+- name: Remove optional sysctl parameters this kernel does not offer
+  ansible.posix.sysctl:
+      name: "{{ _sysctl_key }}"
+      state: absent
+      reload: false
+      sysctl_file: "{{ _tuning_apply_file }}"
+  become: true
+  loop: "{{ _tuning_sysctl_unavailable }}"
+  loop_control:
+      loop_var: _sysctl_key
+
+- name: Report optional sysctl parameters this kernel does not offer
+  ansible.builtin.debug:
+      msg: "Optional sysctl '{{ _sysctl_key }}' is not available on this host, skipped"
+  loop: "{{ _tuning_sysctl_unavailable }}"
+  loop_control:
+      loop_var: _sysctl_key
+
+- name: Configure required sysctl parameters
+  ansible.posix.sysctl:
+      name: "{{ _sysctl_item.key }}"
+      value: "{{ _sysctl_item.value }}"
+      state: present
+      reload: true
+      sysctl_file: "{{ _tuning_apply_file }}"
+  become: true
+  loop: "{{ _tuning_apply_config | dict2items }}"
+  loop_control:
+      loop_var: _sysctl_item
+      label: "{{ _sysctl_item.key }}"
+  when: _sysctl_item.key not in _tuning_apply_optional
+  notify: "tuning: reload sysctl"
+
+- name: Configure optional sysctl parameters
+  ansible.posix.sysctl:
+      name: "{{ _sysctl_item.key }}"
+      value: "{{ _sysctl_item.value }}"
+      state: present
+      reload: true
+      sysctl_file: "{{ _tuning_apply_file }}"
+  become: true
+  loop: "{{ _tuning_apply_config | dict2items }}"
+  loop_control:
+      loop_var: _sysctl_item
+      label: "{{ _sysctl_item.key }}"
+  when:
+      - _sysctl_item.key in _tuning_apply_optional
+      - _sysctl_item.key not in _tuning_sysctl_unavailable
+  notify: "tuning: reload sysctl"
+  register: _tuning_sysctl_optional
+  ignore_errors: true
+
+- name: Report optional sysctl parameters that could not be applied
+  ansible.builtin.debug:
+      msg: >-
+          Optional sysctl '{{ _sysctl_item.item.key }}' could not be applied
+          on this host: {{ _sysctl_item.msg | default('see previous error') }}
+  loop: "{{ _tuning_sysctl_optional.results | default([]) }}"
+  loop_control:
+      loop_var: _sysctl_item
+      label: "{{ _sysctl_item.item.key | default('(skipped)') }}"
+  when:
+      - _sysctl_item.failed | default(false)
+      - not _sysctl_item.skipped | default(false)
+
+# sysctl writes the key before it reloads, so a key that passed the probe but
+# failed anyway would otherwise stay in the drop-in.
+- name: Remove optional sysctl parameters that could not be applied
+  ansible.posix.sysctl:
+      name: "{{ _sysctl_item.item.key }}"
+      state: absent
+      reload: false
+      sysctl_file: "{{ _tuning_apply_file }}"
+  become: true
+  loop: "{{ _tuning_sysctl_optional.results | default([]) }}"
+  loop_control:
+      loop_var: _sysctl_item
+      label: "{{ _sysctl_item.item.key | default('(skipped)') }}"
+  when:
+      - _sysctl_item.failed | default(false)
+      - not _sysctl_item.skipped | default(false)

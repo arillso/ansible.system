@@ -5,8 +5,8 @@
 # reboot to take effect, so verify.yml does not assert it. CPU governor and
 # I/O scheduler stay at `auto` — they are gated on virtual-hardware detection
 # that largely no-ops in a guest. Kernel-module-dependent sysctls (e.g. the
-# bbr congestion control, removed/!built-in knobs) are marked optional so a
-# minimal cloud kernel that lacks them does not fail the converge.
+# bbr congestion control) are marked optional so a minimal cloud kernel that
+# lacks them does not fail the converge.
 
 - name: Converge — arillso.system.tuning
   hosts: all
@@ -28,7 +28,6 @@
       # the required-sysctl loop.
       tuning_optional_sysctl_params:
           - net.ipv4.tcp_congestion_control
-          - net.ipv4.tcp_fack
 
   tasks:
       - name: Apply tuning role

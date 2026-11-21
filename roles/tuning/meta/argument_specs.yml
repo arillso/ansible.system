@@ -30,17 +30,39 @@ argument_specs:
                     net.ipv4.tcp_timestamps, net.ipv4.ip_local_port_range).
                     See defaults/main.yml for the full set of default parameters.
 
+            tuning_optional_sysctl_params:
+                type: "list"
+                required: false
+                elements: "str"
+                default: ["net.ipv4.tcp_congestion_control"]
+                description: >-
+                    Keys of tuning_sysctl_config that may fail on a host (missing
+                    kernel module or knob). A failed key is reported and removed
+                    from the drop-in file instead of failing the role.
+
+            tuning_optional_network_sysctl_params:
+                type: "list"
+                required: false
+                elements: "str"
+                default: []
+                description: "Same as tuning_optional_sysctl_params for tuning_network_sysctl_config"
+
             tuning_grub_cmdline_linux_append:
                 type: "str"
                 required: false
-                default: "transparent_hugepage=never"
-                description: "Kernel parameters to append to GRUB configuration"
+                default: "transparent_hugepage={{ tuning_transparent_hugepages }}"
+                description: >-
+                    Kernel parameters to add to GRUB_CMDLINE_LINUX. A parameter
+                    whose key is already present is replaced. Empty string
+                    leaves GRUB untouched.
 
             tuning_swap_swappiness:
                 type: "int"
                 required: false
                 default: 10
-                description: "Swappiness value (0-100, lower = less swap usage)"
+                description: >-
+                    Swappiness value (0-100, lower = less swap usage). Wins over a
+                    vm.swappiness key in tuning_sysctl_config.
 
             tuning_swap_file_enabled:
                 type: "bool"
@@ -75,35 +97,35 @@ argument_specs:
                 required: false
                 default: "auto"
                 description: |
-                    I/O scheduler to use. Set to 'auto' for automatic
-                    detection based on storage type.
+                    I/O scheduler for all selected devices. 'auto' uses none
+                    for NVMe and mq-deadline for all other disks.
 
             tuning_io_scheduler_override:
                 type: "str"
                 required: false
                 default: null
-                description: "Override automatic I/O scheduler detection"
+                description: "I/O scheduler that takes precedence over tuning_io_scheduler"
 
             tuning_io_scheduler_devices:
                 type: "list"
                 required: false
                 default: []
                 elements: "str"
-                description: "List of specific block devices to apply I/O scheduler settings to"
+                description: "Block device names to set the I/O scheduler on, e.g. sda or dm-0 (empty = all detected disks)"
 
             tuning_cpu_governor:
                 type: "str"
                 required: false
                 default: "auto"
                 description: |
-                    CPU governor to use. Set to 'auto' for automatic
-                    detection based on CPU type.
+                    CPU governor to use. 'auto' uses powersave on pstate
+                    drivers and schedutil or ondemand otherwise.
 
             tuning_cpu_governor_override:
                 type: "str"
                 required: false
                 default: null
-                description: "Override automatic CPU governor detection"
+                description: "CPU governor that takes precedence over tuning_cpu_governor"
 
             tuning_transparent_hugepages:
                 type: "str"
@@ -168,7 +190,7 @@ argument_specs:
                 required: false
                 elements: "str"
                 default: []
-                description: "List of packages required for tuning (auto-detected based on OS family)"
+                description: "Package names required for tuning (default depends on the OS family)"
 
             tuning_network_tuning_enabled:
                 type: "bool"

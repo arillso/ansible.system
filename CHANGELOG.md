@@ -102,6 +102,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **packages**: `packages_apt_conf` values are written in double quotes, as
   apt.conf requires; block values (`{ … }`) and already quoted values stay as
   given, and a value with a stray `"` fails with a clear message.
+- **logging**: `logging_rsyslog_modules` defaults to `[imuxsock, imjournal]` on
+  EL, and `logging_logrotate_su` defaults to `root adm` on Ubuntu.
+- **logging**: on EL, rsyslog creates log files as `root` with mode `0600`
+  (`logging_rsyslog_file_group`, `logging_rsyslog_file_create_mode`), as the
+  distro does, so `/var/log/secure` is no longer readable by `adm`.
 
 ### Removed
 
@@ -109,6 +114,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `firewall: start`, `firewall: stop` and `firewall: restart`, and the unused
   `/etc/nftables` directory.
 
+- **logging**: the unused handler `logging: reload rsyslog` and the unused
+  internal variable `_logging_logrotate_default_options`.
 - **access**: `access_sudoers_validate` was never read. Use
   `access_validate_sudoers`.
 - **ansible**: unused `ansible_debug_mode`, internal arch vars and the
@@ -154,6 +161,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (0..32767) and fails when `systemd-zram-generator` or `zram-config` is
   installed.
 - **zram**: the no-op `packages_update_cache` on the cache include is removed.
+
+- **logging**: `rsyslog.conf` writes the EL log files (`/var/log/messages`,
+  `secure`, `maillog`, `cron`) on EL instead of the Debian ones, and reads the
+  journal there, so EL hosts no longer lose local logs. On Ubuntu it leaves
+  the standard rules to `/etc/rsyslog.d/50-default.conf`, which wrote every
+  message twice.
+- **logging**: `logrotate.conf` no longer rotates `/var/log/wtmp` and `btmp`,
+  which every supported distro already ships in `/etc/logrotate.d`; logrotate
+  failed with `duplicate log entry`.
+- **logging**: the rsyslog configuration failed `rsyslogd -N1` on Debian and
+  Ubuntu: `$KLogPermitNonKernelFacility` is now the `imklog` module parameter,
+  and `logging_rsyslog_work_directory` defaults to `/var/spool/rsyslog` outside
+  EL, where `/var/lib/rsyslog` does not exist.
+- **logging**: `logging_rsyslog_traditional_log_format` was inverted. The
+  default (`false`) now writes high-precision timestamps; `true` writes the
+  traditional format.
+- **logging**: a `logging_rsyslog_remote_servers` entry without `protocol`
+  failed to render; it now defaults to `udp` as documented.
+- **logging**: `--tags logrotate`, `rsyslog` and `syslog` now run the tasks of
+  the included files, not only the include.
+- **logging**: an rsyslog entry whose `priority` changes no longer leaves its
+  old `<priority>-<name>.conf` behind, and `state: absent` removes the file
+  whatever its priority. Files left behind by a priority change are only
+  removed if the role wrote them; files written by earlier versions carry no
+  marker and are left alone.
+- **logging**: `logrotate.conf` is validated before it is written
+  (`logrotate -d`). A changed rsyslog configuration is checked with
+  `rsyslogd -N1` before the restart handler runs; if it fails, the backups are
+  restored and entries created in that run are removed.
+- **logging**: plays with `gather_facts: false` work; the role gathers the
+  minimal facts it needs for the distro defaults.
 - **access**: with `exclusive: true`, each key removed the keys written before
   it, so only the last key stayed in `authorized_keys`. All present keys of a
   user with an exclusive key, from `access_users[].ssh_keys` and

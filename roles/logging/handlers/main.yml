@@ -5,9 +5,3 @@
       state: restarted
   when: logging_rsyslog_restart_on_change | default(true)
   listen: "logging: restart rsyslog"
-
-- name: Reload rsyslog configuration without restarting
-  ansible.builtin.systemd:
-      name: rsyslog
-      state: reloaded
-  listen: "logging: reload rsyslog"

@@ -83,9 +83,10 @@ argument_specs:
                 type: bool
                 default: true
             logging_logrotate_su:
-                description: "Run logrotate as specified user/group"
+                description: >-
+                    Run logrotate as specified user/group. Defaults to
+                    `root adm` on Ubuntu and empty elsewhere.
                 type: str
-                default: ""
             logging_logrotate_include_dir:
                 description: "Directory for additional logrotate configurations"
                 type: str
@@ -158,9 +159,10 @@ argument_specs:
                 type: bool
                 default: false
             logging_rsyslog_work_directory:
-                description: "Working directory for rsyslog"
+                description: >-
+                    Working directory for rsyslog. Defaults to
+                    `/var/lib/rsyslog` on EL and `/var/spool/rsyslog` elsewhere.
                 type: str
-                default: /var/lib/rsyslog
             logging_rsyslog_include_config:
                 description: "Glob pattern for included rsyslog configuration files"
                 type: str
@@ -182,13 +184,15 @@ argument_specs:
                 type: str
                 default: root
             logging_rsyslog_file_group:
-                description: "Group for log files created by rsyslog"
+                description: >-
+                    Group for log files created by rsyslog. Defaults to `root`
+                    on EL and `adm` elsewhere.
                 type: str
-                default: adm
             logging_rsyslog_file_create_mode:
-                description: "File creation mode for log files"
+                description: >-
+                    File creation mode for log files. Defaults to `0600` on EL
+                    and `0640` elsewhere.
                 type: str
-                default: "0640"
             logging_rsyslog_dir_create_mode:
                 description: "Directory creation mode for log directories"
                 type: str
@@ -202,12 +206,13 @@ argument_specs:
                 type: bool
                 default: false
             logging_rsyslog_modules:
-                description: "Rsyslog input modules to load"
+                description: >-
+                    Rsyslog input modules to load. Defaults to
+                    `[imuxsock, imjournal]` on EL and `[imuxsock, imklog]`
+                    elsewhere. With `imjournal`, `imuxsock` leaves the system
+                    socket to journald.
                 type: list
                 elements: str
-                default:
-                    - imuxsock
-                    - imklog
             logging_rsyslog_service_state:
                 description: "State of the rsyslog service"
                 type: str
@@ -317,9 +322,10 @@ argument_specs:
                 type: bool
                 default: true
             logging_logrotate_su:
-                description: "Run logrotate as specified user/group"
+                description: >-
+                    Run logrotate as specified user/group. Defaults to
+                    `root adm` on Ubuntu and empty elsewhere.
                 type: str
-                default: ""
             logging_logrotate_include_dir:
                 description: "Directory for additional logrotate configurations"
                 type: str
@@ -393,9 +399,10 @@ argument_specs:
                 type: bool
                 default: false
             logging_rsyslog_work_directory:
-                description: "Working directory for rsyslog"
+                description: >-
+                    Working directory for rsyslog. Defaults to
+                    `/var/lib/rsyslog` on EL and `/var/spool/rsyslog` elsewhere.
                 type: str
-                default: /var/lib/rsyslog
             logging_rsyslog_include_config:
                 description: "Glob pattern for included rsyslog configuration files"
                 type: str
@@ -417,13 +424,15 @@ argument_specs:
                 type: str
                 default: root
             logging_rsyslog_file_group:
-                description: "Group for log files created by rsyslog"
+                description: >-
+                    Group for log files created by rsyslog. Defaults to `root`
+                    on EL and `adm` elsewhere.
                 type: str
-                default: adm
             logging_rsyslog_file_create_mode:
-                description: "File creation mode for log files"
+                description: >-
+                    File creation mode for log files. Defaults to `0600` on EL
+                    and `0640` elsewhere.
                 type: str
-                default: "0640"
             logging_rsyslog_dir_create_mode:
                 description: "Directory creation mode for log directories"
                 type: str
@@ -437,12 +446,13 @@ argument_specs:
                 type: bool
                 default: false
             logging_rsyslog_modules:
-                description: "Rsyslog input modules to load"
+                description: >-
+                    Rsyslog input modules to load. Defaults to
+                    `[imuxsock, imjournal]` on EL and `[imuxsock, imklog]`
+                    elsewhere. With `imjournal`, `imuxsock` leaves the system
+                    socket to journald.
                 type: list
                 elements: str
-                default:
-                    - imuxsock
-                    - imklog
             logging_rsyslog_service_state:
                 description: "State of the rsyslog service"
                 type: str

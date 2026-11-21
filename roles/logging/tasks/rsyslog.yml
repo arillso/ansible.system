@@ -9,40 +9,97 @@
   register: _logging_rsyslog_install
   until: _logging_rsyslog_install is succeeded
 
-- name: Deploy rsyslog configuration
-  ansible.builtin.template:
-      src: etc/rsyslog.conf.j2
-      dest: /etc/rsyslog.conf
-      owner: root
-      group: root
-      mode: "0644"
-      backup: "{{ logging_backup_configs }}"
+# Not a `validate:` on the templates: rsyslog on EL 9 refuses to read a config
+# from Ansible's temp path. The files are checked in place with `rsyslogd -N1`
+# instead; on failure the rescue restores the backups and removes drop-ins this
+# run created, so the next restart does not pick up a broken configuration.
+- name: Deploy and check rsyslog configuration
   become: true
-  notify: "logging: restart rsyslog"
-  retries: "{{ logging_retry_count }}"
-  delay: "{{ logging_retry_delay }}"
-  register: _logging_rsyslog_config
-  until: _logging_rsyslog_config is succeeded
+  block:
+      - name: Deploy rsyslog configuration
+        ansible.builtin.template:
+            src: etc/rsyslog.conf.j2
+            dest: /etc/rsyslog.conf
+            owner: root
+            group: root
+            mode: "0644"
+            backup: "{{ logging_backup_configs }}"
+        notify: "logging: restart rsyslog"
+        retries: "{{ logging_retry_count }}"
+        delay: "{{ logging_retry_delay }}"
+        register: _logging_rsyslog_config
+        until: _logging_rsyslog_config is succeeded
 
-- name: Deploy rsyslog entries
-  ansible.builtin.template:
-      src: etc/rsyslog.d/entry.j2
-      dest: "/etc/rsyslog.d/{{ _logging_rsyslog_item.priority | default('50') }}-{{ _logging_rsyslog_item.name }}.conf"
-      owner: root
-      group: root
-      mode: "0644"
-      backup: "{{ logging_backup_configs }}"
-  become: true
-  loop: "{{ logging_rsyslog_entries }}"
-  loop_control:
-      loop_var: _logging_rsyslog_item
-      label: "{{ _logging_rsyslog_item.name }}"
-  when:
-      - logging_rsyslog_entries | length > 0
-      - _logging_rsyslog_item.state | default('present') == 'present'
-  notify: "logging: restart rsyslog"
+      - name: Deploy rsyslog entries
+        ansible.builtin.template:
+            src: etc/rsyslog.d/entry.j2
+            dest: "/etc/rsyslog.d/{{ _logging_rsyslog_item.priority | default('50') }}-{{ _logging_rsyslog_item.name }}.conf"
+            owner: root
+            group: root
+            mode: "0644"
+            backup: "{{ logging_backup_configs }}"
+        loop: "{{ logging_rsyslog_entries }}"
+        loop_control:
+            loop_var: _logging_rsyslog_item
+            label: "{{ _logging_rsyslog_item.name }}"
+        when: _logging_rsyslog_item.state | default('present') == 'present'
+        register: _logging_rsyslog_entries_result
+        notify: "logging: restart rsyslog"
 
-- name: Remove rsyslog entries
+      # Old entry files are removed only after this check passed, because the
+      # rescue cannot bring deleted files back.
+      - name: Check rsyslog configuration
+        ansible.builtin.command:
+            cmd: rsyslogd -N1
+        changed_when: false
+        when: _logging_rsyslog_config is changed or _logging_rsyslog_entries_result is changed
+
+  rescue:
+      - name: Restore previous rsyslog configuration
+        ansible.builtin.copy:
+            src: "{{ _logging_rsyslog_config.backup_file }}"
+            dest: /etc/rsyslog.conf
+            remote_src: true
+            owner: root
+            group: root
+            mode: "0644"
+        when: _logging_rsyslog_config.backup_file is defined
+
+      - name: Restore previous rsyslog entries
+        ansible.builtin.copy:
+            src: "{{ _logging_rsyslog_result.backup_file }}"
+            dest: "{{ _logging_rsyslog_result.dest }}"
+            remote_src: true
+            owner: root
+            group: root
+            mode: "0644"
+        loop: "{{ _logging_rsyslog_entries_result.results | default([]) | selectattr('backup_file', 'defined') | list }}"
+        loop_control:
+            loop_var: _logging_rsyslog_result
+            label: "{{ _logging_rsyslog_result.dest }}"
+
+      - name: Remove rsyslog entries created in this run
+        ansible.builtin.file:
+            path: "{{ _logging_rsyslog_result.dest }}"
+            state: absent
+        loop: >-
+            {{ _logging_rsyslog_entries_result.results | default([])
+               | selectattr('changed') | rejectattr('backup_file', 'defined') | list }}
+        loop_control:
+            loop_var: _logging_rsyslog_result
+            label: "{{ _logging_rsyslog_result.dest }}"
+
+      - name: Fail after rsyslog configuration rollback
+        ansible.builtin.fail:
+            msg: >-
+                The rsyslog configuration failed to deploy or failed
+                `rsyslogd -N1`. Files with a backup were restored and entries
+                created in this run removed; without logging_backup_configs
+                /etc/rsyslog.conf stays as written.
+                {{ ansible_failed_result.msg | default('') }}
+                {{ ansible_failed_result.stderr | default('') }}
+
+- name: Remove absent rsyslog entries
   ansible.builtin.file:
       path: "/etc/rsyslog.d/{{ _logging_rsyslog_item.priority | default('50') }}-{{ _logging_rsyslog_item.name }}.conf"
       state: absent
@@ -51,15 +108,50 @@
   loop_control:
       loop_var: _logging_rsyslog_item
       label: "{{ _logging_rsyslog_item.name }}"
+  when: _logging_rsyslog_item.state | default('present') == 'absent'
+  notify: "logging: restart rsyslog"
+
+# Files are named "<priority>-<name>.conf". After a priority change, or for an
+# absent entry whose old priority is no longer known, the old file is found by
+# name; the marker from entry.j2 keeps package files such as 20-ufw.conf out of
+# reach.
+- name: Find rsyslog entry files
+  ansible.builtin.find:
+      paths: /etc/rsyslog.d
+      patterns: '^[0-9]+-.+\.conf$'
+      use_regex: true
+      contains: '^# Managed by arillso\.system\.logging$'
+  become: true
+  register: _logging_rsyslog_found
+  when: logging_rsyslog_entries | length > 0
+
+- name: Remove renamed rsyslog entries
+  ansible.builtin.file:
+      path: "{{ _logging_rsyslog_path }}"
+      state: absent
+  become: true
+  loop: "{{ _logging_rsyslog_found.files | default([]) | map(attribute='path') | list }}"
+  loop_control:
+      loop_var: _logging_rsyslog_path
+  vars:
+      _logging_rsyslog_file: "{{ _logging_rsyslog_path | basename }}"
+      _logging_rsyslog_entry: >-
+          {{ logging_rsyslog_entries
+             | selectattr('name', 'equalto', (_logging_rsyslog_file | splitext | first).split('-', 1) | last)
+             | first | default({}) }}
   when:
-      - logging_rsyslog_entries | length > 0
-      - _logging_rsyslog_item.state | default('present') == 'absent'
+      - _logging_rsyslog_entry | length > 0
+      - >-
+          _logging_rsyslog_entry.state | default('present') == 'absent'
+          or _logging_rsyslog_file != '%s-%s.conf' | format(_logging_rsyslog_entry.priority | default('50'), _logging_rsyslog_entry.name)
   notify: "logging: restart rsyslog"
 
 - name: Manage rsyslog service via systemd role
   ansible.builtin.include_role:
       name: arillso.system.systemd
       tasks_from: service
+      apply:
+          tags: ["logging", "rsyslog", "syslog"]
   vars:
       systemd_services:
           - name: rsyslog

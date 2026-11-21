@@ -1,10 +1,24 @@
 ---
+# Defaults and templates branch on the distro, so plays with
+# `gather_facts: false` still need the minimal facts.
+- name: Gather distribution facts
+  ansible.builtin.setup:
+      gather_subset: [min]
+  when: ansible_facts['os_family'] is not defined or ansible_facts['distribution'] is not defined
+  tags: ["logging", "logrotate", "rsyslog", "syslog"]
+
 - name: Manage logrotate
-  ansible.builtin.include_tasks: logrotate.yml
+  ansible.builtin.include_tasks:
+      file: logrotate.yml
+      apply:
+          tags: ["logging", "logrotate"]
   when: logging_logrotate_enabled | default(true) | bool
   tags: ["logging", "logrotate"]
 
 - name: Manage rsyslog
-  ansible.builtin.include_tasks: rsyslog.yml
+  ansible.builtin.include_tasks:
+      file: rsyslog.yml
+      apply:
+          tags: ["logging", "rsyslog", "syslog"]
   when: logging_rsyslog_enabled | default(true) | bool
   tags: ["logging", "rsyslog", "syslog"]

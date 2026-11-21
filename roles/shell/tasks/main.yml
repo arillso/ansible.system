@@ -1,16 +1,12 @@
 ---
-- name: "Create shell cache and working directories"
+- name: "Create profile.d directory"
   ansible.builtin.file:
-      path: "{{ item }}"
+      path: /etc/profile.d
       state: directory
       mode: "0755"
       owner: root
       group: root
   become: true
-  loop:
-      - "{{ shell_status_cache_dir }}"
-      - /usr/local/bin
-      - /etc/profile.d
   tags:
       - shell
       - directories
@@ -29,6 +25,38 @@
   tags:
       - shell
       - packages
+
+# Outside motd.yml, so hosts with the MOTD disabled lose the old cron job too
+- name: "Check for the system status script from earlier versions"
+  ansible.builtin.stat:
+      path: /usr/local/bin/system-status-precompute.sh
+  register: _shell_precompute_script
+  tags:
+      - shell
+      - cleanup
+
+# Only where the old script exists: the cron module fails on hosts whose root
+# crontab cannot be read, and the role deletes the script only after this task.
+- name: "Remove system status cron job from earlier versions"
+  ansible.builtin.cron:
+      name: "system-status-precompute"
+      user: root
+      state: absent
+  become: true
+  when: _shell_precompute_script.stat.exists
+  tags:
+      - shell
+      - cleanup
+
+- name: "Remove files from earlier versions"
+  ansible.builtin.file:
+      path: "{{ item }}"
+      state: absent
+  become: true
+  loop: "{{ _shell_obsolete_files }}"
+  tags:
+      - shell
+      - cleanup
 
 # Include modular components
 - name: "Configure MOTD system"

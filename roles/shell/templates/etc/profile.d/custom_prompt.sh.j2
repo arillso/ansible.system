@@ -1,7 +1,8 @@
 # /etc/profile.d/custom_prompt.sh
 # Custom shell prompt for all users
-# This file is managed by Ansible (arillso.system.ui)
+# This file is managed by Ansible (arillso.system.shell)
 
-# Set a universal, informative PS1 prompt
-export PS1="\[\e[0;32m\]\u@\h \[\e[0;34m\]\w\[\e[0m\]$ "
-# Optionally, add more prompt customization as needed
+# /etc/profile.d is also sourced by sh and zsh; these PS1 escapes are bash-only.
+if [ -n "${BASH_VERSION-}" ]; then
+    PS1="\[\e[0;32m\]\u@\h \[\e[0;34m\]\w\[\e[0m\]$ "
+fi

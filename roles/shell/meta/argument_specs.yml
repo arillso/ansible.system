@@ -89,21 +89,6 @@ argument_specs:
                 default: "standard"
                 description: "Font used for figlet MOTD style"
 
-            shell_motd_show_performance:
-                type: bool
-                default: true
-                description: "Show performance metrics in MOTD"
-
-            shell_motd_show_network:
-                type: bool
-                default: true
-                description: "Show network information in MOTD"
-
-            shell_motd_show_cloud_info:
-                type: bool
-                default: true
-                description: "Show cloud provider information in MOTD"
-
             shell_ssh_banner_show_warnings:
                 type: bool
                 default: true
@@ -148,26 +133,6 @@ argument_specs:
                 type: bool
                 default: true
                 description: "Enable tab completion"
-
-            shell_enable_background_processing:
-                type: bool
-                default: true
-                description: "Enable background processing for status data"
-
-            shell_status_precompute_interval:
-                type: str
-                default: "*/5"
-                description: "Cron interval for precomputing status data"
-
-            shell_status_cache_ttl:
-                type: int
-                default: 600
-                description: "Cache time-to-live in seconds for status data"
-
-            shell_status_cache_dir:
-                type: str
-                default: "/var/cache/arillso-system-shell"
-                description: "Directory for caching status data"
 
             shell_facts_collection_name:
                 type: str

@@ -7,9 +7,9 @@
 set -euo pipefail
 
 # Configuration
-readonly COMPANY_NAME="{% endraw %}{{ shell_company_name }}{% raw %}"
-readonly BANNER_STYLE="{% endraw %}{{ shell_motd_style | default('standard') }}{% raw %}"
-readonly FIGLET_FONT="{% endraw %}{{ shell_motd_font | default('standard') }}{% raw %}"
+readonly COMPANY_NAME={% endraw %}{{ shell_company_name | quote }}{% raw %}
+readonly BANNER_STYLE={% endraw %}{{ shell_motd_style | default('standard') | quote }}{% raw %}
+readonly FIGLET_FONT={% endraw %}{{ shell_motd_font | default('standard') | quote }}{% raw %}
 
 # Debug mode - set to 1 to enable debug output
 readonly DEBUG_MODE="${MOTD_DEBUG:-0}"

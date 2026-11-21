@@ -1,109 +1,109 @@
 # Ansible Collection: arillso.system
 
-[![license][license-badge]][license-url]
+[![CI][ci-badge]][ci-url]
 [![Ansible Galaxy][galaxy-badge]][galaxy-url]
+[![License: MIT][license-badge]][license-url]
 
-[license-badge]: https://img.shields.io/github/license/mashape/apistatus.svg?style=popout-square
+[ci-badge]: https://github.com/arillso/ansible.system/actions/workflows/merge.yml/badge.svg?branch=main
+[ci-url]: https://github.com/arillso/ansible.system/actions/workflows/merge.yml
+[galaxy-badge]: https://img.shields.io/badge/ansible--galaxy-arillso.system-blue.svg
+[galaxy-url]: https://galaxy.ansible.com/ui/repo/published/arillso/system/
+[license-badge]: https://img.shields.io/github/license/arillso/ansible.system.svg
 [license-url]: LICENSE
-[galaxy-badge]: http://img.shields.io/badge/ansible--galaxy-arillso.system-blue.svg?style=popout-square
-[galaxy-url]: https://galaxy.ansible.com/arillso/system
 
-## Description
+Roles and plugins that configure Linux hosts: users and SSH, packages, network,
+firewall, logging, systemd, and kernel tuning.
 
-This Ansible collection provides comprehensive system configuration and management
-capabilities for Linux servers. It includes unified roles for access control,
-package management, network configuration, firewall setup, logging, and system tuning.
-
-## Roles
-
-### Core System Roles
-
-- **[access](roles/access)** - User/group/SSH/sudo management
-- **[ansible](roles/ansible)** - Ansible automation with systemd timer
-- **[facts](roles/facts)** - Extended system facts (cloud, container, security)
-- **[packages](roles/packages)** - Package management with APT, DNF, unattended upgrades
-- **[python](roles/python)** - Python and pip management
-- **[ready](roles/ready)** - System readiness checks
-- **[shell](roles/shell)** - Shell environment and MOTD configuration
-
-### Infrastructure Roles
-
-- **[firewall](roles/firewall)** - NFTables firewall configuration
-- **[logging](roles/logging)** - Log management (rsyslog, logrotate)
-- **[network](roles/network)** - Network configuration (netplan, resolv)
-- **[systemd](roles/systemd)** - Systemd service/unit/journald management
-
-### Advanced Roles
-
-- **[bitwarden_secrets](roles/bitwarden_secrets)** - Bitwarden CLI secret management
-- **[thermal](roles/thermal)** - CPU thermal management
-- **[tuning](roles/tuning)** - System performance tuning (CPU, IO, network, swap)
-- **[zram](roles/zram)** - Compressed RAM swap (zram) via zram-tools
-
-## Plugins
-
-### Lookup Plugins
-
-- **environment_files** - Curate file lists based on patterns
-- **github_latest_release** - Fetch latest GitHub release version
-
-### Modules
-
-- **apt_update_info** - Retrieve list of updatable APT packages
-- **reboot_info** - Check if system requires reboot
-
-### Filter Plugins
-
-- **from_toml** - Convert TOML string to dictionary
-- **to_toml** - Convert dictionary to TOML string
-- **to_nice_toml** - Convert dictionary to nicely formatted TOML
-- **to_nftables_hierarchy** - Generate nftables rule hierarchy
-- **to_nftables_rule** - Generate nftables rule
-- **to_nftables_ports** - Generate nftables port rules
-
-## Installation
-
-Install this collection from Ansible Galaxy:
+## Quickstart
 
 ```bash
 ansible-galaxy collection install arillso.system
 ```
 
-Or add it to your `requirements.yml`:
+```yaml
+---
+- name: Configure base system
+  hosts: all
+  become: true
+  roles:
+      - arillso.system.packages
+      - arillso.system.access
+      - arillso.system.firewall
+```
+
+To require a minimum version, add it to `requirements.yml`:
 
 ```yaml
 ---
 collections:
     - name: arillso.system
-      version: ">=1.0.0"
+      version: ">=2.0.0"
 ```
 
-## Requirements
+Requires `ansible-core >= 2.18`. Galaxy installs the dependencies
+`ansible.posix`, `community.general` and `community.crypto`. The TOML filters
+need Python 3.11+ on the controller, and `to_toml` / `to_nice_toml` also need
+the `tomli-w` package (`pip install tomli-w`).
 
-- Ansible >= 2.18
-- Python >= 3.12
+## Roles
 
-## Dependencies
+| Role                                         | Purpose                                                           |
+| -------------------------------------------- | ----------------------------------------------------------------- |
+| [access](roles/access)                       | Users, groups, SSH and sudo                                       |
+| [ansible](roles/ansible)                     | Scheduled ansible-pull or ansible-playbook runs via systemd timer |
+| [bitwarden_secrets](roles/bitwarden_secrets) | Bitwarden Secrets Manager CLI (`bws`)                             |
+| [facts](roles/facts)                         | Extended facts (cloud, container, security)                       |
+| [firewall](roles/firewall)                   | nftables rule sets                                                |
+| [logging](roles/logging)                     | rsyslog and logrotate                                             |
+| [network](roles/network)                     | netplan and systemd-resolved                                      |
+| [packages](roles/packages)                   | APT/DNF packages, pins, unattended upgrades                       |
+| [python](roles/python)                       | Python, pip and virtualenvs                                       |
+| [ready](roles/ready)                         | Waits until a host is reachable and booted                        |
+| [shell](roles/shell)                         | Shell environment, SSH banner and MOTD                            |
+| [systemd](roles/systemd)                     | Units, services and journald                                      |
+| [thermal](roles/thermal)                     | CPU thermal management (Intel)                                    |
+| [tuning](roles/tuning)                       | CPU, IO, network, swap and sysctl tuning                          |
+| [zram](roles/zram)                           | Compressed RAM swap via zram-tools                                |
 
-- ansible.posix >= 2.0.0
-- community.general >= 9.0.0
-- community.crypto >= 2.0.0
+## Plugins
 
-## Documentation
+| Plugin                  | Type   | Purpose                                    |
+| ----------------------- | ------ | ------------------------------------------ |
+| `apt_update_info`       | module | List upgradable APT packages               |
+| `reboot_info`           | module | Report whether the host needs a reboot     |
+| `environment_files`     | lookup | Curate a file list from patterns           |
+| `github_latest_release` | lookup | Latest release tag of a public GitHub repo |
+| `from_toml`             | filter | TOML string to dictionary                  |
+| `to_toml`               | filter | Variable to TOML string                    |
+| `to_nice_toml`          | filter | Variable to formatted TOML string          |
+| `to_nftables_hierarchy` | filter | Merge hierarchical firewall configs        |
+| `to_nftables_rule`      | filter | Rule dictionary to nftables syntax         |
+| `to_nftables_ports`     | filter | Port list to nftables port syntax          |
 
-Full documentation is available at: [guide.arillso.io][docs]
+```yaml
+- name: Check for pending reboot
+  arillso.system.reboot_info:
+  register: reboot
+
+- name: Reboot when required
+  ansible.builtin.reboot:
+  when: reboot.reboot
+```
+
+## Configuration
+
+Each role documents its variables in `meta/argument_specs.yml` and its own
+`README.md`; Ansible validates role arguments against the spec at runtime.
+Rendered documentation: [guide.arillso.io][docs].
 
 [docs]: https://guide.arillso.io/collections/arillso/system/
 
-**Breaking Changes in 1.0.0:**
+## Contributing
 
-Version 1.0.0 introduces a major restructuring. Many roles have been removed and consolidated.
-See [CHANGELOG.md](CHANGELOG.md) for migration guidance.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, tests and the release process,
+and [tests/README.md](tests/README.md) for the test layers. Changes are listed in
+[CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
-This project is under the MIT License. See the [LICENSE](LICENSE) file for the full license text.
-
-## Copyright
-
-(c) 2024-2026, Arillso
+MIT, see [LICENSE](LICENSE).

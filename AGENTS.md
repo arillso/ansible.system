@@ -1,147 +1,59 @@
-# Ansible Collection: arillso.system
+# arillso.system
 
-## Context
+Ansible collection with roles and plugins that configure Linux hosts. Roles live
+in `roles/`, plugins in `plugins/{filter,lookup,modules}`, molecule scenarios in
+`extensions/molecule/`.
 
-This is an Ansible collection that provides roles for system configuration and management.
-The collection includes roles for access control, package management, network configuration,
-firewall setup, logging, systemd services, and system tuning.
+## Commands
 
-## Structure
+Most `make` targets print `SKIP: …` and exit 0 when their tool is missing, so a
+green local run can mean nothing ran; CI is the gate.
 
-### Roles Directory (`roles/`)
-
-Each role follows standard Ansible role structure with:
-
-- `tasks/` - Main task files
-- `defaults/` - Default variables
-- `vars/` - Role variables
-- `handlers/` - Handlers for service restarts, etc.
-- `templates/` - Jinja2 templates
-- `meta/` - Role metadata and dependencies
-
-Key roles:
-
-- **access** - User access and permissions management
-- **ansible** - Ansible configuration
-- **bitwarden_secrets** - Bitwarden secrets integration
-- **facts** - System facts gathering
-- **firewall** - Firewall configuration
-- **logging** - Log management
-- **network** - Network configuration
-- **packages** - Package installation and management
-- **python** - Python environment setup
-- **shell** - Shell configuration
-- **systemd** - Systemd service management
-- **thermal** - Thermal management
-- **tuning** - System performance tuning
-
-### Plugins Directory (`plugins/`)
-
-- `lookup/` - Lookup plugins (e.g., github_latest_release.py)
-- `modules/` - Custom modules (e.g., apt_update_info.py, reboot_info.py)
-
-### Configuration Files
-
-- `galaxy.yml` - Ansible Galaxy collection metadata
-- `.ansible-lint` - Ansible lint configuration
-- `.yamllint.yml` - YAML linting rules
-- `lefthook.yml` - Local git hooks (prettier, yamllint, markdownlint, ansible-lint, actionlint, gitleaks)
-- `REVIEW.md` - Code review guidelines (read by the `ai-claude-review` workflow)
-- `.python-version` - Pinned Python version for plugin development (3.12)
-- `Makefile` - Convenience targets (`lint`, `format`, `test`, `build`)
+- Run `lefthook install` once per clone. The hooks in `lefthook.yml` run the
+  same linters as CI (ansible-lint `--profile=production`, yamllint, prettier,
+  markdownlint, actionlint) plus gitleaks.
+- `make test` runs `pytest tests/unit/` as a fast local smoke test. CI runs the
+  same directory through `ansible-test units --docker` (job `unit-test` of the
+  reusable `ci-ansible-collection.yml`). The two runners collect tests
+  differently, so a green `make test` does not guarantee green CI. Treat the
+  `ansible-test` run as authoritative.
+- `ansible-test` (and `make test-integration`) only works when the collection
+  sits at `.../ansible_collections/arillso/system/`. Copy the tree with
+  `git archive HEAD | tar -x -C <dir>`; a symlink fails because `ansible-test`
+  resolves the real path.
+- `make test-molecule-<role>` runs one scenario from `extensions/molecule/`
+  against the installed collection, not the working tree. Reinstall with
+  `ansible-galaxy collection install . --force` after every change; setup steps
+  are in `tests/README.md`, section "Running scenarios".
 
 ## Conventions
 
-### Code Style
+- Every PR with a user-visible change adds an entry under `## [Unreleased]` in
+  `CHANGELOG.md`. The release workflow takes the release notes from the
+  `## [<version>]` section and fails when that section is missing or empty.
+- Breaking changes carry `!` in the commit type (`fix(tuning)!: …`) and a
+  matching changelog entry.
+- Before adding a role or a plugin, load the skill `adding-role-or-plugin`
+  (`.claude/skills/adding-role-or-plugin/`). It lists the mandatory role files,
+  including `meta/argument_specs.yml`, and where plugin documentation lives per
+  plugin type.
 
-- Use 4 spaces for indentation in YAML files
-- Follow Ansible best practices and naming conventions
-- Use descriptive variable names with role prefixes
-- Document variables in `defaults/main.yml`
-- Use handlers for service management
+## Traps
 
-### Testing
+- The molecule matrix in `.github/workflows/pull-request.yml` is pinned, not
+  discovered. A new scenario under `extensions/molecule/<role>/` runs in CI only
+  after it is added to the `scenarios:` list of the `molecule` job.
+  Kernel-bound scenarios (`zram`, `tuning`) run in their own jobs with
+  `driver: qemu`; a docker-driver job does not provision QEMU/KVM.
+- A job calling a reusable workflow must grant every permission the reusable
+  declares. A narrower grant fails the whole workflow with `startup_failure`
+  before any job runs, without logs.
 
-- Roles should be linted with ansible-lint (`--profile=production`)
-- Install hooks locally with `lefthook install`; they run on commit and push
-- Reusable CI (`arillso/.github`) runs lint, unit tests, and molecule on pull requests
-- Test roles in molecule when available
+## Further docs
 
-Two unit-test runners are in use on purpose:
-
-- `make test-unit` (`pytest tests/unit/`) is the fast local smoke test
-- `ansible-test units --docker` in the CI job `unit-test` is the authoritative
-  check; it runs the collection from `ansible_collections/arillso/system`
-  inside a container
-
-They collect tests differently and build different environments, so `make test`
-is not a substitute for the CI run — a green local run does not guarantee green
-CI.
-
-### Documentation
-
-- Each role should have a README in the role directory
-- Document role variables in defaults/main.yml with comments
-- Keep collection-level documentation in main README.md
-
-### Adding a Role or Plugin
-
-Required files and the per-type plugin documentation layout are documented in
-the `adding-role-or-plugin` skill (`.claude/skills/adding-role-or-plugin/`).
-
-## Workflows
-
-### CI/CD
-
-Event-focused workflows calling reusables from `arillso/.github`:
-
-- **pull-request.yml** - Lint, unit tests, molecule, secret scan, and Claude review on PRs
-- **merge.yml** - Same CI plus secret scan on push to `main`
-- **nightly-security.yml** - Scheduled daily secret scan
-- **tag.yml** - Publishes to Ansible Galaxy on tag push (e.g. `1.0.1`)
-
-### Release Process
-
-**IMPORTANT: Always update CHANGELOG.md before releasing!**
-
-1. **Update CHANGELOG.md** (REQUIRED - DO NOT SKIP!)
-    - Add new version section (e.g., `## [1.0.1] - 2026-01-14`)
-    - Document all changes under appropriate sections:
-        - Added - new features
-        - Changed - changes in existing functionality
-        - Deprecated - soon-to-be removed features
-        - Removed - removed features
-        - Fixed - bug fixes
-        - Security - security fixes
-    - Move items from `## [Unreleased]` to the new version section
-
-2. **Update galaxy.yml version**
-    - Change `version:` field to match the new release version
-
-3. **Create and push git tag**
-    - Use version without 'v' prefix (e.g., `1.0.1` not `v1.0.1`)
-    - Follow Ansible Collections best practice (no v prefix)
-    - Command: `git tag 1.0.1 && git push origin 1.0.1`
-
-4. **Automated workflow triggers**
-    - Tag push automatically triggers `tag.yml` workflow
-    - Workflow extracts changelog for the version
-    - Publishes to Ansible Galaxy
-    - Creates GitHub Release with changelog notes
-
-**Release Checklist:**
-
-- [ ] CHANGELOG.md updated with new version
-- [ ] galaxy.yml version updated
-- [ ] All CI tests passing
-- [ ] README.md reflects current state (if needed)
-- [ ] Git tag created and pushed (without v prefix)
-
-## Do Not
-
-- Do not commit secrets or sensitive data
-- Do not modify roles without testing with ansible-lint
-- Do not create roles without proper defaults and documentation
-- Do not use deprecated Ansible syntax
-- Do not hardcode values that should be variables
-- Do not skip handlers or use `meta: flush_handlers` unnecessarily
+- Before changing tests, adding an integration target or a molecule scenario,
+  read `tests/README.md`.
+- Before cutting a release, follow `CONTRIBUTING.md` section "Release Process".
+  Tags carry no `v` prefix; `tag.yml` triggers only on `X.Y.Z`.
+- `REVIEW.md` sets scope and severity for the `claude-review` job in
+  `pull-request.yml`. Change review behaviour there.

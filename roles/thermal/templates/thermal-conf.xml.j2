@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  Thermal Configuration for {{ thermal_platform_name }}
+  Thermal Configuration for {{ thermal_platform_name | regex_replace('-{2,}', '-') }}
   Managed by Ansible - arillso.system.thermal role
 
   Goal: {{ thermal_preference }} thermal management
@@ -14,7 +14,7 @@
 -->
 <ThermalConfiguration>
   <Platform>
-    <Name>{{ thermal_platform_name }}</Name>
+    <Name>{{ thermal_platform_name | e }}</Name>
     <ProductName>*</ProductName>
     <Preference>{{ thermal_preference }}</Preference>
     <ThermalZones>

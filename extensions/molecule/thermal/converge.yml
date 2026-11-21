@@ -1,6 +1,6 @@
 ---
-# Wird vom Syntax-only test_sequence nicht aufgerufen, dient aber als
-# Referenz fuer manuelle Vagrant/VM-Runs.
+# Not called by the syntax-only test_sequence; kept as a reference for
+# manual Vagrant/VM runs.
 
 - name: Converge — arillso.system.thermal (VM-only, do not run in container)
   hosts: all

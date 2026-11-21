@@ -5,7 +5,7 @@ galaxy_info:
     role_name: thermal
     namespace: arillso
     author: sbaerlocher
-    description: Thermal management and fan control using thermald
+    description: Thermal management using thermald on Intel x86_64
     license: MIT
     min_ansible_version: "2.18"
 

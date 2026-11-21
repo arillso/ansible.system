@@ -10,6 +10,3 @@
           - name: thermald
             enabled: true
             state: started
-          - name: fancontrol
-            enabled: false
-            state: stopped

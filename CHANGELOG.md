@@ -139,6 +139,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`logging_rsyslog_file_group`, `logging_rsyslog_file_create_mode`), as the
   distro does, so `/var/log/secure` is no longer readable by `adm`.
 
+- **thermal**: the role now skips hosts without an Intel x86_64 CPU and prints
+  why; thermald and `coretemp` do not support them.
+- **thermal**: temperature thresholds are validated: 20000-120000 millidegrees,
+  passive below active.
+
 ### Removed
 
 - **firewall**: the unused handlers `firewall: reload systemd`,
@@ -180,6 +185,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **python**: unused `_python_common_packages` and `vars/main.yml`.
 - **packages**: `packages_gpg_keyservers` was never read. Keyserver imports use
   the `keyserver` of each `packages_keys` entry.
+
+- **thermal**: `fancontrol` is no longer installed or stopped; the role never
+  configured it. Add it to `thermal_packages` if needed.
+- **thermal**: the unused `thermal: restart cpufrequtils` handler.
 
 ### Fixed
 
@@ -370,6 +379,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   silently; it now runs a safe upgrade.
 - **packages**: `packages_apt_conf` was skipped when `packages_cache_enabled`
   was false and applied twice when the clean entry point ran.
+
+- **thermal**: `sensors-detect` reports a change when it edits `/etc/modules`
+  and fails when the binary is missing or the probe crashes.
+- **thermal**: `--check` on a host without thermald no longer fails at the
+  service step or the restart handler.
+- **thermal**: the platform name is escaped in `thermal-conf.xml`, so names
+  with `&`, `<` or `--` give valid XML.
 
 ### Security
 

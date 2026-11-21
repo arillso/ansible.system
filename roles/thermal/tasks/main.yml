@@ -1,18 +1,70 @@
 ---
 # Main tasks for thermal management role
 
-- name: Install thermal management packages
-  ansible.builtin.include_tasks: packages.yml
-  when: thermal_enabled
+- name: Gather CPU facts for the support check
+  ansible.builtin.setup:
+      gather_subset:
+          - hardware
+      filter:
+          - ansible_architecture
+          - ansible_processor
+  when:
+      - thermal_enabled
+      - "'architecture' not in ansible_facts or 'processor' not in ansible_facts"
 
-- name: Detect sensors and load kernel modules
-  ansible.builtin.include_tasks: sensors.yml
-  when: thermal_enabled
+- name: Report unsupported CPU
+  ansible.builtin.debug:
+      msg: >-
+          Skipping thermal management: thermald and coretemp need an Intel
+          x86_64 CPU, this host has {{ ansible_facts['architecture'] | default('unknown') }}
+          ({{ ansible_facts['processor'] | default([]) | select('in', ['GenuineIntel', 'AuthenticAMD'])
+          | first | default('unknown vendor') }}).
+  when:
+      - thermal_enabled
+      - not _thermal_cpu_supported
 
-- name: Configure thermald
-  ansible.builtin.include_tasks: thermald.yml
-  when: thermal_enabled
+- name: Configure thermal management
+  when:
+      - thermal_enabled
+      - _thermal_cpu_supported
+  block:
+      - name: Validate temperature thresholds
+        ansible.builtin.assert:
+            that:
+                - item.passive | int >= 20000
+                - item.active | int <= 120000
+                - item.passive | int < item.active | int
+            fail_msg: >-
+                {{ item.zone }}: thresholds are millidegrees Celsius
+                (e.g. 75000 = 75 °C), must lie within 20000-120000 and passive
+                ({{ item.passive }}) must be below active ({{ item.active }}).
+            quiet: true
+        loop:
+            - zone: acpitz
+              enabled: "{{ thermal_enable_acpitz }}"
+              passive: "{{ thermal_acpitz_passive_temp }}"
+              active: "{{ thermal_acpitz_active_temp }}"
+            - zone: cpu
+              enabled: "{{ thermal_enable_cpu_temp }}"
+              passive: "{{ thermal_cpu_passive_temp }}"
+              active: "{{ thermal_cpu_active_temp }}"
+        loop_control:
+            label: "{{ item.zone }}"
+        when: item.enabled | bool
 
-- name: Manage thermal services
-  ansible.builtin.include_tasks: service.yml
-  when: thermal_enabled
+      - name: Install thermal management packages
+        ansible.builtin.include_tasks: packages.yml
+
+      - name: Detect sensors and load kernel modules
+        ansible.builtin.include_tasks: sensors.yml
+
+      - name: Configure thermald
+        ansible.builtin.include_tasks: thermald.yml
+
+      - name: Gather service facts for the check mode guard
+        ansible.builtin.service_facts:
+        when: ansible_check_mode
+
+      - name: Manage thermal services
+        ansible.builtin.include_tasks: service.yml
+        when: not _thermal_service_unavailable

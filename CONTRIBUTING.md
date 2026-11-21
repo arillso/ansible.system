@@ -5,7 +5,7 @@ Thank you for your interest in contributing! This document provides guidelines a
 ## Prerequisites
 
 - Ansible >= 2.18
-- Python >= 3.12
+- Python 3.13, the version CI runs (`requirements.txt` needs at least 3.13)
 - Git
 - Docker (for testing)
 
@@ -28,9 +28,9 @@ make install-dev
 ### 3. Create a Branch
 
 ```bash
-git checkout -b feature/your-feature-name
+git checkout -b feat/your-topic
 # or
-git checkout -b fix/issue-description
+git checkout -b fix/your-topic
 ```
 
 ## Coding Standards
@@ -109,6 +109,9 @@ environments, a green `make test` does not guarantee a green CI run.
 `ansible-test units --docker` is the authoritative check; run it locally before
 pushing if you need certainty and have a Docker daemon available.
 
+For a coverage report of the plugins, run `make coverage` (needs `pytest-cov`
+from `requirements.txt`).
+
 ### Auto-format
 
 ```bash
@@ -125,16 +128,21 @@ make build
 
 ### Commit Messages
 
-Write clear, descriptive commit messages:
+Use [Conventional Commits](https://www.conventionalcommits.org/): a type, the
+role, plugin or area as optional scope, and an imperative summary in lower case.
 
 ```text
-Brief summary (50 chars or less)
+fix(firewall): reload nftables after config validation
 
-- Detailed description with bullet points
-- Reference related issues
+Optional body: what changes for users and why.
 
 Fixes #123
 ```
+
+Common types are `feat`, `fix`, `docs`, `test`, `ci`, `chore` and `refactor`.
+A change that requires users to adapt their playbooks or variables is breaking:
+add `!` after the scope (`fix(tuning)!: …`) and a `BREAKING CHANGE:` footer with
+the migration step.
 
 ### Pull Request Process
 

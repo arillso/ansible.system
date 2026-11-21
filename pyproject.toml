@@ -1,6 +1,6 @@
 [tool.black]
 line-length = 100
-target-version = ['py312']
+target-version = ['py311']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -20,8 +20,10 @@ extend_skip_glob = [".ansible/*"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py311"
 extend-exclude = [".ansible", ".venv", "venv"]
+# Modules run on managed hosts, which ansible-core 2.18 supports down to 3.8.
+per-file-target-version = { "plugins/modules/*.py" = "py38" }
 
 [tool.ruff.lint]
 select = [

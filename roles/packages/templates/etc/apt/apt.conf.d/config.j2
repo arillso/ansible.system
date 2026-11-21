@@ -1,5 +1,7 @@
-# Ansible managed - do not edit manually
-# {{ item.name }} configuration
-{% for setting in item.settings %}
-{{ setting.key }} {{ setting.value }};
+// {{ ansible_managed }}
+// {{ _pkg_config_item.name }} configuration
+{% for setting in _pkg_config_item.settings %}
+{% set _value = setting.value | string | trim %}
+{# block values ({ "cmd"; }) and already quoted values are written as given #}
+{{ setting.key }} {{ _value if _value.startswith('{') or (_value.startswith('"') and _value.endswith('"')) else '"' ~ _value ~ '"' }};
 {% endfor %}

@@ -2,12 +2,9 @@
 - name: Install packages from unified list
   ansible.builtin.apt:
       name: "{{ _pkg_package_item.name }}"
-      state: >-
-          {{ _pkg_package_item.state
-             if _pkg_package_item.state in ['present', 'latest', 'build-dep']
-             else 'present' }}
+      state: "{{ _pkg_package_item.state | default('present') }}"
       update_cache: false
-      install_recommends: "{{ _pkg_package_item.install_recommends | default(true) }}"
+      install_recommends: "{{ _pkg_package_item.install_recommends | default(omit) }}"
       allow_unauthenticated: "{{ _pkg_package_item.allow_unauthenticated | default(false) }}"
       force: "{{ _pkg_package_item.force | default(false) }}"
       default_release: "{{ _pkg_package_item.default_release | default(omit) }}"

@@ -1,4 +1,21 @@
 ---
+# apt.conf strings have no escape for `"`; a stray quote breaks every apt call
+- name: Check packages_apt_conf values for unbalanced quotes
+  ansible.builtin.assert:
+      that: >-
+          (_pkg_conf_value is match('^[{"]'))
+          or ('"' not in _pkg_conf_value)
+      fail_msg: >-
+          {{ _pkg_conf_setting.0.name }}: value of {{ _pkg_conf_setting.1.key }}
+          contains a double quote; quote the whole value or use a block value
+      quiet: true
+  loop: "{{ packages_apt_conf | subelements('settings') }}"
+  loop_control:
+      loop_var: _pkg_conf_setting
+      label: "{{ _pkg_conf_setting.0.name }}: {{ _pkg_conf_setting.1.key }}"
+  vars:
+      _pkg_conf_value: "{{ _pkg_conf_setting.1.value | string | trim }}"
+
 - name: Configure APT settings
   ansible.builtin.template:
       src: etc/apt/apt.conf.d/config.j2
@@ -11,4 +28,10 @@
   loop: "{{ packages_apt_conf }}"
   loop_control:
       loop_var: _pkg_config_item
+  register: _packages_apt_conf_files
   notify: "packages: update cache"
+
+- name: Track APT configuration changes
+  ansible.builtin.set_fact:
+      packages_apt_conf_changed: true
+  when: _packages_apt_conf_files is changed

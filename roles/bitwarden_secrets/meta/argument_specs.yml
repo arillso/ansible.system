@@ -10,7 +10,7 @@ argument_specs:
                 description: "Version of bws CLI to install"
                 type: str
                 # renovate: datasource=github-releases depName=bitwarden/sdk-sm extractVersion=^bws-v(?<version>.*)$
-                default: "1.0.0"
+                default: "2.1.0"
             bitwarden_secrets_install_path:
                 description: "Installation path for bws binary"
                 type: str

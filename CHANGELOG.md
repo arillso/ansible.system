@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-11-21
+
 ### Added
 
 - **zram**: `zram_kernel_module_meta_package` (opt-in, empty by default)
@@ -122,6 +124,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **python**: `python_virtualenv_python` defaults to `""` instead of `python3`;
   the pip module then chooses the interpreter. A value set together with the
   venv module now fails with the module's error instead of being dropped.
+- **bitwarden_secrets**: `bitwarden_secrets_version` defaults to `2.1.0`
+  instead of `1.0.0` (new major release of the `bws` CLI).
 - **packages**: `packages_apt_get_assume_yes` and `packages_apt_fix_broken`
   default to `false`. Both wrote host-wide APT settings, so manual
   `apt-get remove` ran without confirmation. The role's own apt calls do not
@@ -435,18 +439,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   restarted `cpupower` on every run.
 - **tuning**: the I/O scheduler report referenced an undefined `type` key.
 
-### Security
-
-- **bitwarden_secrets**: the archive was downloaded to the fixed path
-  `/tmp/bws-<version>.zip` and an existing file there was reused, so any local
-  user could plant a `bws` binary that the role then installed as root. The
-  download now goes to a private temporary directory that is always removed.
-- **bitwarden_secrets**: the archive is verified against the upstream
-  `bws-sha256-checksums-<version>.txt`, and download, check and extraction all
-  run as root. A mirrored `bitwarden_secrets_download_url` keeps working while
-  the list is reachable; air-gapped hosts set `bitwarden_secrets_checksum` or
-  skip the check with `bitwarden_secrets_checksum_url: ""`.
-
 - **facts**: boolean settings reached the fact scripts as `True`/`False` and
   never matched `true`. Container detection and the container cache were
   always off, and `facts_debug_enabled` had no effect.
@@ -493,6 +485,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now reports `public_ipv4` from the metadata service and the MOTD reads it
   from `cloud.json`. `10-sysinfo` also aborted under `set -e` when
   `system.json` was missing.
+
+### Security
+
+- **bitwarden_secrets**: the archive was downloaded to the fixed path
+  `/tmp/bws-<version>.zip` and an existing file there was reused, so any local
+  user could plant a `bws` binary that the role then installed as root. The
+  download now goes to a private temporary directory that is always removed.
+- **bitwarden_secrets**: the archive is verified against the upstream
+  `bws-sha256-checksums-<version>.txt`, and download, check and extraction all
+  run as root. A mirrored `bitwarden_secrets_download_url` keeps working while
+  the list is reachable; air-gapped hosts set `bitwarden_secrets_checksum` or
+  skip the check with `bitwarden_secrets_checksum_url: ""`.
+
 - **packages**: armored keys were staged as root at a fixed path
   `/tmp/<label>-armored.asc`, which a local user could replace with a symlink.
   They are now staged in a fresh temporary file that is always removed.
@@ -1134,7 +1139,8 @@ Users need to migrate to the new role structure. See role documentation for migr
 
 For releases prior to this changelog format change, see: <https://github.com/arillso/ansible.system/releases>
 
-[Unreleased]: https://github.com/arillso/ansible.system/compare/2.0.4...HEAD
+[Unreleased]: https://github.com/arillso/ansible.system/compare/3.0.0...HEAD
+[3.0.0]: https://github.com/arillso/ansible.system/compare/2.0.4...3.0.0
 [2.0.4]: https://github.com/arillso/ansible.system/compare/2.0.3...2.0.4
 [2.0.3]: https://github.com/arillso/ansible.system/compare/2.0.2...2.0.3
 [2.0.2]: https://github.com/arillso/ansible.system/compare/2.0.1...2.0.2

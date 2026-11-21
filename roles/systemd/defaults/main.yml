@@ -79,8 +79,7 @@ systemd_retry_count: 3
 systemd_retry_delay: 5
 
 # Validation and Safety
+# Runs systemd-analyze verify on units with a known suffix before writing them.
 systemd_validate_units: true
-systemd_backup_units: true
-
-# Debug Configuration
-systemd_debug_mode: false
+# Backups land next to the file (also in /etc/systemd/system) and are never pruned.
+systemd_backup_units: false

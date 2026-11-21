@@ -5,11 +5,13 @@
 [{{ section }}]
 {% if options is mapping %}
 {% for key, value in options.items() %}
-{% if value is string or value is number %}
+{% if value is none %}
+{{ key }}=
+{% elif value is string or value is number %}
 {{ key }}={{ value }}
 {% elif value is sequence and value is not string %}
 {% for item in value %}
-{{ key }}={{ item }}
+{{ key }}={{ '' if item is none else item }}
 {% endfor %}
 {% endif %}
 {% endfor %}

@@ -1,7 +1,8 @@
 ---
 # Internal variables for systemd role
 
-# Common systemd unit types
+# Unit file suffixes. Anything else (e.g. a drop-in override.conf) is not a
+# unit of its own: not verified, not stopped on removal.
 _systemd_unit_types:
     - service
     - socket
@@ -13,4 +14,30 @@ _systemd_unit_types:
     - path
     - timer
     - slice
-    - scope
+
+# Units verified before writing. Triggering units (timer, socket, path,
+# automount) fail verify while their target unit is not written yet, and
+# templates (foo@.service) are refused by older systemd versions.
+_systemd_validate_types: [service, mount, swap, target, slice]
+
+_systemd_unit_validate: >-
+    {{ systemd_validate_units | bool
+       and _systemd_unit_item.name.split('.') | last in _systemd_validate_types
+       and '@.' not in _systemd_unit_item.name }}
+
+# Units with state absent that are real units (no drop-ins, no templates:
+# foo@.service cannot be stopped without an instance).
+_systemd_units_absent: >-
+    {{ systemd_units | selectattr('state', 'defined') | selectattr('state', '==', 'absent')
+       | rejectattr('name', 'search', '@[.]')
+       | selectattr('name', 'search', '[.](' ~ _systemd_unit_types | join('|') ~ ')$') | list }}
+
+_systemd_unit_absent_paths: "{{ _systemd_unit_absent_find.files | default([]) | map(attribute='path') | list }}"
+
+# verify needs the real unit name, so copy the temp file to <tmpdir>/<name> first.
+# The name is quoted: validate splits the command shell-style and would drop the
+# backslash of escaped names (mnt-my\x2ddisk.mount). --man=no: hosts without man
+# pages would otherwise fail every unit with Documentation=man:...
+_systemd_validate_cmd: >-
+    /bin/sh -c 'd=$(mktemp -d) && cp "$1" "$d/$2" && systemd-analyze verify --man=no "$d/$2"; r=$?; rm -rf "$d"; exit $r'
+    _ %s {{ _systemd_unit_item.name | quote }}

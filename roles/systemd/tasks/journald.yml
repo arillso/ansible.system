@@ -9,10 +9,6 @@
       backup: "{{ systemd_backup_units }}"
   become: true
   notify: "systemd: restart journald"
-  retries: "{{ systemd_retry_count }}"
-  delay: "{{ systemd_retry_delay }}"
-  register: _systemd_journald_config_result
-  until: _systemd_journald_config_result is succeeded
 
 - name: Manage systemd-journald service
   ansible.builtin.systemd:

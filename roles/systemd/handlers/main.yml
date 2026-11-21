@@ -1,12 +1,19 @@
 ---
-- name: Reload systemd manager configuration after unit file changes
+# Not notified by this role any more (unit.yml reloads inline); kept so that
+# playbooks notifying "systemd: daemon-reload" keep working.
+- name: Reload systemd manager configuration
   ansible.builtin.systemd:
       daemon_reload: true
+  become: true
   listen: "systemd: daemon-reload"
 
 - name: Restart systemd-journald to apply journald.conf changes
   ansible.builtin.systemd:
       name: systemd-journald
       state: restarted
-  when: systemd_journald_restart_on_change | default(true)
+  become: true
+  when:
+      - systemd_journald_restart_on_change | bool
+      # restarted: journald.yml restarts it already; stopped: must stay down
+      - systemd_journald_service_state not in ['restarted', 'stopped']
   listen: "systemd: restart journald"

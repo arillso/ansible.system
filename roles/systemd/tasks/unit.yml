@@ -1,66 +1,127 @@
 ---
-- name: Ensure systemd unit destination directory exists
-  ansible.builtin.file:
-      path: "{{ systemd_unit_path }}"
-      state: directory
-      owner: "{{ systemd_unit_owner }}"
-      group: "{{ systemd_unit_group }}"
-      mode: "{{ systemd_unit_dir_mode }}"
-  become: true
-  when: systemd_units | length > 0
-
-- name: Deploy systemd unit files (raw content)
-  ansible.builtin.copy:
-      content: "{{ _systemd_unit_item.content }}"
-      dest: "{{ systemd_unit_path }}/{{ _systemd_unit_item.name }}"
-      owner: "{{ systemd_unit_owner }}"
-      group: "{{ systemd_unit_group }}"
-      mode: "{{ systemd_unit_mode }}"
-      backup: "{{ systemd_backup_units }}"
-  become: true
+- name: Validate systemd unit definitions
+  ansible.builtin.assert:
+      that:
+          - (_systemd_unit_item.content is defined) != (_systemd_unit_item.unit is defined)
+          # Sections map to options or are empty (null); option values are
+          # scalars, null or lists of those, never mappings.
+          - >-
+              _systemd_unit_item.unit is not defined
+              or (_systemd_unit_item.unit is mapping
+                  and _systemd_unit_item.unit.values() | reject('none') | reject('mapping') | list | length == 0
+                  and _systemd_unit_item.unit.values() | reject('none') | map('dict2items') | flatten
+                      | map(attribute='value') | flatten | select('mapping') | list | length == 0)
+      fail_msg: >-
+          {{ _systemd_unit_item.name }}: set exactly one of content or unit; unit must map
+          section names to mappings of option values (string, number, null or a list of those)
+      quiet: true
   loop: "{{ systemd_units }}"
   loop_control:
       loop_var: _systemd_unit_item
       label: "{{ _systemd_unit_item.name }}"
-  when:
-      - _systemd_unit_item.state | default('present') == 'present'
-      - _systemd_unit_item.content is defined
-  notify: "systemd: daemon-reload"
-  retries: "{{ systemd_retry_count }}"
-  delay: "{{ systemd_retry_delay }}"
-  register: _systemd_unit_copy_result
-  until: _systemd_unit_copy_result is succeeded
+  when: _systemd_unit_item.state | default('present') == 'present'
 
-- name: Deploy systemd unit files (structured)
-  ansible.builtin.template:
-      src: etc/systemd/system/unit.j2
-      dest: "{{ systemd_unit_path }}/{{ _systemd_unit_item.name }}"
-      owner: "{{ systemd_unit_owner }}"
-      group: "{{ systemd_unit_group }}"
-      mode: "{{ systemd_unit_mode }}"
-      backup: "{{ systemd_backup_units }}"
-  become: true
-  loop: "{{ systemd_units }}"
-  loop_control:
-      loop_var: _systemd_unit_item
-      label: "{{ _systemd_unit_item.name }}"
-  when:
-      - _systemd_unit_item.state | default('present') == 'present'
-      - _systemd_unit_item.unit is defined
-  notify: "systemd: daemon-reload"
-  retries: "{{ systemd_retry_count }}"
-  delay: "{{ systemd_retry_delay }}"
-  register: _systemd_unit_template_result
-  until: _systemd_unit_template_result is succeeded
+- name: Deploy and remove systemd unit files
+  block:
+      - name: Ensure systemd unit destination directory exists
+        ansible.builtin.file:
+            path: "{{ systemd_unit_path }}"
+            state: directory
+            owner: "{{ systemd_unit_owner }}"
+            group: "{{ systemd_unit_group }}"
+            mode: "{{ systemd_unit_dir_mode }}"
+        become: true
 
-- name: Remove systemd unit files
-  ansible.builtin.file:
-      path: "{{ systemd_unit_path }}/{{ _systemd_unit_item.name }}"
-      state: absent
-  become: true
-  loop: "{{ systemd_units }}"
-  loop_control:
-      loop_var: _systemd_unit_item
-      label: "{{ _systemd_unit_item.name }}"
-  when: _systemd_unit_item.state | default('present') == 'absent'
-  notify: "systemd: daemon-reload"
+      - name: Deploy systemd unit files (raw content)
+        ansible.builtin.copy:
+            content: "{{ _systemd_unit_item.content }}"
+            dest: "{{ systemd_unit_path }}/{{ _systemd_unit_item.name }}"
+            owner: "{{ systemd_unit_owner }}"
+            group: "{{ systemd_unit_group }}"
+            mode: "{{ systemd_unit_mode }}"
+            backup: "{{ systemd_backup_units }}"
+            validate: "{{ _systemd_validate_cmd if _systemd_unit_validate | bool else omit }}"
+        become: true
+        loop: "{{ systemd_units }}"
+        loop_control:
+            loop_var: _systemd_unit_item
+            label: "{{ _systemd_unit_item.name }}"
+        when:
+            - _systemd_unit_item.state | default('present') == 'present'
+            - _systemd_unit_item.content is defined
+        register: _systemd_unit_copy_result
+
+      - name: Deploy systemd unit files (structured)
+        ansible.builtin.template:
+            src: etc/systemd/system/unit.j2
+            dest: "{{ systemd_unit_path }}/{{ _systemd_unit_item.name }}"
+            owner: "{{ systemd_unit_owner }}"
+            group: "{{ systemd_unit_group }}"
+            mode: "{{ systemd_unit_mode }}"
+            backup: "{{ systemd_backup_units }}"
+            validate: "{{ _systemd_validate_cmd if _systemd_unit_validate | bool else omit }}"
+        become: true
+        loop: "{{ systemd_units }}"
+        loop_control:
+            loop_var: _systemd_unit_item
+            label: "{{ _systemd_unit_item.name }}"
+        when:
+            - _systemd_unit_item.state | default('present') == 'present'
+            - _systemd_unit_item.unit is defined
+        register: _systemd_unit_template_result
+
+      # One lookup for all units to remove: own file in systemd_unit_path and a
+      # vendor file of the same name.
+      # ponytail: vendor units only looked up in /usr/lib/systemd/system (merged
+      # /usr on all supported distros); /usr/local/lib and /run are not checked.
+      - name: Find unit files to remove and vendor units they shadow
+        ansible.builtin.find:
+            paths:
+                - "{{ systemd_unit_path }}"
+                - /usr/lib/systemd/system
+            patterns: "{{ _systemd_units_absent | map(attribute='name') | list }}"
+            file_type: any
+        become: true
+        when: _systemd_units_absent | length > 0
+        register: _systemd_unit_absent_find
+
+      # Stop and disable before the file goes, otherwise the process keeps running
+      # and the .wants/ symlink dangles. Skipped when a vendor unit of that name
+      # stays behind: removing an override must not stop the real service.
+      - name: Stop and disable systemd units before removal
+        ansible.builtin.systemd:
+            name: "{{ _systemd_unit_item.name }}"
+            state: stopped
+            enabled: false
+        become: true
+        loop: "{{ _systemd_units_absent }}"
+        loop_control:
+            loop_var: _systemd_unit_item
+            label: "{{ _systemd_unit_item.name }}"
+        when:
+            - systemd_unit_path ~ '/' ~ _systemd_unit_item.name in _systemd_unit_absent_paths
+            - "'/usr/lib/systemd/system/' ~ _systemd_unit_item.name not in _systemd_unit_absent_paths"
+
+      - name: Remove systemd unit files
+        ansible.builtin.file:
+            path: "{{ systemd_unit_path }}/{{ _systemd_unit_item.name }}"
+            state: absent
+        become: true
+        loop: "{{ systemd_units }}"
+        loop_control:
+            loop_var: _systemd_unit_item
+            label: "{{ _systemd_unit_item.name }}"
+        when: _systemd_unit_item.state | default('present') == 'absent'
+        register: _systemd_unit_remove_result
+
+  # Reload here, not in a handler: service.yml runs next and must see the new
+  # units. always: units written before a failed item still get loaded.
+  always:
+      - name: Reload systemd manager configuration after unit file changes
+        ansible.builtin.systemd:
+            daemon_reload: true
+        become: true
+        when: >-
+            _systemd_unit_copy_result | default({}) is changed
+            or _systemd_unit_template_result | default({}) is changed
+            or _systemd_unit_remove_result | default({}) is changed

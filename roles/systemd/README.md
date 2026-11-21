@@ -41,7 +41,8 @@ For detailed documentation including all variables, examples, and usage instruct
 | `systemd_journald_system_max_use`    | `1G`                  | Max disk space for the journal              |
 | `systemd_journald_max_retention_sec` | `1month`              | Max journal retention time                  |
 | `systemd_daemon_reload`              | `false`               | Force `daemon-reload`                       |
-| `systemd_validate_units`             | `true`                | Validate unit files before applying         |
+| `systemd_validate_units`             | `true`                | `systemd-analyze verify` before writing     |
+| `systemd_backup_units`               | `false`               | Keep backup copies next to changed files    |
 
 See [`defaults/main.yml`](defaults/main.yml) for the complete list and [the guide](https://guide.arillso.io/collections/arillso/system/systemd_role.html) for detailed docs.
 

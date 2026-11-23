@@ -9,7 +9,7 @@ driver:
 
 platforms:
     - name: logging-debian-bookworm
-      image: geerlingguy/docker-debian12-ansible:latest@sha256:39bdd16916ec475a12db0502550b72e4f4c2cc858a1939ad2a17f21f6eb51b65
+      image: geerlingguy/docker-debian12-ansible:latest@sha256:74c7e3326b2a35aa4f32c2e943e48a03da8698e2d0c484153bb24110387b285d
       command: /usr/lib/systemd/systemd
       privileged: true
       pre_build_image: true
@@ -21,7 +21,7 @@ platforms:
           - /run/lock
 
     - name: logging-ubuntu-noble
-      image: geerlingguy/docker-ubuntu2404-ansible:latest@sha256:fa0889a991fe4f9404efc2f53d5960804f4e409e74bff6ad2443992cc57915c4
+      image: geerlingguy/docker-ubuntu2404-ansible:latest@sha256:01adc699145ab47eb196b5aa7b056af80548502f8bc99e230afcffb6700cac3d
       command: /usr/lib/systemd/systemd
       privileged: true
       pre_build_image: true
@@ -33,7 +33,7 @@ platforms:
           - /run/lock
 
     - name: logging-rocky-9
-      image: geerlingguy/docker-rockylinux9-ansible:latest@sha256:370133da77678450c59c78c5ede1a9fec90c87dbe3ba968ab0dcad24b80524c0
+      image: geerlingguy/docker-rockylinux9-ansible:latest@sha256:c7e8eff59e07fec5b5184926db9e9deb4a465fc599faf862b214e432642e9277
       command: /usr/lib/systemd/systemd
       privileged: true
       pre_build_image: true

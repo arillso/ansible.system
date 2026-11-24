@@ -13,17 +13,24 @@ argument_specs:
             tuning_sysctl_config:
                 type: "dict"
                 required: false
-                default: {}
                 description: >-
                     Dictionary of sysctl parameters for performance tuning.
                     Keys are sysctl parameter names (e.g. vm.dirty_ratio, net.core.rmem_max,
                     fs.file-max, kernel.pid_max). Values are the desired settings.
+                    Default: 21 parameters for dirty page writeback, socket buffers and backlog,
+                    TCP buffers with bbr congestion control, and file, PID and thread limits.
                     See defaults/main.yml for the full set of default parameters.
 
             tuning_network_sysctl_config:
                 type: "dict"
                 required: false
-                default: {}
+                default:
+                    net.ipv4.tcp_window_scaling: 1
+                    net.ipv4.tcp_timestamps: 1
+                    net.ipv4.tcp_sack: 1
+                    net.ipv4.tcp_moderate_rcvbuf: 1
+                    net.ipv4.tcp_no_metrics_save: 1
+                    net.ipv4.ip_local_port_range: "1024 65535"
                 description: >-
                     Additional network-specific sysctl parameters.
                     Keys are sysctl parameter names (e.g. net.ipv4.tcp_window_scaling,
@@ -143,9 +150,11 @@ argument_specs:
             tuning_security_limits:
                 type: "list"
                 required: false
-                default: []
                 elements: "dict"
-                description: "List of security limit configurations"
+                description: >-
+                    List of security limit configurations.
+                    Default: soft/hard nofile 32768/65536 and soft/hard nproc 16384/32768 for domain "*".
+                    See defaults/main.yml for the full list.
                 options:
                     domain:
                         type: "str"
@@ -189,8 +198,11 @@ argument_specs:
                 type: "list"
                 required: false
                 elements: "str"
-                default: []
-                description: "Package names required for tuning (default depends on the OS family)"
+                description: >-
+                    Package names required for tuning.
+                    Default: the list for ansible_facts['os_family'] from vars/main.yml
+                    (Debian, RedHat, Suse; sysstat, iotop, htop, tuned, ethtool, util-linux,
+                    pciutils plus cpufrequtils on Debian and tuned-utils on RedHat), else an empty list.
 
             tuning_network_tuning_enabled:
                 type: "bool"

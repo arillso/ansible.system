@@ -6,6 +6,23 @@ argument_specs:
             - "Manages APT packages including installation, removal, and configuration"
             - "Supports repositories, keys, and advanced APT configuration"
             - "Uses unified package list approach"
+        examples: |
+            - name: Add a repository, install packages and enable unattended upgrades
+              hosts: all
+              become: true
+              roles:
+                  - role: arillso.system.packages
+                    vars:
+                        packages_keys:
+                            - name: docker
+                              url: https://download.docker.com/linux/ubuntu/gpg
+                              keyring: /usr/share/keyrings/docker.asc
+                        packages_repositories:
+                            - repo: "deb [signed-by=/usr/share/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable"
+                              filename: docker
+                        packages_list:
+                            - name: docker-ce
+                        packages_unattended_upgrades_enabled: true
         options:
             # Entry Point Controls
             packages_repositories_enabled:
@@ -591,6 +608,19 @@ argument_specs:
         description:
             - "Entry point for managing APT repositories and keys"
             - "Handles repository addition and GPG key management"
+        examples: |
+            - name: Add an APT repository
+              hosts: all
+              become: true
+              tasks:
+                  - name: Add an APT repository
+                    ansible.builtin.include_role:
+                        name: arillso.system.packages
+                        tasks_from: repositories
+                    vars:
+                        packages_repositories:
+                            - repo: "deb [signed-by=/usr/share/keyrings/docker-keyring.gpg] https://download.docker.com/linux/ubuntu noble stable"
+                              filename: docker
         options:
             packages_repositories:
                 description: "List of APT repositories to add"
@@ -610,6 +640,17 @@ argument_specs:
         description:
             - "Entry point for upgrading system packages"
             - "Supports different upgrade strategies"
+        examples: |
+            - name: Run a safe upgrade of all packages
+              hosts: all
+              become: true
+              tasks:
+                  - name: Run a safe upgrade of all packages
+                    ansible.builtin.include_role:
+                        name: arillso.system.packages
+                        tasks_from: upgrade
+                    vars:
+                        packages_upgrade: safe
         options:
             packages_upgrade:
                 description: "Type of upgrade to perform"
@@ -622,6 +663,18 @@ argument_specs:
         description:
             - "Entry point for updating APT package cache"
             - "Used as dependency by other roles"
+        examples: |
+            - name: Refresh the APT cache when older than one hour
+              hosts: all
+              become: true
+              tasks:
+                  - name: Refresh the APT cache when older than one hour
+                    ansible.builtin.include_role:
+                        name: arillso.system.packages
+                        tasks_from: cache
+                    vars:
+                        packages_cache_valid_time: 3600
+                        packages_cache_update_retries: 5
         options:
             packages_update_cache:
                 description: "Update APT cache"
@@ -649,6 +702,18 @@ argument_specs:
         description:
             - "Entry point for cleaning package cache and configuring APT"
             - "Handles autoclean, autoremove, and APT configuration files"
+        examples: |
+            - name: Remove unused packages and clean the APT cache
+              hosts: all
+              become: true
+              tasks:
+                  - name: Remove unused packages and clean the APT cache
+                    ansible.builtin.include_role:
+                        name: arillso.system.packages
+                        tasks_from: clean
+                    vars:
+                        packages_autoremove: true
+                        packages_autoclean: true
         options:
             packages_autoclean:
                 description: "Clean package cache"
@@ -692,6 +757,20 @@ argument_specs:
         description:
             - "Entry point for managing APT signing keys"
             - "Supports keys from URLs, keyservers, or direct data"
+        examples: |
+            - name: Import an APT signing key
+              hosts: all
+              become: true
+              tasks:
+                  - name: Import an APT signing key
+                    ansible.builtin.include_role:
+                        name: arillso.system.packages
+                        tasks_from: keys
+                    vars:
+                        packages_keys:
+                            - name: docker
+                              url: https://download.docker.com/linux/ubuntu/gpg
+                              dearmor: true
         options:
             packages_keys:
                 description: "List of APT signing keys to manage"
@@ -712,6 +791,22 @@ argument_specs:
             - "Entry point for processing packages from unified list"
             - "Handles package installation, removal, hold/unhold operations"
             - "Executes package operations in correct order: unhold → remove → install → hold"
+        examples: |
+            - name: Install one package and remove another
+              hosts: all
+              become: true
+              tasks:
+                  - name: Install one package and remove another
+                    ansible.builtin.include_role:
+                        name: arillso.system.packages
+                        tasks_from: packages
+                    vars:
+                        packages_list:
+                            - name: htop
+                              state: latest
+                            - name: telnet
+                              state: absent
+                              purge: true
         options:
             packages_list:
                 description: "Unified list of packages with their desired states"
@@ -788,6 +883,20 @@ argument_specs:
         description:
             - "Entry point for installing packages from unified list"
             - "Handles only installation operations (present, latest, build-dep states)"
+        examples: |
+            - name: Install packages
+              hosts: all
+              become: true
+              tasks:
+                  - name: Install packages
+                    ansible.builtin.include_role:
+                        name: arillso.system.packages
+                        tasks_from: install
+                    vars:
+                        packages_list:
+                            - name: curl
+                            - name: jq
+                              state: latest
         options:
             packages_list:
                 description: "List of packages to install"
@@ -825,6 +934,19 @@ argument_specs:
         description:
             - "Entry point for removing packages from unified list"
             - "Handles only removal operations (absent state)"
+        examples: |
+            - name: Remove a package with its configuration
+              hosts: all
+              become: true
+              tasks:
+                  - name: Remove a package with its configuration
+                    ansible.builtin.include_role:
+                        name: arillso.system.packages
+                        tasks_from: remove
+                    vars:
+                        packages_list:
+                            - name: telnet
+                              purge: true
         options:
             packages_list:
                 description: "List of packages to remove"
@@ -867,6 +989,18 @@ argument_specs:
         description:
             - "Entry point for holding packages from unified list"
             - "Prevents packages from being upgraded"
+        examples: |
+            - name: Hold a package at its installed version
+              hosts: all
+              become: true
+              tasks:
+                  - name: Hold a package at its installed version
+                    ansible.builtin.include_role:
+                        name: arillso.system.packages
+                        tasks_from: hold
+                    vars:
+                        packages_list:
+                            - name: containerd.io
         options:
             packages_list:
                 description: "List of packages to hold"
@@ -889,6 +1023,18 @@ argument_specs:
         description:
             - "Entry point for unholding packages from unified list"
             - "Allows previously held packages to be upgraded"
+        examples: |
+            - name: Release a held package
+              hosts: all
+              become: true
+              tasks:
+                  - name: Release a held package
+                    ansible.builtin.include_role:
+                        name: arillso.system.packages
+                        tasks_from: unhold
+                    vars:
+                        packages_list:
+                            - name: containerd.io
         options:
             packages_list:
                 description: "List of packages to unhold"
@@ -911,6 +1057,23 @@ argument_specs:
         description:
             - "Entry point for managing APT configuration files"
             - "Creates custom APT configuration files in /etc/apt/apt.conf.d/"
+        examples: |
+            - name: Configure APT and unattended upgrades
+              hosts: all
+              become: true
+              tasks:
+                  - name: Configure APT and unattended upgrades
+                    ansible.builtin.include_role:
+                        name: arillso.system.packages
+                        tasks_from: apt_config
+                    vars:
+                        packages_apt_conf:
+                            - name: no-recommends
+                              settings:
+                                  - key: APT::Install-Recommends
+                                    value: "false"
+                        packages_unattended_upgrades_auto_reboot: true
+                        packages_unattended_upgrades_auto_reboot_time: "04:00"
         options:
             packages_apt_conf:
                 description: "List of APT configuration files to create"

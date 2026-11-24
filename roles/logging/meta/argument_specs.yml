@@ -5,6 +5,21 @@ argument_specs:
         description:
             - "Manages system logging via logrotate and rsyslog"
             - "Supports granular control via entry points"
+        examples: |
+            - name: Rotate application logs and forward syslog
+              hosts: all
+              become: true
+              roles:
+                  - role: arillso.system.logging
+                    vars:
+                        logging_logrotate_entries:
+                            - name: myapp
+                              path: /var/log/myapp/*.log
+                              options: ["daily", "rotate 14", "missingok"]
+                        logging_rsyslog_remote_servers:
+                            - host: logs.example.com
+                              port: 514
+                              protocol: tcp
         options:
             logging_logrotate_enabled:
                 description: "Enable logrotate management"
@@ -256,6 +271,20 @@ argument_specs:
         description:
             - "Entry point for managing logrotate configurations"
             - "Configure log rotation policies"
+        examples: |
+            - name: Rotate application logs daily
+              hosts: all
+              become: true
+              tasks:
+                  - name: Rotate application logs daily
+                    ansible.builtin.include_role:
+                        name: arillso.system.logging
+                        tasks_from: logrotate
+                    vars:
+                        logging_logrotate_entries:
+                            - name: myapp
+                              path: /var/log/myapp/*.log
+                              options: ["daily", "rotate 14", "missingok", "compress"]
         options:
             logging_logrotate_entries:
                 description: "List of logrotate configurations"
@@ -347,6 +376,20 @@ argument_specs:
         description:
             - "Entry point for managing rsyslog configurations"
             - "Configure system logging and forwarding"
+        examples: |
+            - name: Forward syslog to a central server
+              hosts: all
+              become: true
+              tasks:
+                  - name: Forward syslog to a central server
+                    ansible.builtin.include_role:
+                        name: arillso.system.logging
+                        tasks_from: rsyslog
+                    vars:
+                        logging_rsyslog_remote_servers:
+                            - host: logs.example.com
+                              port: 514
+                              protocol: tcp
         options:
             logging_rsyslog_entries:
                 description: "List of rsyslog configurations"

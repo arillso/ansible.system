@@ -9,6 +9,18 @@ argument_specs:
             Enterprise-grade facts collection role that gathers system information,
             cloud metadata, and provides K3s cluster state detection.
 
+        examples: |
+            - name: Collect custom facts for a worker node
+              hosts: all
+              become: true
+              roles:
+                  - role: arillso.system.facts
+                    vars:
+                        facts_node_type: worker
+                        facts_system_owner: platform-team
+                        facts_system_tags:
+                            - managed
+                            - k3s
         options:
             # Core role identification (defaults set dynamically in defaults/main.yml)
             facts_role_name:

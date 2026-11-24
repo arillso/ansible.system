@@ -7,6 +7,16 @@ argument_specs:
             - Supports both ansible-pull and ansible-playbook modes
             - Handles SSH key generation for Git repository access
             - Configures OpenTelemetry integration for observability
+        examples: |
+            - name: Run ansible-pull from a Git repository every 15 minutes
+              hosts: all
+              become: true
+              roles:
+                  - role: arillso.system.ansible
+                    vars:
+                        ansible_repo: https://github.com/example/infrastructure.git
+                        ansible_playbook: site.yml
+                        ansible_schedule: "*:0/15"
         options:
             ansible_install_enabled:
                 description: Enable Ansible installation

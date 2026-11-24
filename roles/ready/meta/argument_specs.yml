@@ -9,6 +9,16 @@ argument_specs:
             This role waits until the host accepts an Ansible connection and
             cloud-init has finished. A reboot triggered by cloud-init is
             handled once. Run it in a play with `gather_facts: false`.
+        examples: |
+            - name: Wait until a fresh cloud instance accepts SSH and finished cloud-init
+              hosts: all
+              become: true
+              gather_facts: false
+              roles:
+                  - role: arillso.system.ready
+                    vars:
+                        ready_ssh_timeout: 600
+                        ready_cloud_init_timeout: 1200
         options:
             ready_ssh_delay:
                 type: "int"

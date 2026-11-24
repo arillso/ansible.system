@@ -5,6 +5,15 @@ argument_specs:
         description:
             - "Installs the Bitwarden Secrets Manager CLI (bws) for secret management"
             - "Supports version management and multi-architecture"
+        examples: |
+            - name: Install the Bitwarden Secrets Manager CLI
+              hosts: all
+              become: true
+              roles:
+                  - role: arillso.system.bitwarden_secrets
+                    vars:
+                        bitwarden_secrets_version: "2.1.0"
+                        bitwarden_secrets_install_path: /usr/local/bin
         options:
             bitwarden_secrets_version:
                 description: "Version of bws CLI to install"

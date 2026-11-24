@@ -9,6 +9,16 @@ argument_specs:
             This role configures system-level performance tuning including
             sysctl parameters, network tuning, I/O schedulers, CPU governors,
             and security limits for optimized server performance.
+        examples: |
+            - name: Tune a host for throughput
+              hosts: all
+              become: true
+              roles:
+                  - role: arillso.system.tuning
+                    vars:
+                        tuning_tuned_profile: throughput-performance
+                        tuning_transparent_hugepages: never
+                        tuning_swap_swappiness: 1
         options:
             tuning_sysctl_config:
                 type: "dict"

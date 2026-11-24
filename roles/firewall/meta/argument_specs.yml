@@ -9,6 +9,25 @@ argument_specs:
               chain settings and sets and append their rules
             - Direct mapping from YAML to nftables configuration
 
+        examples: |
+            - name: Allow HTTPS on top of the default nftables ruleset
+              hosts: all
+              become: true
+              roles:
+                  - role: arillso.system.firewall
+                    vars:
+                        firewall_ssh_rate_limit: "30/minute"
+                        firewall_host:
+                            - table:
+                                  name: filter
+                                  family: inet
+                                  chains:
+                                      - name: input
+                                        rules:
+                                            - comment: "Accept HTTPS"
+                                              tcp_dport: 443
+                                              ct_state: ["new"]
+                                              action: accept
         options:
             firewall_ssh_port:
                 description:

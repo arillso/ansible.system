@@ -12,7 +12,6 @@ argument_specs:
               roles:
                   - role: arillso.system.bitwarden_secrets
                     vars:
-                        bitwarden_secrets_version: "2.1.0"
                         bitwarden_secrets_install_path: /usr/local/bin
         options:
             bitwarden_secrets_version:

@@ -47,7 +47,7 @@ def example_vars(plays, role: str, entry: str) -> set[str]:
 @pytest.mark.parametrize(
     ("role", "entry", "spec"),
     ENTRY_POINTS,
-    ids=[f"{role}-{entry}" for role, entry, _ in ENTRY_POINTS],
+    ids=[f"{point[0]}-{point[1]}" for point in ENTRY_POINTS],
 )
 def test_entry_point_has_valid_example(role, entry, spec):
     examples = spec.get("examples")

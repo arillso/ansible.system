@@ -1058,11 +1058,11 @@ argument_specs:
             - "Entry point for managing APT configuration files"
             - "Creates custom APT configuration files in /etc/apt/apt.conf.d/"
         examples: |
-            - name: Configure APT and unattended upgrades
+            - name: Disable APT recommends
               hosts: all
               become: true
               tasks:
-                  - name: Configure APT and unattended upgrades
+                  - name: Disable APT recommends
                     ansible.builtin.include_role:
                         name: arillso.system.packages
                         tasks_from: apt_config
@@ -1072,8 +1072,6 @@ argument_specs:
                               settings:
                                   - key: APT::Install-Recommends
                                     value: "false"
-                        packages_unattended_upgrades_auto_reboot: true
-                        packages_unattended_upgrades_auto_reboot_time: "04:00"
         options:
             packages_apt_conf:
                 description: "List of APT configuration files to create"

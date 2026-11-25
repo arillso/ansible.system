@@ -31,7 +31,7 @@ def test_spec_defaults_match_role_defaults(role):
         f"{entry}.{name}"
         for entry, spec in specs.items()
         for name, option in (spec.get("options") or {}).items()
-        if "default" in option and name in role_defaults and option["default"] != role_defaults[name]
+        if "default" in option and (name not in role_defaults or option["default"] != role_defaults[name])
     ]
 
     assert drift == []

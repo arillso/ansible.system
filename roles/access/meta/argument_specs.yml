@@ -22,7 +22,6 @@ argument_specs:
                             - name: deploy
                               user: deploy
                               nopasswd: true
-                        access_ssh_port: 2222
         options:
             # Entry Point Controls
             access_users_enabled:
@@ -697,9 +696,8 @@ argument_specs:
                         name: arillso.system.access
                         tasks_from: ssh_server
                     vars:
-                        access_ssh_port: 2222
                         access_ssh_permit_root_login: "no"
-                        access_ssh_allow_groups: ["operators"]
+                        access_ssh_allow_groups: ["sudo", "operators"]
         options:
             access_ssh_port:
                 description: "SSH port"

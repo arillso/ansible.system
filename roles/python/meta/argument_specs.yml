@@ -5,6 +5,16 @@ argument_specs:
         description:
             - "Manages Python packages via pip"
             - "Supports virtualenv and system-wide installation"
+        examples: |
+            - name: Install Python packages with pip
+              hosts: all
+              become: true
+              roles:
+                  - role: arillso.system.python
+                    vars:
+                        python_packages:
+                            - name: requests
+                              version: "2.32.3"
         options:
             python_pip_enabled:
                 description: "Enable pip package management"
@@ -131,6 +141,19 @@ argument_specs:
         short_description: "Pip package management entry point"
         description:
             - "Entry point for managing Python packages"
+        examples: |
+            - name: Install a pip package into a virtualenv
+              hosts: all
+              become: true
+              tasks:
+                  - name: Install a pip package into a virtualenv
+                    ansible.builtin.include_role:
+                        name: arillso.system.python
+                        tasks_from: pip
+                    vars:
+                        python_packages:
+                            - name: requests
+                              virtualenv: /opt/myapp/venv
         options:
             python_packages:
                 description: "List of packages to manage"
@@ -161,6 +184,19 @@ argument_specs:
         short_description: "Requirements file entry point"
         description:
             - "Entry point for installing from requirements.txt"
+        examples: |
+            - name: Install a requirements file into a virtualenv
+              hosts: all
+              become: true
+              tasks:
+                  - name: Install a requirements file into a virtualenv
+                    ansible.builtin.include_role:
+                        name: arillso.system.python
+                        tasks_from: requirements
+                    vars:
+                        python_requirements_files:
+                            - path: /opt/myapp/requirements.txt
+                              virtualenv: /opt/myapp/venv
         options:
             python_requirements_files:
                 description: "List of requirements files"

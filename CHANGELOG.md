@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **docs**: every role entry point carries an `examples` block in
+  `meta/argument_specs.yml`, so the role pages in the guide show a usage
+  example.
+- **docs**: `meta/argument_specs.yml` no longer documents defaults the roles do
+  not apply. `firewall_tables`, `tuning_sysctl_config`,
+  `tuning_security_limits`, `tuning_packages_list`, `facts_role_name`,
+  `facts_collection_name` and `facts_version` describe their computed or large
+  default in the description instead; `tuning_network_sysctl_config` shows the
+  actual default. A unit test fails when a spec default and
+  `defaults/main.yml` drift apart.
+
 ## [3.0.0] - 2026-11-21
 
 ### Added

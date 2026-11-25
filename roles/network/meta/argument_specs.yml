@@ -5,6 +5,15 @@ argument_specs:
         description:
             - "Manages network configuration including DNS and netplan"
             - "Supports systemd-resolved and traditional resolv.conf"
+        examples: |
+            - name: Configure DNS resolution
+              hosts: all
+              become: true
+              roles:
+                  - role: arillso.system.network
+                    vars:
+                        network_dns_nameservers: ["9.9.9.9", "149.112.112.112"]
+                        network_dns_search: ["example.com"]
         options:
             network_resolv_enabled:
                 description: "Enable DNS configuration"
@@ -130,6 +139,19 @@ argument_specs:
         description:
             - "Entry point for configuring DNS resolution"
             - "Supports systemd-resolved and traditional resolv.conf"
+        examples: |
+            - name: Configure systemd-resolved
+              hosts: all
+              become: true
+              tasks:
+                  - name: Configure systemd-resolved
+                    ansible.builtin.include_role:
+                        name: arillso.system.network
+                        tasks_from: resolv
+                    vars:
+                        network_resolved_dns: ["9.9.9.9", "149.112.112.112"]
+                        network_resolved_domains: ["example.com"]
+                        network_resolved_dns_over_tls: opportunistic
         options:
             network_dns_nameservers:
                 description: "List of DNS nameservers, also used for systemd-resolved unless network_resolved_dns is set"
@@ -231,6 +253,23 @@ argument_specs:
         description:
             - "Entry point for configuring network interfaces via netplan"
             - "Ubuntu/Debian with netplan only"
+        examples: |
+            - name: Write and apply a netplan configuration
+              hosts: all
+              become: true
+              tasks:
+                  - name: Write and apply a netplan configuration
+                    ansible.builtin.include_role:
+                        name: arillso.system.network
+                        tasks_from: netplan
+                    vars:
+                        network_netplan_config:
+                            network:
+                                version: 2
+                                ethernets:
+                                    eth0:
+                                        dhcp4: true
+                        network_netplan_apply: true
         options:
             network_netplan_config:
                 description: "Netplan configuration dictionary"

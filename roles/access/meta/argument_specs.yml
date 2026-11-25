@@ -6,6 +6,22 @@ argument_specs:
             - "Manages system access including users, groups, sudo and SSH"
             - "Supports granular control via entry points"
             - "Security-focused with validation and backup options"
+        examples: |
+            - name: Manage users, sudo rules and the SSH server
+              hosts: all
+              become: true
+              roles:
+                  - role: arillso.system.access
+                    vars:
+                        access_users:
+                            - name: deploy
+                              groups: ["sudo"]
+                              ssh_keys:
+                                  - key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleKeyOnly deploy@example"
+                        access_sudoers:
+                            - name: deploy
+                              user: deploy
+                              nopasswd: true
         options:
             # Entry Point Controls
             access_users_enabled:
@@ -432,6 +448,21 @@ argument_specs:
         description:
             - "Entry point for managing user accounts"
             - "Handles user creation, modification and removal"
+        examples: |
+            - name: Create a deploy user
+              hosts: all
+              become: true
+              tasks:
+                  - name: Create a deploy user
+                    ansible.builtin.include_role:
+                        name: arillso.system.access
+                        tasks_from: users
+                    vars:
+                        access_users:
+                            - name: deploy
+                              comment: Deployment user
+                              groups: ["sudo"]
+                              shell: /bin/bash
         options:
             access_users:
                 description: "List of users to manage"
@@ -534,6 +565,19 @@ argument_specs:
         description:
             - "Entry point for managing groups"
             - "Handles group creation and removal"
+        examples: |
+            - name: Create an operators group
+              hosts: all
+              become: true
+              tasks:
+                  - name: Create an operators group
+                    ansible.builtin.include_role:
+                        name: arillso.system.access
+                        tasks_from: groups
+                    vars:
+                        access_groups:
+                            - name: operators
+                              gid: 2000
         options:
             access_groups:
                 description: "List of groups to manage"
@@ -563,6 +607,21 @@ argument_specs:
         description:
             - "Entry point for managing sudoers configuration"
             - "Handles sudo access control"
+        examples: |
+            - name: Allow the operators group to restart nginx
+              hosts: all
+              become: true
+              tasks:
+                  - name: Allow the operators group to restart nginx
+                    ansible.builtin.include_role:
+                        name: arillso.system.access
+                        tasks_from: sudoers
+                    vars:
+                        access_sudoers:
+                            - name: operators-nginx
+                              group: operators
+                              commands: /usr/bin/systemctl restart nginx
+                              nopasswd: true
         options:
             access_sudoers:
                 description: "List of sudoers entries"
@@ -627,6 +686,18 @@ argument_specs:
         description:
             - "Entry point for SSH server configuration"
             - "Handles sshd_config and service management"
+        examples: |
+            - name: Harden the SSH server
+              hosts: all
+              become: true
+              tasks:
+                  - name: Harden the SSH server
+                    ansible.builtin.include_role:
+                        name: arillso.system.access
+                        tasks_from: ssh_server
+                    vars:
+                        access_ssh_permit_root_login: "no"
+                        access_ssh_allow_groups: ["sudo", "operators"]
         options:
             access_ssh_port:
                 description: "SSH port"
@@ -789,6 +860,19 @@ argument_specs:
         description:
             - "Entry point for managing SSH authorized keys"
             - "Handles SSH key deployment for users"
+        examples: |
+            - name: Authorize an SSH key for the deploy user
+              hosts: all
+              become: true
+              tasks:
+                  - name: Authorize an SSH key for the deploy user
+                    ansible.builtin.include_role:
+                        name: arillso.system.access
+                        tasks_from: ssh_keys
+                    vars:
+                        access_ssh_keys:
+                            - user: deploy
+                              key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleKeyOnly deploy@example"
         options:
             access_ssh_keys:
                 description: "List of SSH keys to manage"

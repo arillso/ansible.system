@@ -5,6 +5,27 @@ argument_specs:
         description:
             - "Manages systemd services, unit files and journald configuration"
             - "Supports granular control via entry points"
+        examples: |
+            - name: Write a unit, start it and configure journald
+              hosts: all
+              become: true
+              roles:
+                  - role: arillso.system.systemd
+                    vars:
+                        systemd_units:
+                            - name: myapp.service
+                              unit:
+                                  Unit:
+                                      Description: My application
+                                  Service:
+                                      ExecStart: /usr/local/bin/myapp
+                                  Install:
+                                      WantedBy: multi-user.target
+                        systemd_services:
+                            - name: myapp
+                              state: started
+                              enabled: true
+                        systemd_journald_system_max_use: 2G
         options:
             # Entry Point Controls
             systemd_service_enabled:
@@ -245,6 +266,20 @@ argument_specs:
         description:
             - "Entry point for managing systemd services"
             - "Control service state and boot configuration"
+        examples: |
+            - name: Start and enable a service
+              hosts: all
+              become: true
+              tasks:
+                  - name: Start and enable a service
+                    ansible.builtin.include_role:
+                        name: arillso.system.systemd
+                        tasks_from: service
+                    vars:
+                        systemd_services:
+                            - name: nginx
+                              state: started
+                              enabled: true
         options:
             systemd_services:
                 description: "List of services to manage"
@@ -275,6 +310,25 @@ argument_specs:
         description:
             - "Entry point for managing systemd unit files"
             - "Deploy and remove unit files"
+        examples: |
+            - name: Write a systemd unit
+              hosts: all
+              become: true
+              tasks:
+                  - name: Write a systemd unit
+                    ansible.builtin.include_role:
+                        name: arillso.system.systemd
+                        tasks_from: unit
+                    vars:
+                        systemd_units:
+                            - name: myapp.service
+                              unit:
+                                  Unit:
+                                      Description: My application
+                                  Service:
+                                      ExecStart: /usr/local/bin/myapp
+                                  Install:
+                                      WantedBy: multi-user.target
         options:
             systemd_units:
                 description: "List of unit files to manage"
@@ -331,6 +385,19 @@ argument_specs:
         description:
             - "Entry point for configuring systemd-journald"
             - "Manage journal storage, retention and forwarding"
+        examples: |
+            - name: Keep the journal persistent and capped
+              hosts: all
+              become: true
+              tasks:
+                  - name: Keep the journal persistent and capped
+                    ansible.builtin.include_role:
+                        name: arillso.system.systemd
+                        tasks_from: journald
+                    vars:
+                        systemd_journald_storage: persistent
+                        systemd_journald_system_max_use: 2G
+                        systemd_journald_max_retention_sec: 2week
         options:
             systemd_journald_storage:
                 description: "Journal storage mode"

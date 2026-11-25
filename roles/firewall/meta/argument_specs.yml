@@ -9,6 +9,25 @@ argument_specs:
               chain settings and sets and append their rules
             - Direct mapping from YAML to nftables configuration
 
+        examples: |
+            - name: Allow HTTPS on top of the default nftables ruleset
+              hosts: all
+              become: true
+              roles:
+                  - role: arillso.system.firewall
+                    vars:
+                        firewall_ssh_rate_limit: "30/minute"
+                        firewall_host:
+                            - table:
+                                  name: filter
+                                  family: inet
+                                  chains:
+                                      - name: input
+                                        rules:
+                                            - comment: "Accept HTTPS"
+                                              tcp_dport: 443
+                                              ct_state: ["new"]
+                                              action: accept
         options:
             firewall_ssh_port:
                 description:
@@ -43,11 +62,17 @@ argument_specs:
                 required: false
                 default: "nft-drop-input: "
             firewall_tables:
-                description: "Main nftables configuration with default filter table (input/forward/output chains)"
+                description:
+                    - Main nftables configuration with default filter table (input/forward/output chains)
+                    - "Default: one inet table filter. Chain input has policy drop and accepts loopback,
+                      established/related, ICMPv6 neighbor discovery and router advertisements, and new
+                      SSH connections on firewall_ssh_port, rate-limited by firewall_ssh_rate_limit and
+                      firewall_ssh_rate_burst; the rest is logged with firewall_log_drop_prefix and dropped.
+                      Chain forward has policy drop and accepts established/related only. Chain output has
+                      policy accept. See defaults/main.yml for the full structure."
                 type: list
                 elements: dict
                 required: false
-                default: []
                 options: &firewall_structure
                     table:
                         description: nftables table configuration

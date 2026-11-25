@@ -7,6 +7,15 @@ argument_specs:
             - "Manages temperature thresholds and thermal zones for CPU and ACPI"
             - "Configures thermal preferences for performance, quiet, or balanced operation"
             - "Arillso"
+        examples: |
+            - name: Configure thermald for performance
+              hosts: all
+              become: true
+              roles:
+                  - role: arillso.system.thermal
+                    vars:
+                        thermal_preference: PERFORMANCE
+                        thermal_cpu_passive_temp: 80000
         options:
             thermal_enabled:
                 description: "Enable or disable thermal management configuration"

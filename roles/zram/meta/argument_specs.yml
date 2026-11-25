@@ -7,6 +7,15 @@ argument_specs:
             - "Validates the requested compression algorithm against kernel capabilities"
             - "Deploys /etc/default/zramswap and enables the zramswap service"
             - "Arillso"
+        examples: |
+            - name: Use a quarter of the memory as compressed swap
+              hosts: all
+              become: true
+              roles:
+                  - role: arillso.system.zram
+                    vars:
+                        zram_percent: 25
+                        zram_algorithm: lz4
         options:
             zram_enabled:
                 description: "Enable or disable zram; false disables an existing zramswap.service; zram stays active until the next reboot"

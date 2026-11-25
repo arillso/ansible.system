@@ -9,22 +9,38 @@ argument_specs:
             Enterprise-grade facts collection role that gathers system information,
             cloud metadata, and provides K3s cluster state detection.
 
+        examples: |
+            - name: Collect custom facts for a worker node
+              hosts: all
+              become: true
+              roles:
+                  - role: arillso.system.facts
+                    vars:
+                        facts_node_type: worker
+                        facts_system_owner: platform-team
+                        facts_system_tags:
+                            - managed
+                            - k3s
         options:
             # Core role identification (defaults set dynamically in defaults/main.yml)
             facts_role_name:
                 type: str
-                default: "facts"
-                description: "Internal role identifier for facts collection"
+                description: >-
+                    Internal role identifier for facts collection.
+                    Default: ansible_role_name, else "facts".
 
             facts_collection_name:
                 type: str
-                default: "arillso.system"
-                description: "Full collection name for metadata tracking"
+                description: >-
+                    Full collection name for metadata tracking.
+                    Default: ansible_collection_name, else "arillso.system".
 
             facts_version:
                 type: str
-                default: ""
-                description: "Collection version, read from MANIFEST.json or galaxy.yml on the controller"
+                description: >-
+                    Collection version on the controller.
+                    Default: version from MANIFEST.json of the installed collection, else from
+                    galaxy.yml of a source checkout, else an empty string.
 
             # Node classification
             facts_node_type:

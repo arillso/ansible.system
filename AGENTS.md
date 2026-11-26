@@ -9,6 +9,8 @@ in `roles/`, plugins in `plugins/{filter,lookup,modules}`, molecule scenarios in
 Most `make` targets print `SKIP: …` and exit 0 when their tool is missing, so a
 green local run can mean nothing ran; CI is the gate.
 
+- Install the repository's Lefthook hooks with `lefthook install`; see
+  [lefthook.yml](lefthook.yml) for the checks they run.
 - `make test` runs `pytest tests/unit/` as a fast local smoke test. CI runs the
   same directory through `ansible-test units --docker` (job `unit-test` of the
   reusable `ci-ansible-collection.yml`). The two runners collect tests
@@ -27,6 +29,8 @@ green local run can mean nothing ran; CI is the gate.
 
 - Organization-wide conventions are defined in
   [arillso/.github/AGENTS.md](https://github.com/arillso/.github/blob/main/AGENTS.md).
+- Changelog and breaking-change rules are documented in
+  [CONTRIBUTING.md](CONTRIBUTING.md#submitting-changes).
 - Before adding a role or a plugin, load the skill `adding-role-or-plugin`
   (`.claude/skills/adding-role-or-plugin/`). It lists the mandatory role files,
   including `meta/argument_specs.yml`, and where plugin documentation lives per

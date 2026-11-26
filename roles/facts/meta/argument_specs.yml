@@ -1,13 +1,13 @@
 ---
-# Argument specifications for Facts role - Enterprise-grade validation
+# Argument specifications for Facts role
 # Only documents variables that are actually used in the role implementation
 
 argument_specs:
     main:
         short_description: "Collect system facts and metadata with K3s integration"
         description: |
-            Enterprise-grade facts collection role that gathers system information,
-            cloud metadata, and provides K3s cluster state detection.
+            Facts collection role that gathers system information, cloud
+            metadata, and provides K3s cluster state detection.
 
         examples: |
             - name: Collect custom facts for a worker node

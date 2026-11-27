@@ -25,11 +25,8 @@ galaxy_info:
     galaxy_tags:
         - system
         - facts
-        - motd
         - monitoring
         - information
-        - banner
-        - ssh
         - cloud
         - infrastructure
 

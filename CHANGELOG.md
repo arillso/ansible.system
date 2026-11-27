@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   example.
 - **facts**: the role description no longer uses "Enterprise-grade" or claims
   MOTD generation, which the `shell` role provides.
+- **facts**: the Galaxy tags no longer list `motd`, `banner`, and `ssh`, which
+  the role does not cover.
 - **docs**: `meta/argument_specs.yml` no longer documents defaults the roles do
   not apply. `firewall_tables`, `tuning_sysctl_config`,
   `tuning_security_limits`, `tuning_packages_list`, `facts_role_name`,
